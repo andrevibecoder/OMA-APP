@@ -177,6 +177,7 @@ export async function createUser(raw: z.infer<typeof userCreateSchema>): Promise
 
 const userUpdateSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(100),
+  email: z.string().trim().email("Enter a valid email"),
   role: roleSchema,
   businessUnitId: z.string().nullable(),
   managerId: z.string().nullable(),
@@ -191,15 +192,21 @@ export async function updateUser(
   if (!parsed.success) return { error: parsed.error.issues[0].message }
   const u = parsed.data
   if (u.managerId === id) return { error: "A user can't be their own manager." }
-  await db.user.update({
-    where: { id },
-    data: {
-      name: u.name,
-      role: u.role,
-      businessUnitId: u.businessUnitId || null,
-      managerId: u.managerId || null,
-    },
-  })
+  try {
+    await db.user.update({
+      where: { id },
+      data: {
+        name: u.name,
+        email: u.email.toLowerCase(),
+        role: u.role,
+        businessUnitId: u.businessUnitId || null,
+        managerId: u.managerId || null,
+      },
+    })
+  } catch (e) {
+    if (isDup(e)) return { error: `${u.email} is already registered.` }
+    throw e
+  }
   revalidateApp()
   return {}
 }

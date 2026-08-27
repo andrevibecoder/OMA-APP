@@ -374,7 +374,7 @@ function UsersSection({ data }: { data: AdminData }) {
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[52rem] text-left text-sm">
+        <table className="w-full min-w-[60rem] text-left text-sm">
           <thead className="text-xs uppercase tracking-widest text-mfa-muted">
             <tr>
               <th className="px-4 py-2 font-semibold">Name</th>
@@ -413,6 +413,7 @@ function UserRow({
 }) {
   const { pending, error, run } = useAction()
   const [name, setName] = useState(u.name)
+  const [email, setEmail] = useState(u.email)
   const [role, setRole] = useState<Role>(u.role as Role)
   const [buId, setBuId] = useState(u.businessUnitId ?? "")
   const [mgrId, setMgrId] = useState(u.managerId ?? "")
@@ -420,6 +421,7 @@ function UserRow({
 
   const dirty =
     name.trim() !== u.name ||
+    email.trim() !== u.email ||
     role !== u.role ||
     buId !== (u.businessUnitId ?? "") ||
     mgrId !== (u.managerId ?? "")
@@ -432,7 +434,14 @@ function UserRow({
         <td className="px-4 py-2">
           <input className={`${input} w-40`} value={name} onChange={(e) => setName(e.target.value)} />
         </td>
-        <td className="px-4 py-2 text-mfa-muted">{u.email}</td>
+        <td className="px-4 py-2">
+          <input
+            className={`${input} w-52`}
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+        </td>
         <td className="px-4 py-2">
           <select className={input} value={role} onChange={(e) => setRole(e.target.value as Role)}>
             {ROLES.map((r) => (
@@ -481,6 +490,7 @@ function UserRow({
                   run(() =>
                     updateUser(u.id, {
                       name,
+                      email,
                       role,
                       businessUnitId: buId || null,
                       managerId: mgrId || null,
