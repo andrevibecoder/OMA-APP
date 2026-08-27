@@ -14,8 +14,9 @@ export function canEditOutcomeMetric(user: SessionUser, oma: OmaAuthShape): bool
 
 export function canEditActions(user: SessionUser, oma: OmaAuthShape): boolean {
   if (user.role === "ADMIN") return true
+  if (oma.ownerId === user.id) return true
   if (user.role === "MANAGER") return managesOwner(user, oma)
-  return oma.ownerId === user.id
+  return false
 }
 
 export function canCreateOMA(

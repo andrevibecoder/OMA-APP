@@ -23,6 +23,8 @@ describe("canEditOutcomeMetric", () => {
     expect(canEditOutcomeMetric(mgr, omaOfOther)).toBe(false)
   })
   it("user: never", () => expect(canEditOutcomeMetric(user, omaOfU1)).toBe(false))
+  it("manager: null managerId blocks", () =>
+    expect(canEditOutcomeMetric(mgr, { ownerId: "x", owner: { managerId: null } })).toBe(false))
 })
 
 describe("canEditActions", () => {
@@ -31,6 +33,11 @@ describe("canEditActions", () => {
     expect(canEditActions(user, omaOfOther)).toBe(false)
   })
   it("manager: own team", () => expect(canEditActions(mgr, omaOfU1)).toBe(true))
+  it("manager: own OMA", () =>
+    expect(canEditActions(mgr, { ownerId: "mgr", owner: { managerId: "boss" } })).toBe(true))
+  it("manager: null managerId blocks", () =>
+    expect(canEditActions(mgr, { ownerId: "x", owner: { managerId: null } })).toBe(false))
+  it("manager: other team blocks", () => expect(canEditActions(mgr, omaOfOther)).toBe(false))
   it("admin: any", () => expect(canEditActions(admin, omaOfOther)).toBe(true))
 })
 
@@ -41,6 +48,7 @@ describe("canCreateOMA", () => {
   it("manager not for other teams", () => expect(canCreateOMA(mgr, { id: "u2", managerId: "x" }, 0)).toBe(false))
   it("user never", () => expect(canCreateOMA(user, target, 0)).toBe(false))
   it("admin any team under cap", () => expect(canCreateOMA(admin, { id: "u2", managerId: "x" }, 1)).toBe(true))
+  it("admin blocked by cap", () => expect(canCreateOMA(admin, { id: "u2", managerId: "x" }, 3)).toBe(false))
 })
 
 describe("canEditProfile", () => {
