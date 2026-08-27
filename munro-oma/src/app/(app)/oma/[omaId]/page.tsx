@@ -54,7 +54,7 @@ export default async function OmaDetailPage({
             : []),
           { label: oma.owner.name, href: `/person/${oma.owner.id}${qp}` },
           { label: `OMA ${oma.sequence}` },
-          { label: `Q${oma.period.quarter}` },
+          { label: oma.period.shortLabel },
         ]}
       />
       <div className="mt-3">

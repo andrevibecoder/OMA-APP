@@ -19,7 +19,7 @@ export default async function DashboardPage({
       <div className="flex items-baseline justify-between">
         <PageTitle>Main dashboard</PageTitle>
         <span className="text-xs font-semibold uppercase tracking-widest text-mfa-red">
-          Q{period.quarter} · All departments
+          {period.shortLabel} · All departments
         </span>
       </div>
       <div className="mt-10">

@@ -36,7 +36,7 @@ export default async function PersonPage({
             ? [{ label: person.businessUnit.name, href: `/bu/${person.businessUnit.id}${qp}` }]
             : []),
           { label: person.name },
-          { label: `Q${period.quarter}` },
+          { label: period.shortLabel },
         ]}
       />
       <div className="mt-3 flex items-baseline justify-between">

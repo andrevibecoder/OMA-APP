@@ -29,9 +29,30 @@ async function main() {
   await db.period.deleteMany()
   await db.businessUnit.deleteMany()
 
-  const period = await db.period.create({
-    data: { label: "Q3 2026", quarter: 3, year: 2026, startDate: new Date("2026-07-01"), isActive: true },
-  })
+  // Full 2026 set — quarters, halves, and the full year. Q3 is the active period.
+  const periodSpecs = [
+    { label: "Q1 2026", shortLabel: "Q1", kind: "QUARTER" as const, startDate: "2026-01-01" },
+    { label: "Q2 2026", shortLabel: "Q2", kind: "QUARTER" as const, startDate: "2026-04-01" },
+    { label: "Q3 2026", shortLabel: "Q3", kind: "QUARTER" as const, startDate: "2026-07-01", active: true },
+    { label: "Q4 2026", shortLabel: "Q4", kind: "QUARTER" as const, startDate: "2026-10-01" },
+    { label: "H1 2026", shortLabel: "H1", kind: "HALF" as const, startDate: "2026-01-01" },
+    { label: "H2 2026", shortLabel: "H2", kind: "HALF" as const, startDate: "2026-07-01" },
+    { label: "FY 2026", shortLabel: "FY", kind: "ANNUAL" as const, startDate: "2026-01-01" },
+  ]
+  let period!: Awaited<ReturnType<typeof db.period.create>>
+  for (const s of periodSpecs) {
+    const p = await db.period.create({
+      data: {
+        label: s.label,
+        shortLabel: s.shortLabel,
+        kind: s.kind,
+        year: 2026,
+        startDate: new Date(s.startDate),
+        isActive: s.active ?? false,
+      },
+    })
+    if (s.active) period = p
+  }
 
   const buNames = ["Marketing", "Sales", "Product", "Production", "Finance", "Systems", "HR"]
   const bus: Record<string, string> = {}

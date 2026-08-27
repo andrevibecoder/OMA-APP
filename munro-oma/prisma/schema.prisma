@@ -26,6 +26,12 @@ enum MetricDirection {
   LOWER_BETTER
 }
 
+enum PeriodKind {
+  QUARTER
+  HALF
+  ANNUAL
+}
+
 model User {
   id             String        @id @default(cuid())
   name           String
@@ -50,13 +56,14 @@ model BusinessUnit {
 }
 
 model Period {
-  id        String   @id @default(cuid())
-  label     String   @unique
-  quarter   Int
-  year      Int
-  startDate DateTime
-  isActive  Boolean  @default(false)
-  omas      OMA[]
+  id         String     @id @default(cuid())
+  label      String     @unique // "Q3 2026", "H1 2026", "FY 2026"
+  shortLabel String // "Q3", "H1", "FY" — for breadcrumbs
+  kind       PeriodKind @default(QUARTER)
+  year       Int
+  startDate  DateTime
+  isActive   Boolean    @default(false)
+  omas       OMA[]
 }
 
 model OMA {
