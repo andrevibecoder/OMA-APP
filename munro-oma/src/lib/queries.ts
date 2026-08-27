@@ -68,7 +68,7 @@ export async function getOma(omaId: string) {
       owner: {
         select: { id: true, name: true, managerId: true, businessUnit: { select: { id: true, name: true } } },
       },
-      period: { select: { id: true, label: true, startDate: true } },
+      period: { select: { id: true, label: true, quarter: true, startDate: true } },
       metrics: { orderBy: { order: "asc" } },
       actions: { orderBy: { order: "asc" } },
     },

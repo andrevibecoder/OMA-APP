@@ -31,7 +31,7 @@ export default async function OmaDetailPage({
             : []),
           { label: oma.owner.name, href: `/person/${oma.owner.id}${qp}` },
           { label: `OMA ${oma.sequence}` },
-          { label: oma.period.label },
+          { label: `Q${oma.period.quarter}` },
         ]}
       />
       <div className="mt-3">
@@ -70,7 +70,9 @@ export default async function OmaDetailPage({
               <span className={a.completed ? "line-through text-mfa-muted" : ""}>{a.description}</span>
             </li>
           ))}
-          {oma.actions.length === 0 && <p className="text-sm text-mfa-muted">No actions yet.</p>}
+          {oma.actions.length === 0 && (
+            <li className="text-sm text-mfa-muted">No actions yet.</li>
+          )}
         </ol>
       </div>
 

@@ -1,6 +1,5 @@
 import { notFound, redirect } from "next/navigation"
 import { Breadcrumbs } from "@/components/Breadcrumbs"
-import { PageTitle } from "@/components/PageTitle"
 import { OmaEditForm } from "@/components/OmaEditForm"
 import { getOma } from "@/lib/queries"
 import { getSessionUser } from "@/lib/session"
@@ -32,10 +31,8 @@ export default async function OmaEditPage({
           { label: "Edit" },
         ]}
       />
-      <div className="mb-8 mt-3">
-        <PageTitle>OMA {oma.sequence} — edit</PageTitle>
-      </div>
-      <OmaEditForm
+      <div className="mt-6">
+        <OmaEditForm
         oma={{
           id: oma.id,
           sequence: oma.sequence,
@@ -49,9 +46,10 @@ export default async function OmaEditPage({
             completed: a.completed,
           })),
         }}
-        canOutcomeMetric={canEditOutcomeMetric(viewer, authShape)}
-        canActions={canEditActions(viewer, authShape)}
-      />
+          canOutcomeMetric={canEditOutcomeMetric(viewer, authShape)}
+          canActions={canEditActions(viewer, authShape)}
+        />
+      </div>
     </main>
   )
 }

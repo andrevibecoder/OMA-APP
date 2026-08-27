@@ -25,7 +25,7 @@ export default async function BuPage({
         items={[
           { label: "Main dashboard", href: `/${qp}` },
           { label: bu.name },
-          { label: period.label },
+          { label: `Q${period.quarter}` },
         ]}
       />
       <div className="mt-3">

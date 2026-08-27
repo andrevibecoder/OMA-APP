@@ -39,9 +39,19 @@ export function OmaEditForm({
     <div className="rounded-2xl border-2 border-mfa-red">
       <div className="rounded-t-2xl bg-mfa-red px-5 py-3 text-white">
         <span className="font-serif text-lg">OMA {oma.sequence}</span>
-        <span className="ml-4 text-sm">Period {oma.period.label}</span>
-        <span className="ml-4 text-sm">
-          Date {new Date(oma.period.startDate).toLocaleDateString("en-GB")}
+        <span className="ml-6 text-sm">
+          <span className="font-semibold">Period</span>{" "}
+          <span className="italic">{oma.period.label}</span>
+        </span>
+        <span className="ml-6 text-sm">
+          <span className="font-semibold">Date</span>{" "}
+          <span className="italic">
+            {new Date(oma.period.startDate).toLocaleDateString("en-GB", {
+              day: "2-digit",
+              month: "short",
+              year: "numeric",
+            })}
+          </span>
         </span>
       </div>
 
@@ -61,6 +71,10 @@ export function OmaEditForm({
       <section className="border-b border-mfa-track">
         <div className="bg-mfa-panel px-5 py-2 text-sm font-semibold text-mfa-red">
           METRIC / KPI <span className="text-mfa-muted">— how you&apos;ll know you&apos;re getting there</span>
+        </div>
+        <div className="grid grid-cols-[1fr_16rem] bg-mfa-track text-sm font-semibold text-mfa-ink">
+          <div className="px-3 py-2">Metric — what you measure</div>
+          <div className="border-l border-mfa-track px-3 py-2">Target</div>
         </div>
         {metrics.map((m, i) => (
           <div
@@ -111,7 +125,13 @@ export function OmaEditForm({
 
       <section>
         <div className="bg-mfa-panel px-5 py-2 text-sm font-semibold text-mfa-red">
-          ACTIONS <span className="text-mfa-muted">— the moves that drive the result</span>
+          ACTIONS <span className="text-mfa-muted">— the projects and moves that drive the result</span>
+        </div>
+        <div className="grid grid-cols-[auto_1fr_10rem_auto] items-center gap-2 bg-mfa-track px-3 text-sm font-semibold text-mfa-ink">
+          <span className="h-4 w-4" />
+          <span className="py-2">Action — what you&apos;ll do</span>
+          <span className="py-2">Due date</span>
+          <span />
         </div>
         {actions.map((a, i) => (
           <div

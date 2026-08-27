@@ -5,7 +5,7 @@ export function Breadcrumbs({ items }: { items: { label: string; href?: string }
     <nav className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-widest">
       {items.map((it, i) => {
         const last = i === items.length - 1
-        const cls = last || !it.href ? "text-mfa-red" : "text-mfa-muted hover:underline"
+        const cls = it.href && !last ? "text-mfa-red hover:underline" : "text-mfa-ink"
         return (
           <span key={i} className="flex items-center gap-2">
             {it.href && !last ? (
