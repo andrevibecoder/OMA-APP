@@ -4,12 +4,18 @@ import bcrypt from "bcryptjs"
 const db = new PrismaClient()
 const HASH = bcrypt.hashSync("munro-dev-2026", 10)
 
-// n actions, k completed
+const DAY = 86_400_000
+const DUE_BASE = new Date("2026-08-06").getTime() // due dates spread ~weekly from here
+const DONE_BASE = new Date("2026-07-08").getTime() // completions staggered through July/Aug
+
+// n actions, k completed — with staggered due + completion dates so the
+// To-do / Done grouping on the OMA detail screen has something to sort
 function actions(n: number, k: number, prefix: string) {
   return Array.from({ length: n }, (_, i) => ({
     description: `${prefix} action ${i + 1}`,
     completed: i < k,
-    completedAt: i < k ? new Date() : null,
+    completedAt: i < k ? new Date(DONE_BASE + i * 6 * DAY) : null,
+    dueDate: new Date(DUE_BASE + i * 9 * DAY),
     order: i,
   }))
 }
@@ -68,9 +74,9 @@ async function main() {
       metrics: { create: [{ measure: "Qualified leads", target: "40 qualified leads by 31 Oct", order: 0 }] },
       actions: {
         create: [
-          { description: "Rework the lead form and scoring rules", completed: true, completedAt: new Date(), order: 0 },
-          { description: "Run two paid tests per month", completed: true, completedAt: new Date(), order: 1 },
-          { description: "Review the pipeline with Sales every Friday", completed: true, completedAt: new Date(), order: 2 },
+          { description: "Rework the lead form and scoring rules", completed: true, completedAt: new Date("2026-07-14"), dueDate: new Date("2026-07-31"), order: 0 },
+          { description: "Run two paid tests per month", completed: true, completedAt: new Date("2026-07-28"), dueDate: new Date("2026-08-15"), order: 1 },
+          { description: "Review the pipeline with Sales every Friday", completed: true, completedAt: new Date("2026-08-11"), dueDate: new Date("2026-08-29"), order: 2 },
         ],
       },
     },
