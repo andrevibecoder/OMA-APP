@@ -198,7 +198,6 @@ export function OmaEditForm({
                   onChange={(e) => setM({ target: num(e.target.value) })}
                   className="rounded border border-mfa-track px-2 py-1.5 disabled:text-mfa-muted"
                 />
-                <span className="h-4 text-xs text-mfa-muted">{hint(m.target, m.unit)}</span>
               </label>
 
               <label className="flex w-24 flex-col">
@@ -211,8 +210,16 @@ export function OmaEditForm({
                   onChange={(e) => setM({ current: num(e.target.value) })}
                   className="rounded border border-mfa-track px-2 py-1.5 disabled:text-mfa-muted"
                 />
-                <span className="h-4 text-xs text-mfa-muted">{hint(m.current, m.unit)}</span>
               </label>
+
+              {(hint(m.target, m.unit) || hint(m.current, m.unit)) && (
+                <div className="w-full text-xs text-mfa-muted">
+                  {hint(m.target, m.unit) && <span>Target: {hint(m.target, m.unit)}</span>}
+                  {hint(m.current, m.unit) && (
+                    <span className="ml-4">Current: {hint(m.current, m.unit)}</span>
+                  )}
+                </div>
+              )}
             </div>
           )
         })}
