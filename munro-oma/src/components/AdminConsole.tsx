@@ -38,12 +38,12 @@ function useAction() {
   return { pending, error, setError, run }
 }
 
-export function AdminConsole({ data }: { data: AdminData }) {
+export function AdminConsole({ data, viewerId }: { data: AdminData; viewerId: string }) {
   return (
     <div className="space-y-10">
       <BusinessUnitsSection data={data} />
       <PeriodsSection data={data} />
-      <UsersSection data={data} />
+      <UsersSection data={data} viewerId={viewerId} />
     </div>
   )
 }
@@ -280,7 +280,7 @@ function PeriodRow({ p }: { p: AdminData["periods"][number] }) {
 
 const ROLES: Role[] = ["USER", "MANAGER", "ADMIN"]
 
-function UsersSection({ data }: { data: AdminData }) {
+function UsersSection({ data, viewerId }: { data: AdminData; viewerId: string }) {
   const { users, businessUnits } = data
   const managerOptions = users.filter((u) => u.role === "MANAGER" || u.role === "ADMIN")
   const { pending, error, run } = useAction()
@@ -391,6 +391,7 @@ function UsersSection({ data }: { data: AdminData }) {
               <UserRow
                 key={u.id}
                 u={u}
+                isSelf={u.id === viewerId}
                 businessUnits={businessUnits}
                 managerOptions={managerOptions.filter((m) => m.id !== u.id)}
               />
@@ -404,10 +405,12 @@ function UsersSection({ data }: { data: AdminData }) {
 
 function UserRow({
   u,
+  isSelf,
   businessUnits,
   managerOptions,
 }: {
   u: AdminData["users"][number]
+  isSelf: boolean
   businessUnits: AdminData["businessUnits"]
   managerOptions: AdminData["users"]
 }) {
@@ -426,7 +429,15 @@ function UserRow({
     buId !== (u.businessUnitId ?? "") ||
     mgrId !== (u.managerId ?? "")
 
-  const canDelete = u._count.omas === 0 && u._count.team === 0
+  function confirmDelete() {
+    const extras: string[] = []
+    if (u._count.omas > 0) extras.push(`${u._count.omas} OMA${u._count.omas === 1 ? "" : "s"} and their history`)
+    if (u._count.team > 0) extras.push(`${u._count.team} report${u._count.team === 1 ? "" : "s"} will lose their manager`)
+    const tail = extras.length ? `\n\nThis also removes: ${extras.join("; ")}.` : ""
+    if (window.confirm(`Delete ${u.name} (${u.email})?${tail}\n\nThis cannot be undone.`)) {
+      run(() => deleteUser(u.id))
+    }
+  }
 
   return (
     <>
@@ -516,11 +527,11 @@ function UserRow({
                 Set
               </button>
             )}
-            {canDelete && (
+            {!isSelf && (
               <button
                 className="rounded-full border border-mfa-red px-3 py-1 text-sm text-mfa-red"
                 disabled={pending}
-                onClick={() => run(() => deleteUser(u.id))}
+                onClick={confirmDelete}
               >
                 Delete
               </button>

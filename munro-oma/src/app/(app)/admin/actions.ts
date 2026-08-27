@@ -250,13 +250,13 @@ export async function deleteUser(id: string): Promise<Result> {
   if (await isLastActiveAdmin(id)) {
     return { error: "This is the only admin — promote someone else first." }
   }
-  const u = await db.user.findUniqueOrThrow({
-    where: { id },
-    select: { _count: { select: { omas: true, team: true } } },
-  })
-  if (u._count.omas > 0) return { error: "This user has OMAs — deactivate instead." }
-  if (u._count.team > 0) return { error: "This user manages people — reassign them first." }
-  await db.user.delete({ where: { id } })
+  // Detach anyone who reports to this user, drop their OMAs (metrics + actions
+  // cascade), then remove the account.
+  await db.$transaction([
+    db.user.updateMany({ where: { managerId: id }, data: { managerId: null } }),
+    db.oMA.deleteMany({ where: { ownerId: id } }),
+    db.user.delete({ where: { id } }),
+  ])
   revalidateApp()
   return {}
 }

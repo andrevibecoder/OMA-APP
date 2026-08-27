@@ -16,7 +16,7 @@ export default async function AdminPage() {
         Business units, review periods and people.
       </p>
       <div className="mt-8">
-        <AdminConsole data={data} />
+        <AdminConsole data={data} viewerId={viewer.id} />
       </div>
     </main>
   )
