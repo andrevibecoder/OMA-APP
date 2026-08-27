@@ -72,10 +72,6 @@ export function OmaEditForm({
         <div className="bg-mfa-panel px-5 py-2 text-sm font-semibold text-mfa-red">
           METRIC / KPI <span className="text-mfa-muted">— how you&apos;ll know you&apos;re getting there</span>
         </div>
-        <div className="grid grid-cols-[1fr_16rem] bg-mfa-track text-sm font-semibold text-mfa-ink">
-          <div className="px-3 py-2">Metric — what you measure</div>
-          <div className="border-l border-mfa-track px-3 py-2">Target</div>
-        </div>
         {metrics.map((m, i) => (
           <div
             key={i}
