@@ -71,7 +71,12 @@ async function main() {
       sequence: 1,
       outcome:
         "Marketing delivers a steady flow of qualified leads the sales team can work without rework.",
-      metrics: { create: [{ measure: "Qualified leads", target: "40 qualified leads by 31 Oct", order: 0 }] },
+      metrics: {
+        create: [
+          { measure: "Qualified leads", unit: "NUMBER", direction: "HIGHER_BETTER", target: 40, current: 40, order: 0 },
+          { measure: "Rework rate on leads", unit: "PERCENT", direction: "LOWER_BETTER", target: 5, current: 5, order: 1 },
+        ],
+      },
       actions: {
         create: [
           { description: "Rework the lead form and scoring rules", completed: true, completedAt: new Date("2026-07-14"), dueDate: new Date("2026-07-31"), order: 0 },
@@ -89,7 +94,11 @@ async function main() {
       periodId: period.id,
       sequence: 2,
       outcome: "The brand shows up consistently across every channel prospects touch.",
-      metrics: { create: [{ measure: "Channel audit score", target: "90% by 30 Sep", order: 0 }] },
+      metrics: {
+        create: [
+          { measure: "Channel audit score", unit: "PERCENT", direction: "HIGHER_BETTER", target: 100, current: 45, order: 0 },
+        ],
+      },
       actions: { create: actions(11, 5, "Brand") },
     },
   })
@@ -101,7 +110,11 @@ async function main() {
       periodId: period.id,
       sequence: 3,
       outcome: "Marketing can prove its contribution to revenue.",
-      metrics: { create: [{ measure: "Attributed pipeline", target: "R2m by 31 Oct", order: 0 }] },
+      metrics: {
+        create: [
+          { measure: "Attributed pipeline", unit: "CURRENCY", direction: "HIGHER_BETTER", target: 2000000, current: 0, order: 0 },
+        ],
+      },
       actions: { create: actions(3, 0, "Attribution") },
     },
   })
@@ -113,7 +126,11 @@ async function main() {
       periodId: period.id,
       sequence: 1,
       outcome: "Content engine ships on a predictable cadence.",
-      metrics: { create: [{ measure: "Posts published", target: "8 per month", order: 0 }] },
+      metrics: {
+        create: [
+          { measure: "Posts published", unit: "NUMBER", direction: "HIGHER_BETTER", target: 8, current: 6, order: 0 },
+        ],
+      },
       actions: { create: actions(4, 3, "Content") },
     },
   })
@@ -125,21 +142,26 @@ async function main() {
       periodId: period.id,
       sequence: 1,
       outcome: "Events generate qualified conversations for Sales.",
-      metrics: { create: [{ measure: "Booked meetings", target: "15 per event", order: 0 }] },
+      metrics: {
+        create: [
+          { measure: "Booked meetings", unit: "NUMBER", direction: "HIGHER_BETTER", target: 15, current: 6, order: 0 },
+        ],
+      },
       actions: { create: actions(5, 2, "Events") },
     },
   })
 
-  // Other BUs — one synthetic user + one OMA to approximate the dashboard spread
-  const spread: Record<string, [number, number]> = {
-    Sales: [10, 5], // 50
-    Product: [10, 6], // 60
-    Production: [10, 9], // 90
-    Finance: [10, 1], // 10
-    Systems: [10, 6], // 60
-    HR: [10, 3], // 30
+  // Other BUs — one synthetic user + one OMA to give the dashboard a spread.
+  // [actions total, actions done, metric attainment %]
+  const spread: Record<string, [number, number, number]> = {
+    Sales: [10, 5, 50],
+    Product: [10, 6, 60],
+    Production: [10, 9, 90],
+    Finance: [10, 1, 10],
+    Systems: [10, 6, 60],
+    HR: [10, 3, 30],
   }
-  for (const [bu, [n, k]] of Object.entries(spread)) {
+  for (const [bu, [n, k, pct]] of Object.entries(spread)) {
     const u = await db.user.create({
       data: {
         name: `${bu} Lead`,
@@ -156,7 +178,11 @@ async function main() {
         periodId: period.id,
         sequence: 1,
         outcome: `${bu} delivers on its core commitment for the quarter.`,
-        metrics: { create: [{ measure: "Primary KPI", target: "On target by 31 Oct", order: 0 }] },
+        metrics: {
+          create: [
+            { measure: "Primary KPI", unit: "PERCENT", direction: "HIGHER_BETTER", target: 100, current: pct, order: 0 },
+          ],
+        },
         actions: { create: actions(n, k, bu) },
       },
     })

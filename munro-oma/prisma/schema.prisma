@@ -14,6 +14,18 @@ enum Role {
   USER
 }
 
+enum MetricUnit {
+  NUMBER
+  CURRENCY
+  PERCENT
+  DAYS
+}
+
+enum MetricDirection {
+  HIGHER_BETTER
+  LOWER_BETTER
+}
+
 model User {
   id             String        @id @default(cuid())
   name           String
@@ -64,12 +76,15 @@ model OMA {
 }
 
 model Metric {
-  id      String @id @default(cuid())
-  oma     OMA    @relation(fields: [omaId], references: [id], onDelete: Cascade)
-  omaId   String
-  measure String
-  target  String
-  order   Int    @default(0)
+  id        String          @id @default(cuid())
+  oma       OMA             @relation(fields: [omaId], references: [id], onDelete: Cascade)
+  omaId     String
+  measure   String
+  unit      MetricUnit      @default(NUMBER)
+  direction MetricDirection @default(HIGHER_BETTER)
+  target    Float
+  current   Float           @default(0)
+  order     Int             @default(0)
 }
 
 model Action {

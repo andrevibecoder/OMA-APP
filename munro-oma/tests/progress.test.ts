@@ -1,8 +1,20 @@
 import { describe, expect, it } from "vitest"
-import { ragState, ragColorVar, omaProgress, mean, personProgress, buProgress } from "@/lib/progress"
+import {
+  ragState,
+  ragColorVar,
+  formatMetricValue,
+  metricAttainment,
+  metricBarPercent,
+  omaProgress,
+  mean,
+  personProgress,
+  buProgress,
+} from "@/lib/progress"
 
-const done = { completed: true }
-const todo = { completed: false }
+const hi = (target: number, current: number) =>
+  ({ direction: "HIGHER_BETTER", target, current }) as const
+const lo = (target: number, current: number) =>
+  ({ direction: "LOWER_BETTER", target, current }) as const
 
 describe("ragState", () => {
   it("maps thresholds exactly", () => {
@@ -31,14 +43,63 @@ describe("ragColorVar", () => {
   })
 })
 
-describe("omaProgress", () => {
-  it("is 0 when there are no actions", () => {
-    expect(omaProgress({ actions: [] })).toBe(0)
+describe("formatMetricValue", () => {
+  it("NUMBER: space thousands over 999, rounded", () => {
+    expect(formatMetricValue(40, "NUMBER")).toBe("40")
+    expect(formatMetricValue(3000, "NUMBER")).toBe("3 000")
+    expect(formatMetricValue(37.6, "NUMBER")).toBe("38")
   })
-  it("rounds completed/total", () => {
-    expect(omaProgress({ actions: [done, todo, todo] })).toBe(33)
-    expect(omaProgress({ actions: [done, done, done] })).toBe(100)
-    expect(omaProgress({ actions: [done, todo] })).toBe(50)
+  it("CURRENCY: R prefix, space thousands, no decimals", () => {
+    expect(formatMetricValue(3000000, "CURRENCY")).toBe("R3 000 000")
+    expect(formatMetricValue(950.4, "CURRENCY")).toBe("R950")
+  })
+  it("PERCENT: value + %, decimals kept", () => {
+    expect(formatMetricValue(95, "PERCENT")).toBe("95%")
+    expect(formatMetricValue(95.5, "PERCENT")).toBe("95.5%")
+  })
+  it("DAYS: value + ' days'", () => {
+    expect(formatMetricValue(10, "DAYS")).toBe("10 days")
+  })
+})
+
+describe("metricAttainment", () => {
+  it("higher is better: current / target", () => {
+    expect(metricAttainment(hi(40, 10))).toBe(25)
+    expect(metricAttainment(hi(40, 40))).toBe(100)
+    expect(metricAttainment(hi(40, 60))).toBe(150) // can exceed 100
+  })
+  it("lower is better: target / current", () => {
+    expect(metricAttainment(lo(10, 20))).toBe(50)
+    expect(metricAttainment(lo(10, 10))).toBe(100)
+    expect(metricAttainment(lo(10, 5))).toBe(200) // beat it
+  })
+  it("degenerate: higher-better with target 0 -> 0", () => {
+    expect(metricAttainment(hi(0, 5))).toBe(0)
+  })
+  it("degenerate: lower-better with current 0 -> 100 when target is real", () => {
+    expect(metricAttainment(lo(10, 0))).toBe(100)
+    expect(metricAttainment(lo(0, 0))).toBe(0)
+  })
+  it("clamps negatives to 0", () => {
+    expect(metricAttainment(hi(40, -5))).toBe(0)
+  })
+})
+
+describe("metricBarPercent", () => {
+  it("caps at 100", () => {
+    expect(metricBarPercent(hi(40, 60))).toBe(100)
+    expect(metricBarPercent(hi(40, 10))).toBe(25)
+  })
+})
+
+describe("omaProgress", () => {
+  it("is 0 when there are no metrics", () => {
+    expect(omaProgress({ metrics: [] })).toBe(0)
+  })
+  it("is the mean of the capped metric percentages", () => {
+    expect(omaProgress({ metrics: [hi(40, 10)] })).toBe(25)
+    expect(omaProgress({ metrics: [hi(40, 10), hi(100, 100)] })).toBe(63) // mean(25, 100)
+    expect(omaProgress({ metrics: [hi(40, 80), hi(40, 40)] })).toBe(100) // both cap to 100
   })
 })
 
@@ -50,13 +111,19 @@ describe("mean", () => {
 
 describe("personProgress", () => {
   it("averages OMA progress", () => {
-    expect(personProgress([{ actions: [done] }, { actions: [todo] }, { actions: [] }])).toBe(33)
+    expect(
+      personProgress([
+        { metrics: [hi(40, 40)] }, // 100
+        { metrics: [hi(40, 20)] }, // 50
+        { metrics: [] }, // 0
+      ]),
+    ).toBe(50)
   })
 })
 
 describe("buProgress", () => {
   it("skips people with no OMAs", () => {
-    const withOmas = { omas: [{ actions: [done] }] } // 100
+    const withOmas = { omas: [{ metrics: [hi(40, 40)] }] } // 100
     const noOmas = { omas: [] }
     expect(buProgress([withOmas, noOmas])).toBe(100)
   })

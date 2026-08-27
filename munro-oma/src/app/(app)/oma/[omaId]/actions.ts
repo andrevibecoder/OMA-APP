@@ -64,8 +64,16 @@ export async function saveOma(input: SaveOmaInput): Promise<void> {
     ops.push(db.oMA.update({ where: { id: oma.id }, data: { outcome: data.outcome } }))
     ops.push(db.metric.deleteMany({ where: { omaId: oma.id } }))
     const metrics = data.metrics
-      .filter((m) => m.measure.trim() || m.target.trim())
-      .map((m, i) => ({ omaId: oma.id, measure: m.measure, target: m.target, order: i }))
+      .filter((m) => m.measure.trim())
+      .map((m, i) => ({
+        omaId: oma.id,
+        measure: m.measure,
+        unit: m.unit,
+        direction: m.direction,
+        target: m.target,
+        current: m.current,
+        order: i,
+      }))
     if (metrics.length > 0) {
       ops.push(db.metric.createMany({ data: metrics }))
     }

@@ -7,7 +7,7 @@ export async function getCompanyDashboard(periodId: string) {
     include: {
       users: {
         where: { active: true },
-        include: { omas: { where: { periodId }, include: { actions: { select: { completed: true } } } } },
+        include: { omas: { where: { periodId }, include: { metrics: { select: { direction: true, target: true, current: true } } } } },
       },
     },
   })
@@ -29,7 +29,7 @@ export async function getBusinessUnit(buId: string, periodId: string) {
       users: {
         where: { active: true },
         orderBy: { name: "asc" },
-        include: { omas: { where: { periodId }, include: { actions: { select: { completed: true } } } } },
+        include: { omas: { where: { periodId }, include: { metrics: { select: { direction: true, target: true, current: true } } } } },
       },
     },
   })
@@ -52,7 +52,7 @@ export async function getPerson(userId: string, periodId: string) {
       omas: {
         where: { periodId },
         orderBy: { sequence: "asc" },
-        include: { actions: { select: { completed: true } } },
+        include: { metrics: { select: { direction: true, target: true, current: true } } },
       },
     },
   })

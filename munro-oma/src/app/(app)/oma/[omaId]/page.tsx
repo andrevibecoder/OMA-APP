@@ -4,6 +4,13 @@ import { Breadcrumbs } from "@/components/Breadcrumbs"
 import { PageTitle } from "@/components/PageTitle"
 import { ActionCheckbox } from "@/components/ActionCheckbox"
 import { getOma } from "@/lib/queries"
+import {
+  formatMetricValue,
+  metricAttainment,
+  metricBarPercent,
+  ragColorVar,
+  ragState,
+} from "@/lib/progress"
 import { resolvePeriodId } from "@/lib/periods"
 import { getSessionUser } from "@/lib/session"
 import { canEditActions, canEditOma } from "@/lib/authz"
@@ -51,17 +58,39 @@ export default async function OmaDetailPage({
         </p>
 
         <span className="font-semibold">Metric</span>
-        <div className="space-y-2">
-          {oma.metrics.map((m) => (
-            <div key={m.id} className="grid grid-cols-2 overflow-hidden rounded-xl bg-mfa-panel">
-              <div className="px-5 py-3">
-                <span className="font-semibold">KPI:</span> {m.measure}
+        <div className="space-y-3">
+          {oma.metrics.map((m) => {
+            const bar = metricBarPercent(m)
+            const real = metricAttainment(m)
+            return (
+              <div key={m.id} className="overflow-hidden rounded-xl bg-mfa-panel">
+                <div className="grid grid-cols-1 divide-y divide-mfa-track sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+                  <div className="px-5 py-3">
+                    <span className="font-semibold">KPI:</span> {m.measure}
+                  </div>
+                  <div className="px-5 py-3">
+                    <span className="font-semibold">Target:</span> {formatMetricValue(m.target, m.unit)}
+                  </div>
+                  <div className="px-5 py-3">
+                    <span className="font-semibold">Current:</span>{" "}
+                    {formatMetricValue(m.current, m.unit)}
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 border-t border-mfa-track px-5 py-2">
+                  <div className="h-2 flex-1 overflow-hidden rounded-full bg-mfa-track">
+                    <div
+                      className="h-full rounded-full"
+                      style={{ width: `${bar}%`, background: ragColorVar(ragState(bar)) }}
+                    />
+                  </div>
+                  <span className="shrink-0 text-sm font-semibold">{real}%</span>
+                  {m.direction === "LOWER_BETTER" && (
+                    <span className="shrink-0 text-xs text-mfa-muted">lower is better</span>
+                  )}
+                </div>
               </div>
-              <div className="border-l border-mfa-track px-5 py-3">
-                <span className="font-semibold">Target:</span> {m.target}
-              </div>
-            </div>
-          ))}
+            )
+          })}
           {oma.metrics.length === 0 && <p className="text-sm text-mfa-muted">No metric set yet.</p>}
         </div>
 

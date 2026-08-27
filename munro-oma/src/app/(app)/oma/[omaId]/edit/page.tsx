@@ -40,7 +40,13 @@ export default async function OmaEditPage({
           sequence: oma.sequence,
           outcome: oma.outcome,
           period: { label: oma.period.label, startDate: oma.period.startDate.toISOString() },
-          metrics: oma.metrics.map((m) => ({ measure: m.measure, target: m.target })),
+          metrics: oma.metrics.map((m) => ({
+            measure: m.measure,
+            unit: m.unit,
+            direction: m.direction,
+            target: m.target,
+            current: m.current,
+          })),
           actions: oma.actions.map((a) => ({
             id: a.id,
             description: a.description,

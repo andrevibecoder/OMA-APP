@@ -2,6 +2,9 @@ import { z } from "zod"
 
 export type Role = "ADMIN" | "MANAGER" | "USER"
 
+export type MetricUnit = "NUMBER" | "CURRENCY" | "PERCENT" | "DAYS"
+export type MetricDirection = "HIGHER_BETTER" | "LOWER_BETTER"
+
 export type RagState = "not-started" | "behind" | "in-progress" | "on-track"
 
 export interface SessionUser {
@@ -17,7 +20,15 @@ export const saveOmaSchema = z.object({
   omaId: z.string().min(1),
   outcome: z.string().max(2000),
   metrics: z
-    .array(z.object({ measure: z.string().max(200), target: z.string().max(200) }))
+    .array(
+      z.object({
+        measure: z.string().max(200),
+        unit: z.enum(["NUMBER", "CURRENCY", "PERCENT", "DAYS"]),
+        direction: z.enum(["HIGHER_BETTER", "LOWER_BETTER"]),
+        target: z.number().finite(),
+        current: z.number().finite(),
+      }),
+    )
     .max(10),
   actions: z
     .array(
