@@ -1,0 +1,84 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  ADMIN
+  MANAGER
+  USER
+}
+
+model User {
+  id             String        @id @default(cuid())
+  name           String
+  email          String        @unique
+  passwordHash   String
+  role           Role          @default(USER)
+  active         Boolean       @default(true)
+  businessUnit   BusinessUnit? @relation(fields: [businessUnitId], references: [id])
+  businessUnitId String?
+  manager        User?         @relation("TeamMembers", fields: [managerId], references: [id])
+  managerId      String?
+  team           User[]        @relation("TeamMembers")
+  omas           OMA[]         @relation("OwnedOMAs")
+  createdAt      DateTime      @default(now())
+}
+
+model BusinessUnit {
+  id    String @id @default(cuid())
+  name  String @unique
+  order Int    @default(0)
+  users User[]
+}
+
+model Period {
+  id        String   @id @default(cuid())
+  label     String   @unique
+  quarter   Int
+  year      Int
+  startDate DateTime
+  isActive  Boolean  @default(false)
+  omas      OMA[]
+}
+
+model OMA {
+  id        String   @id @default(cuid())
+  owner     User     @relation("OwnedOMAs", fields: [ownerId], references: [id])
+  ownerId   String
+  period    Period   @relation(fields: [periodId], references: [id])
+  periodId  String
+  sequence  Int
+  outcome   String
+  metrics   Metric[]
+  actions   Action[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([ownerId, periodId, sequence])
+}
+
+model Metric {
+  id      String @id @default(cuid())
+  oma     OMA    @relation(fields: [omaId], references: [id], onDelete: Cascade)
+  omaId   String
+  measure String
+  target  String
+  order   Int    @default(0)
+}
+
+model Action {
+  id          String    @id @default(cuid())
+  oma         OMA       @relation(fields: [omaId], references: [id], onDelete: Cascade)
+  omaId       String
+  description String
+  dueDate     DateTime?
+  completed   Boolean   @default(false)
+  completedAt DateTime?
+  order       Int       @default(0)
+}
