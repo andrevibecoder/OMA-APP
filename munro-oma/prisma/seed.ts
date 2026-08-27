@@ -141,7 +141,7 @@ async function main() {
         passwordHash: HASH,
         role: "USER",
         businessUnitId: bus[bu],
-        managerId: manager.id,
+        managerId: null,
       },
     })
     await db.oMA.create({

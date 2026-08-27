@@ -9,3 +9,10 @@ export interface SessionUser {
   businessUnitId: string | null
   managerId: string | null
 }
+
+export type SaveOmaInput = {
+  omaId: string
+  outcome: string
+  metrics: { measure: string; target: string }[]
+  actions: { id?: string; description: string; dueDate: string | null; completed: boolean }[]
+}
