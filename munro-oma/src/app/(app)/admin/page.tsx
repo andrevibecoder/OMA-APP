@@ -13,7 +13,9 @@ export default async function AdminPage() {
     <main>
       <PageTitle>Admin</PageTitle>
       <p className="mt-2 text-sm text-mfa-muted">
-        Business units, review periods and people.
+        Business units, review periods and people. Text edits save when you press
+        the row&apos;s <span className="font-semibold">Save</span>; toggles, reorder
+        and the active period save straight away.
       </p>
       <div className="mt-8">
         <AdminConsole data={data} viewerId={viewer.id} />

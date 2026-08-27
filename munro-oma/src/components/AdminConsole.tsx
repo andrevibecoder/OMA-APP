@@ -24,6 +24,13 @@ const input = "rounded border border-mfa-track px-2 py-1 text-sm"
 const btn = "rounded-full bg-mfa-red px-4 py-1.5 text-sm font-semibold text-white disabled:opacity-60"
 const ghostBtn = "rounded-full border border-mfa-track px-3 py-1 text-sm"
 
+// Row Save button: solid red when there are unsaved edits, muted/disabled when clean.
+function saveClass(dirty: boolean): string {
+  return dirty
+    ? "rounded-full bg-mfa-red px-3 py-1 text-sm font-semibold text-white"
+    : "rounded-full border border-mfa-track px-3 py-1 text-sm text-mfa-muted"
+}
+
 function useAction() {
   const [pending, start] = useTransition()
   const [error, setError] = useState<string | null>(null)
@@ -102,17 +109,15 @@ function BusinessUnitRow({
   const dirty = name.trim() !== bu.name
 
   return (
-    <li className="flex flex-wrap items-center gap-2 px-4 py-2">
+    <li className={`flex flex-wrap items-center gap-2 px-4 py-2 ${dirty ? "bg-mfa-panel" : ""}`}>
       <input className={`${input} min-w-[10rem] flex-1`} value={name} onChange={(e) => setName(e.target.value)} />
-      {dirty && (
-        <button
-          className={ghostBtn}
-          disabled={pending}
-          onClick={() => run(() => renameBusinessUnit(bu.id, name))}
-        >
-          Save
-        </button>
-      )}
+      <button
+        className={saveClass(dirty)}
+        disabled={pending || !dirty}
+        onClick={() => run(() => renameBusinessUnit(bu.id, name))}
+      >
+        Save
+      </button>
       <span className="text-xs text-mfa-muted">
         {bu._count.users} {bu._count.users === 1 ? "person" : "people"}
       </span>
@@ -441,7 +446,7 @@ function UserRow({
 
   return (
     <>
-      <tr className={u.active ? "" : "opacity-50"}>
+      <tr className={`${u.active ? "" : "opacity-50"} ${dirty ? "bg-mfa-panel" : ""}`}>
         <td className="px-4 py-2">
           <input className={`${input} w-40`} value={name} onChange={(e) => setName(e.target.value)} />
         </td>
@@ -493,25 +498,23 @@ function UserRow({
         </td>
         <td className="px-4 py-2">
           <div className="flex flex-wrap items-center gap-2">
-            {dirty && (
-              <button
-                className={ghostBtn}
-                disabled={pending}
-                onClick={() =>
-                  run(() =>
-                    updateUser(u.id, {
-                      name,
-                      email,
-                      role,
-                      businessUnitId: buId || null,
-                      managerId: mgrId || null,
-                    }),
-                  )
-                }
-              >
-                Save
-              </button>
-            )}
+            <button
+              className={saveClass(dirty)}
+              disabled={pending || !dirty}
+              onClick={() =>
+                run(() =>
+                  updateUser(u.id, {
+                    name,
+                    email,
+                    role,
+                    businessUnitId: buId || null,
+                    managerId: mgrId || null,
+                  }),
+                )
+              }
+            >
+              Save
+            </button>
             <input
               className={`${input} w-32`}
               placeholder="New password"
