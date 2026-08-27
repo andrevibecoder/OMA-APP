@@ -13,7 +13,9 @@ import {
 } from "@/lib/progress"
 import { resolvePeriodId } from "@/lib/periods"
 import { getSessionUser } from "@/lib/session"
-import { canEditActions, canEditOma } from "@/lib/authz"
+import { canCreateOMA, canEditActions, canEditOma } from "@/lib/authz"
+import { db } from "@/lib/db"
+import { createOma } from "@/app/(app)/person/[userId]/actions"
 
 function fmtDate(d: Date): string {
   return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
@@ -32,6 +34,14 @@ export default async function OmaDetailPage({
   const authShape = { ownerId: oma.owner.id, owner: { managerId: oma.owner.managerId } }
   const canTick = canEditActions(viewer, authShape)
   const showEdit = canEditOma(viewer, authShape)
+  const omaCount = await db.oMA.count({
+    where: { ownerId: oma.owner.id, periodId: oma.periodId },
+  })
+  const canAdd = canCreateOMA(
+    viewer,
+    { id: oma.owner.id, managerId: oma.owner.managerId },
+    omaCount,
+  )
   const periodId = await resolvePeriodId(searchParams.period)
   const qp = searchParams.period ? `?period=${encodeURIComponent(periodId)}` : ""
 
@@ -165,14 +175,23 @@ export default async function OmaDetailPage({
         )}
       </div>
 
-      {showEdit && (
-        <div className="mt-12 flex justify-end">
-          <Link
-            href={`/oma/${oma.id}/edit${qp}`}
-            className="rounded-full bg-mfa-red px-6 py-2 font-semibold text-white"
-          >
-            Edit
-          </Link>
+      {(canAdd || showEdit) && (
+        <div className="mt-12 flex justify-end gap-3">
+          {canAdd && (
+            <form action={createOma.bind(null, oma.owner.id, oma.periodId)}>
+              <button className="rounded-full border border-mfa-red px-6 py-2 font-semibold text-mfa-red">
+                New OMA
+              </button>
+            </form>
+          )}
+          {showEdit && (
+            <Link
+              href={`/oma/${oma.id}/edit${qp}`}
+              className="rounded-full bg-mfa-red px-6 py-2 font-semibold text-white"
+            >
+              Edit
+            </Link>
+          )}
         </div>
       )}
     </main>
