@@ -1,6 +1,6 @@
 import { db } from "@/lib/db"
 
-// QUARTER before HALF before ANNUAL when start dates tie (Q1/H1/FY all start Jan 1)
+// Group the dropdown by granularity: all quarters, then halves, then full year.
 const KIND_ORDER = { QUARTER: 0, HALF: 1, ANNUAL: 2 } as const
 
 export async function getActivePeriod() {
@@ -18,8 +18,8 @@ export async function listPeriods() {
   return periods
     .sort(
       (a, b) =>
-        a.startDate.getTime() - b.startDate.getTime() ||
-        KIND_ORDER[a.kind] - KIND_ORDER[b.kind],
+        KIND_ORDER[a.kind] - KIND_ORDER[b.kind] ||
+        a.startDate.getTime() - b.startDate.getTime(),
     )
     .map((p) => ({ id: p.id, label: p.label }))
 }
