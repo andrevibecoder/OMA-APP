@@ -1,0 +1,236 @@
+"use server"
+
+import { revalidatePath } from "next/cache"
+import { Prisma } from "@prisma/client"
+import bcrypt from "bcryptjs"
+import { z } from "zod"
+import { db } from "@/lib/db"
+import { requireAdmin } from "@/lib/admin"
+
+type Result = { error?: string }
+
+function isDup(e: unknown): boolean {
+  return e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002"
+}
+
+// Active period + BU names feed the header and every dashboard, so bust the
+// whole app on changes that touch them.
+function revalidateApp() {
+  revalidatePath("/admin")
+  revalidatePath("/", "layout")
+}
+
+// --------------------------------------------------------------------------
+// Business Units
+// --------------------------------------------------------------------------
+
+const nameSchema = z.string().trim().min(1, "Name is required").max(60)
+
+export async function createBusinessUnit(name: string): Promise<Result> {
+  await requireAdmin()
+  const parsed = nameSchema.safeParse(name)
+  if (!parsed.success) return { error: parsed.error.issues[0].message }
+  const last = await db.businessUnit.findFirst({
+    orderBy: { order: "desc" },
+    select: { order: true },
+  })
+  try {
+    await db.businessUnit.create({ data: { name: parsed.data, order: (last?.order ?? -1) + 1 } })
+  } catch (e) {
+    if (isDup(e)) return { error: `"${parsed.data}" already exists.` }
+    throw e
+  }
+  revalidateApp()
+  return {}
+}
+
+export async function renameBusinessUnit(id: string, name: string): Promise<Result> {
+  await requireAdmin()
+  const parsed = nameSchema.safeParse(name)
+  if (!parsed.success) return { error: parsed.error.issues[0].message }
+  try {
+    await db.businessUnit.update({ where: { id }, data: { name: parsed.data } })
+  } catch (e) {
+    if (isDup(e)) return { error: `"${parsed.data}" already exists.` }
+    throw e
+  }
+  revalidateApp()
+  return {}
+}
+
+export async function moveBusinessUnit(id: string, direction: "up" | "down"): Promise<Result> {
+  await requireAdmin()
+  const all = await db.businessUnit.findMany({
+    orderBy: { order: "asc" },
+    select: { id: true, order: true },
+  })
+  const idx = all.findIndex((b) => b.id === id)
+  const swapIdx = direction === "up" ? idx - 1 : idx + 1
+  if (idx === -1 || swapIdx < 0 || swapIdx >= all.length) return {}
+  const a = all[idx]
+  const b = all[swapIdx]
+  await db.$transaction([
+    db.businessUnit.update({ where: { id: a.id }, data: { order: b.order } }),
+    db.businessUnit.update({ where: { id: b.id }, data: { order: a.order } }),
+  ])
+  revalidateApp()
+  return {}
+}
+
+// --------------------------------------------------------------------------
+// Periods
+// --------------------------------------------------------------------------
+
+const periodSchema = z.object({
+  kind: z.enum(["QUARTER", "HALF", "ANNUAL"]),
+  number: z.number().int().min(1).max(4).nullable(),
+  year: z.number().int().min(2000).max(2100),
+  startDate: z.string().min(1),
+})
+
+export async function createPeriod(raw: z.infer<typeof periodSchema>): Promise<Result> {
+  await requireAdmin()
+  const parsed = periodSchema.safeParse(raw)
+  if (!parsed.success) return { error: parsed.error.issues[0].message }
+  const p = parsed.data
+
+  let label: string
+  let shortLabel: string
+  if (p.kind === "ANNUAL") {
+    label = `FY ${p.year}`
+    shortLabel = "FY"
+  } else {
+    const prefix = p.kind === "QUARTER" ? "Q" : "H"
+    const max = p.kind === "QUARTER" ? 4 : 2
+    if (!p.number || p.number > max) return { error: `Pick ${prefix}1–${prefix}${max}` }
+    label = `${prefix}${p.number} ${p.year}`
+    shortLabel = `${prefix}${p.number}`
+  }
+
+  try {
+    await db.period.create({
+      data: {
+        label,
+        shortLabel,
+        kind: p.kind,
+        year: p.year,
+        startDate: new Date(p.startDate),
+        isActive: false,
+      },
+    })
+  } catch (e) {
+    if (isDup(e)) return { error: `"${label}" already exists.` }
+    throw e
+  }
+  revalidatePath("/admin")
+  return {}
+}
+
+export async function setActivePeriod(id: string): Promise<Result> {
+  await requireAdmin()
+  await db.$transaction([
+    db.period.updateMany({ where: { isActive: true }, data: { isActive: false } }),
+    db.period.update({ where: { id }, data: { isActive: true } }),
+  ])
+  revalidateApp()
+  return {}
+}
+
+// --------------------------------------------------------------------------
+// Users
+// --------------------------------------------------------------------------
+
+const roleSchema = z.enum(["ADMIN", "MANAGER", "USER"])
+
+const userCreateSchema = z.object({
+  name: z.string().trim().min(1, "Name is required").max(100),
+  email: z.string().trim().email("Enter a valid email"),
+  password: z.string().min(6, "Password must be at least 6 characters").max(100),
+  role: roleSchema,
+  businessUnitId: z.string().nullable(),
+  managerId: z.string().nullable(),
+})
+
+export async function createUser(raw: z.infer<typeof userCreateSchema>): Promise<Result> {
+  await requireAdmin()
+  const parsed = userCreateSchema.safeParse(raw)
+  if (!parsed.success) return { error: parsed.error.issues[0].message }
+  const u = parsed.data
+  try {
+    await db.user.create({
+      data: {
+        name: u.name,
+        email: u.email.toLowerCase(),
+        passwordHash: bcrypt.hashSync(u.password, 10),
+        role: u.role,
+        businessUnitId: u.businessUnitId || null,
+        managerId: u.managerId || null,
+      },
+    })
+  } catch (e) {
+    if (isDup(e)) return { error: `${u.email} is already registered.` }
+    throw e
+  }
+  revalidateApp()
+  return {}
+}
+
+const userUpdateSchema = z.object({
+  name: z.string().trim().min(1, "Name is required").max(100),
+  role: roleSchema,
+  businessUnitId: z.string().nullable(),
+  managerId: z.string().nullable(),
+})
+
+export async function updateUser(
+  id: string,
+  raw: z.infer<typeof userUpdateSchema>,
+): Promise<Result> {
+  await requireAdmin()
+  const parsed = userUpdateSchema.safeParse(raw)
+  if (!parsed.success) return { error: parsed.error.issues[0].message }
+  const u = parsed.data
+  if (u.managerId === id) return { error: "A user can't be their own manager." }
+  await db.user.update({
+    where: { id },
+    data: {
+      name: u.name,
+      role: u.role,
+      businessUnitId: u.businessUnitId || null,
+      managerId: u.managerId || null,
+    },
+  })
+  revalidateApp()
+  return {}
+}
+
+export async function setUserActive(id: string, active: boolean): Promise<Result> {
+  const me = await requireAdmin()
+  if (id === me.id && !active) return { error: "You can't deactivate your own account." }
+  await db.user.update({ where: { id }, data: { active } })
+  revalidateApp()
+  return {}
+}
+
+export async function resetUserPassword(id: string, password: string): Promise<Result> {
+  await requireAdmin()
+  const parsed = z.string().min(6, "Password must be at least 6 characters").max(100).safeParse(password)
+  if (!parsed.success) return { error: parsed.error.issues[0].message }
+  await db.user.update({ where: { id }, data: { passwordHash: bcrypt.hashSync(parsed.data, 10) } })
+  revalidatePath("/admin")
+  return {}
+}
+
+export async function deleteUser(id: string): Promise<Result> {
+  const me = await requireAdmin()
+  if (id === me.id) return { error: "You can't delete your own account." }
+  const u = await db.user.findUniqueOrThrow({
+    where: { id },
+    select: { _count: { select: { omas: true, team: true } } },
+  })
+  if (u._count.omas > 0) return { error: "This user has OMAs — deactivate instead." }
+  if (u._count.team > 0) return { error: "This user manages people — reassign them first." }
+  await db.user.delete({ where: { id } })
+  revalidateApp()
+  return {}
+}

@@ -14,6 +14,11 @@ export async function AppHeader({ period }: { period?: string }) {
         OMA Performance Systems
       </Link>
       <div className="flex items-center gap-4">
+        {user.role === "ADMIN" && (
+          <Link href="/admin" className="text-sm font-semibold text-mfa-white/80 hover:text-mfa-white">
+            Admin
+          </Link>
+        )}
         <PeriodSelector periods={periods} value={active} />
         <span className="font-semibold">{user.name}</span>
         <RoleBadge role={user.role} />
