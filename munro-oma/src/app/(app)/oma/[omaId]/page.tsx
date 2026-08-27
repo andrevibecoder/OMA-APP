@@ -8,6 +8,10 @@ import { resolvePeriodId } from "@/lib/periods"
 import { getSessionUser } from "@/lib/session"
 import { canEditActions, canEditOma } from "@/lib/authz"
 
+function fmtDate(d: Date): string {
+  return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
+}
+
 export default async function OmaDetailPage({
   params,
   searchParams,
@@ -62,20 +66,74 @@ export default async function OmaDetailPage({
         </div>
 
         <span className="font-semibold">Actions</span>
-        <ol className="space-y-2">
-          {oma.actions.map((a, i) => (
-            <li key={a.id} className="flex items-center gap-4 rounded-xl bg-mfa-panel px-5 py-3">
-              <span className="font-semibold text-mfa-red">{i + 1}</span>
-              {(canTick || a.completed) && (
-                <ActionCheckbox actionId={a.id} completed={a.completed} disabled={!canTick} />
-              )}
-              <span className={a.completed ? "line-through text-mfa-muted" : ""}>{a.description}</span>
-            </li>
-          ))}
-          {oma.actions.length === 0 && (
-            <li className="text-sm text-mfa-muted">No actions yet.</li>
-          )}
-        </ol>
+        {oma.actions.length === 0 ? (
+          <p className="text-sm text-mfa-muted">No actions yet.</p>
+        ) : (
+          <div className="space-y-6">
+            {(() => {
+              const todo = oma.actions
+                .filter((a) => !a.completed)
+                .sort((a, b) => {
+                  if (a.dueDate && b.dueDate) return a.dueDate.getTime() - b.dueDate.getTime()
+                  if (a.dueDate) return -1
+                  if (b.dueDate) return 1
+                  return a.order - b.order
+                })
+              const done = oma.actions
+                .filter((a) => a.completed)
+                .sort(
+                  (a, b) =>
+                    (a.completedAt?.getTime() ?? 0) - (b.completedAt?.getTime() ?? 0),
+                )
+              const groupHeading = "mb-2 text-xs font-semibold uppercase tracking-widest text-mfa-muted"
+              const row = "flex items-center gap-4 rounded-xl bg-mfa-panel px-5 py-3"
+              return (
+                <>
+                  <div>
+                    <h3 className={groupHeading}>To do ({todo.length})</h3>
+                    <ul className="space-y-2">
+                      {todo.map((a) => (
+                        <li key={a.id} className={row}>
+                          {canTick && (
+                            <ActionCheckbox actionId={a.id} completed={a.completed} disabled={!canTick} />
+                          )}
+                          <span className="flex-1">{a.description}</span>
+                          {a.dueDate && (
+                            <span className="shrink-0 text-sm text-mfa-muted">
+                              Due {fmtDate(a.dueDate)}
+                            </span>
+                          )}
+                        </li>
+                      ))}
+                      {todo.length === 0 && (
+                        <li className="text-sm text-mfa-muted">Nothing outstanding.</li>
+                      )}
+                    </ul>
+                  </div>
+                  <div>
+                    <h3 className={groupHeading}>Done ({done.length})</h3>
+                    <ul className="space-y-2">
+                      {done.map((a) => (
+                        <li key={a.id} className={row}>
+                          {(canTick || a.completed) && (
+                            <ActionCheckbox actionId={a.id} completed={a.completed} disabled={!canTick} />
+                          )}
+                          <span className="flex-1 text-mfa-muted line-through">{a.description}</span>
+                          <span className="shrink-0 text-sm text-mfa-muted">
+                            {a.completedAt ? `Completed ${fmtDate(a.completedAt)}` : "Completed"}
+                          </span>
+                        </li>
+                      ))}
+                      {done.length === 0 && (
+                        <li className="text-sm text-mfa-muted">Nothing completed yet.</li>
+                      )}
+                    </ul>
+                  </div>
+                </>
+              )
+            })()}
+          </div>
+        )}
       </div>
 
       {showEdit && (

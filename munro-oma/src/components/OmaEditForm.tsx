@@ -126,7 +126,7 @@ export function OmaEditForm({
         {actions.map((a, i) => (
           <div
             key={a.id ?? `new-${i}`}
-            className="grid grid-cols-[auto_1fr_10rem_auto] items-center gap-2 border-t border-mfa-track px-3 first:border-t-0"
+            className="grid grid-cols-[auto_1fr_auto_auto] items-center gap-2 border-t border-mfa-track px-3 first:border-t-0"
           >
             <input
               type="checkbox"
@@ -150,17 +150,20 @@ export function OmaEditForm({
               }
               className={cell}
             />
-            <input
-              type="date"
-              value={a.dueDate ?? ""}
-              disabled={!canActions}
-              onChange={(e) =>
-                setActions(
-                  actions.map((x, j) => (j === i ? { ...x, dueDate: e.target.value || null } : x)),
-                )
-              }
-              className={cell}
-            />
+            <div className="flex items-center gap-1 px-3 text-sm text-mfa-muted">
+              <span>Due</span>
+              <input
+                type="date"
+                value={a.dueDate ?? ""}
+                disabled={!canActions}
+                onChange={(e) =>
+                  setActions(
+                    actions.map((x, j) => (j === i ? { ...x, dueDate: e.target.value || null } : x)),
+                  )
+                }
+                className="bg-transparent py-2 text-mfa-ink outline-none disabled:text-mfa-muted"
+              />
+            </div>
             {canActions && (
               <button
                 type="button"
