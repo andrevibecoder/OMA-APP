@@ -140,31 +140,36 @@ export function OmaEditForm({
           return (
             <div
               key={i}
-              className="space-y-3 border-t border-mfa-track px-5 py-4 first:border-t-0"
+              className="flex flex-wrap items-end gap-x-4 gap-y-2 border-t border-mfa-track px-5 py-4 text-sm first:border-t-0"
             >
-              <div className="flex items-baseline gap-2">
-                <span className="shrink-0 text-sm font-semibold text-mfa-red">KPI</span>
+              <label className="flex min-w-[12rem] flex-1 flex-col">
+                <span className="text-xs text-mfa-muted">KPI</span>
                 <input
                   value={m.measure}
                   disabled={!canOutcomeMetric}
                   placeholder="what you measure"
                   onChange={(e) => setM({ measure: e.target.value })}
-                  className="w-full bg-transparent font-semibold outline-none disabled:text-mfa-muted"
+                  className="border-b border-mfa-track bg-transparent py-1 font-semibold outline-none focus:border-mfa-red disabled:text-mfa-muted"
                 />
-              </div>
+              </label>
 
-              <div className="flex flex-wrap items-center gap-3 text-sm">
+              <label className="flex flex-col">
+                <span className="text-xs text-mfa-muted">Unit</span>
                 <select
                   value={m.unit}
                   disabled={!canOutcomeMetric}
                   onChange={(e) => setM({ unit: e.target.value as MetricUnit })}
-                  className="rounded border border-mfa-track bg-white px-2 py-1 disabled:text-mfa-muted"
+                  className="rounded border border-mfa-track bg-white px-2 py-1.5 disabled:text-mfa-muted"
                 >
                   <option value="NUMBER">Number</option>
                   <option value="CURRENCY">Currency (R)</option>
                   <option value="PERCENT">Percent</option>
                   <option value="DAYS">Days</option>
                 </select>
+              </label>
+
+              <div className="flex flex-col">
+                <span className="text-xs text-mfa-muted">Direction</span>
                 <div className="inline-flex overflow-hidden rounded border border-mfa-track">
                   {(["HIGHER_BETTER", "LOWER_BETTER"] as const).map((d) => (
                     <button
@@ -172,46 +177,42 @@ export function OmaEditForm({
                       type="button"
                       disabled={!canOutcomeMetric}
                       onClick={() => setM({ direction: d })}
-                      className={`px-3 py-1 disabled:opacity-60 ${
+                      title={d === "HIGHER_BETTER" ? "Higher is better" : "Lower is better"}
+                      className={`px-2.5 py-1.5 disabled:opacity-60 ${
                         m.direction === d ? "bg-mfa-red text-white" : "text-mfa-muted"
                       }`}
                     >
-                      {d === "HIGHER_BETTER" ? "Higher is better" : "Lower is better"}
+                      {d === "HIGHER_BETTER" ? "↑ Higher" : "↓ Lower"}
                     </button>
                   ))}
                 </div>
               </div>
 
-              <div className="grid max-w-md grid-cols-2 gap-4 text-sm">
-                <label className="block">
-                  <span className="text-mfa-muted">Target</span>
-                  <input
-                    value={m.target}
-                    disabled={!canOutcomeMetric}
-                    inputMode="decimal"
-                    placeholder="0"
-                    onChange={(e) => setM({ target: num(e.target.value) })}
-                    className="mt-1 w-full rounded border border-mfa-track px-2 py-1 disabled:text-mfa-muted"
-                  />
-                  <span className="mt-1 block h-4 text-xs text-mfa-muted">
-                    {hint(m.target, m.unit)}
-                  </span>
-                </label>
-                <label className="block">
-                  <span className="text-mfa-muted">Current</span>
-                  <input
-                    value={m.current}
-                    disabled={!canOutcomeMetric}
-                    inputMode="decimal"
-                    placeholder="0"
-                    onChange={(e) => setM({ current: num(e.target.value) })}
-                    className="mt-1 w-full rounded border border-mfa-track px-2 py-1 disabled:text-mfa-muted"
-                  />
-                  <span className="mt-1 block h-4 text-xs text-mfa-muted">
-                    {hint(m.current, m.unit)}
-                  </span>
-                </label>
-              </div>
+              <label className="flex w-24 flex-col">
+                <span className="text-xs text-mfa-muted">Target</span>
+                <input
+                  value={m.target}
+                  disabled={!canOutcomeMetric}
+                  inputMode="decimal"
+                  placeholder="0"
+                  onChange={(e) => setM({ target: num(e.target.value) })}
+                  className="rounded border border-mfa-track px-2 py-1.5 disabled:text-mfa-muted"
+                />
+                <span className="h-4 text-xs text-mfa-muted">{hint(m.target, m.unit)}</span>
+              </label>
+
+              <label className="flex w-24 flex-col">
+                <span className="text-xs text-mfa-muted">Current</span>
+                <input
+                  value={m.current}
+                  disabled={!canOutcomeMetric}
+                  inputMode="decimal"
+                  placeholder="0"
+                  onChange={(e) => setM({ current: num(e.target.value) })}
+                  className="rounded border border-mfa-track px-2 py-1.5 disabled:text-mfa-muted"
+                />
+                <span className="h-4 text-xs text-mfa-muted">{hint(m.current, m.unit)}</span>
+              </label>
             </div>
           )
         })}
