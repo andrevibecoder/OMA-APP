@@ -267,15 +267,20 @@ click-through from build-spec §10:
   year 2026.
 - **Business Units** (with `order` 0..6): Marketing, Sales, Product, Production,
   Finance, Systems, HR.
-- **Company dashboard percentages** to hit (approx, emerging from seeded OMAs):
-  Marketing 70, Sales 50, Product 60, Production 90, Finance 10, Systems 60,
-  HR 30. Seed enough OMAs/actions per BU to land near these. Marketing must land
-  at avg(33, 75, 40) ≈ 49–50 for its own people but the build spec's Screen 1
-  shows Marketing 70 — **the Screen 1 numbers are illustrative; the canonical
-  requirement is that Marketing's people read 33 / 75 / 40 and Sharine's OMAs
-  read 100 / 45 / 0.** Other BUs are seeded with one or two synthetic users each
-  to approximate their dashboard percentage. (Recorded as a known tension; Screen
-  2 + Screen 3 exact numbers win.)
+- **Company dashboard percentages are computed, never hand-set.** The Screen 1
+  mockup numbers (Marketing 70, Sales 50, …) are illustrative only and their
+  arithmetic does not hold — they are ignored. Every BU bar on Screen 1 is the
+  average of that BU's people, each person is the average of their OMAs, each OMA
+  is % of actions ticked. The one canonical seeded fact is **Sharine's OMAs read
+  100 / 45 / 0** (Screen 3 and the Screen 4 detail depend on these). Everything
+  above rolls up from there: Sharine's person bar = avg(100, 45, 0) ≈ 48; John
+  and Sam are seeded to land near 75 and 40; Marketing = avg of its three people
+  ≈ 54. The person and BU percentages printed on the Screen 2/3 mockups
+  (Sharine 33, etc.) are illustrative too, not targets. Other BUs are seeded with one or
+  two synthetic users carrying OMAs at round percentages (e.g. Production ~90,
+  Finance ~10, HR ~30) purely so the dashboard has a realistic spread; their
+  exact values are not a requirement, only that each computes cleanly from its
+  seed.
 - **Marketing team:** manager `Manager` (role MANAGER); `Sharine`, `John`, `Sam`
   (role USER, `managerId` = the manager), all `businessUnitId` = Marketing.
   - Sharine: OMA1 100% (all actions completed), OMA2 45%, OMA3 0% (actions exist,
