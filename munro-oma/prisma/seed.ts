@@ -62,7 +62,7 @@ async function main() {
   }
 
   const admin = await db.user.create({
-    data: { name: "Admin", email: "admin@munrofa.com", passwordHash: HASH, role: "ADMIN" },
+    data: { name: "System Admin", email: "admin@munrofa.com", passwordHash: HASH, role: "ADMIN" },
   })
   const manager = await db.user.create({
     data: {

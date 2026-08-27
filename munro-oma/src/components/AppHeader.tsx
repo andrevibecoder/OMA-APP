@@ -2,7 +2,6 @@ import Link from "next/link"
 import { getSessionUser } from "@/lib/session"
 import { listPeriods, resolvePeriodId } from "@/lib/periods"
 import { PeriodSelector } from "./PeriodSelector"
-import { RoleBadge } from "./RoleBadge"
 
 export async function AppHeader({ period }: { period?: string }) {
   const user = await getSessionUser()
@@ -21,7 +20,6 @@ export async function AppHeader({ period }: { period?: string }) {
         )}
         <PeriodSelector periods={periods} value={active} />
         <span className="font-semibold">{user.name}</span>
-        <RoleBadge role={user.role} />
       </div>
     </header>
   )
