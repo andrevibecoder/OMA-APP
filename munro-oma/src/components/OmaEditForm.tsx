@@ -138,13 +138,16 @@ export function OmaEditForm({
               key={i}
               className="space-y-3 border-t border-mfa-track px-5 py-4 first:border-t-0"
             >
-              <input
-                value={m.measure}
-                disabled={!canOutcomeMetric}
-                placeholder="KPI — what you measure"
-                onChange={(e) => setM({ measure: e.target.value })}
-                className="w-full bg-transparent font-semibold outline-none disabled:text-mfa-muted"
-              />
+              <div className="flex items-baseline gap-2">
+                <span className="shrink-0 text-sm font-semibold text-mfa-red">KPI</span>
+                <input
+                  value={m.measure}
+                  disabled={!canOutcomeMetric}
+                  placeholder="what you measure"
+                  onChange={(e) => setM({ measure: e.target.value })}
+                  className="w-full bg-transparent font-semibold outline-none disabled:text-mfa-muted"
+                />
+              </div>
 
               <div className="flex flex-wrap items-center gap-3 text-sm">
                 <select
