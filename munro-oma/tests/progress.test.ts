@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { ragState, omaProgress, mean, personProgress, buProgress } from "@/lib/progress"
+import { ragState, ragColorVar, omaProgress, mean, personProgress, buProgress } from "@/lib/progress"
 
 const done = { completed: true }
 const todo = { completed: false }
@@ -13,6 +13,21 @@ describe("ragState", () => {
     expect(ragState(79)).toBe("in-progress")
     expect(ragState(80)).toBe("on-track")
     expect(ragState(100)).toBe("on-track")
+  })
+})
+
+describe("ragColorVar", () => {
+  it("maps not-started to transparent", () => {
+    expect(ragColorVar("not-started")).toBe("transparent")
+  })
+  it("maps behind to var(--rag-red)", () => {
+    expect(ragColorVar("behind")).toBe("var(--rag-red)")
+  })
+  it("maps in-progress to var(--rag-amber)", () => {
+    expect(ragColorVar("in-progress")).toBe("var(--rag-amber)")
+  })
+  it("maps on-track to var(--rag-green)", () => {
+    expect(ragColorVar("on-track")).toBe("var(--rag-green)")
   })
 })
 
@@ -30,6 +45,7 @@ describe("omaProgress", () => {
 describe("mean", () => {
   it("is 0 for empty", () => expect(mean([])).toBe(0))
   it("rounds", () => expect(mean([100, 45, 0])).toBe(48))
+  it("rounds half cases", () => expect(mean([0, 1])).toBe(1))
 })
 
 describe("personProgress", () => {
