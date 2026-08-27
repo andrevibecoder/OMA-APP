@@ -4,7 +4,7 @@ import "./globals.css"
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" })
 
-export const metadata: Metadata = { title: "Munro FA — OMA" }
+export const metadata: Metadata = { title: "OMA Performance Systems" }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

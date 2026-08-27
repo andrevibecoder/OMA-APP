@@ -11,7 +11,7 @@ export async function AppHeader({ period }: { period?: string }) {
   return (
     <header className="flex items-center justify-between border-b border-mfa-track px-8 py-4">
       <Link href="/" className="font-serif text-xl font-light text-mfa-red">
-        Munro FA
+        OMA Performance Systems
       </Link>
       <div className="flex items-center gap-4">
         <PeriodSelector periods={periods} value={active} />

@@ -17,8 +17,7 @@ export default function LoginPage() {
   const [state, action] = useFormState(login, {})
   return (
     <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center px-8">
-      <h1 className="font-serif text-3xl font-light">Munro FA</h1>
-      <p className="mt-1 text-mfa-muted">OMA performance</p>
+      <h1 className="font-serif text-3xl font-light">OMA Performance Systems</h1>
       <form action={action} className="mt-8 space-y-4">
         <input name="email" type="email" required placeholder="Email"
           className="w-full rounded-lg border border-mfa-track px-4 py-2" />
