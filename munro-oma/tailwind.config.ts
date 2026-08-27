@@ -6,17 +6,18 @@ export default {
     extend: {
       colors: {
         mfa: {
-          red: "#C8102E",
-          ink: "#1A1A1A",
-          muted: "#696969",
-          track: "#D9D9D9",
+          red: "#BA0C2F",
+          black: "#101820",
+          ink: "#101820",
+          muted: "#53565A",
+          track: "#DCDDDD",
           panel: "#F2F2F2",
           white: "#FFFFFF",
         },
         rag: {
           green: "#2E7D32",
           amber: "#E8A33D",
-          red: "#C8102E",
+          red: "#BA0C2F",
         },
       },
       fontFamily: {

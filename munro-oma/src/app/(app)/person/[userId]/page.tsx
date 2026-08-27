@@ -29,7 +29,7 @@ export default async function PersonPage({
   const qp = searchParams.period ? `?period=${periodId}` : ""
 
   return (
-    <main className="mx-auto max-w-4xl px-8 py-16">
+    <main>
       <Breadcrumbs
         items={[
           ...(person.businessUnit

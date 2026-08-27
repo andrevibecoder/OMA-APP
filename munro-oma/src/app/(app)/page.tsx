@@ -15,7 +15,7 @@ export default async function DashboardPage({
   const qp = searchParams.period ? `?period=${periodId}` : ""
 
   return (
-    <main className="mx-auto max-w-4xl px-8 py-16">
+    <main>
       <div className="flex items-baseline justify-between">
         <PageTitle>Main dashboard</PageTitle>
         <span className="text-xs font-semibold uppercase tracking-widest text-mfa-red">

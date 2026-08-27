@@ -3,18 +3,22 @@
 @tailwind utilities;
 
 :root {
-  --mfa-red: #C8102E;
-  --mfa-ink: #1A1A1A;
-  --mfa-muted: #696969;
-  --mfa-track: #D9D9D9;
-  --mfa-panel: #F2F2F2;
-  --mfa-white: #FFFFFF;
-  --rag-green: #2E7D32;
-  --rag-amber: #E8A33D;
-  --rag-red: #C8102E;
+  /* Munro brand palette (Brand Guide p.13) */
+  --mfa-red: #ba0c2f; /* Pantone 200C */
+  --mfa-black: #101820; /* Pantone Black 6C — page background */
+  --mfa-ink: #101820; /* body text on white blocks */
+  --mfa-muted: #53565a; /* Pantone Cool Gray 11C */
+  --mfa-track: #dcdddd; /* ~20% tint of Cool Gray, bar tracks */
+  --mfa-panel: #f2f2f2; /* light panels inside white blocks */
+  --mfa-white: #ffffff;
+
+  /* RAG (functional, not brand) */
+  --rag-green: #2e7d32;
+  --rag-amber: #e8a33d;
+  --rag-red: #ba0c2f;
 }
 
 body {
   color: var(--mfa-ink);
-  background: var(--mfa-white);
+  background: var(--mfa-black);
 }

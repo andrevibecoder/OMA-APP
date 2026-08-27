@@ -46,7 +46,7 @@ export default async function OmaDetailPage({
   const qp = searchParams.period ? `?period=${encodeURIComponent(periodId)}` : ""
 
   return (
-    <main className="mx-auto max-w-4xl px-8 py-16">
+    <main>
       <Breadcrumbs
         items={[
           ...(oma.owner.businessUnit

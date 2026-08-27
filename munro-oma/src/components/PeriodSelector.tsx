@@ -26,10 +26,10 @@ export function PeriodSelector({
     <select
       value={selected}
       onChange={onChange}
-      className="rounded-full border border-mfa-track px-3 py-1 text-sm font-semibold"
+      className="rounded-full border border-white/30 bg-transparent px-3 py-1 text-sm font-semibold text-mfa-white outline-none [color-scheme:dark]"
     >
       {periods.map((p) => (
-        <option key={p.id} value={p.id}>
+        <option key={p.id} value={p.id} className="text-mfa-ink">
           {p.label}
         </option>
       ))}

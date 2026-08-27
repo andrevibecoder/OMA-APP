@@ -9,7 +9,7 @@ export async function AppHeader({ period }: { period?: string }) {
   const periods = await listPeriods()
   const active = await resolvePeriodId(period)
   return (
-    <header className="flex items-center justify-between border-b border-mfa-track px-8 py-4">
+    <header className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 bg-mfa-black px-6 py-4 text-mfa-white sm:px-8">
       <Link href="/" className="font-serif text-xl font-light text-mfa-red">
         OMA Performance Systems
       </Link>

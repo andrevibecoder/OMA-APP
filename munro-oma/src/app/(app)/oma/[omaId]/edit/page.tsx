@@ -23,7 +23,7 @@ export default async function OmaEditPage({
   const periods = await listPeriods()
 
   return (
-    <main className="mx-auto max-w-4xl px-8 py-16">
+    <main>
       <Breadcrumbs
         items={[
           ...(oma.owner.businessUnit
