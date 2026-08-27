@@ -60,12 +60,18 @@ export async function saveOma(input: SaveOmaInput): Promise<void> {
   }
 
   if (mayActions) {
-    const keepIds = new Set(input.actions.filter((a) => a.id).map((a) => a.id as string))
+    const ownIds = new Set(oma.actions.map((a) => a.id))
+    const keepIds = new Set(
+      input.actions.filter((a) => a.id && ownIds.has(a.id)).map((a) => a.id as string),
+    )
     const toDelete = oma.actions.filter((a) => !keepIds.has(a.id)).map((a) => a.id)
     if (toDelete.length) await db.action.deleteMany({ where: { id: { in: toDelete } } })
     for (let i = 0; i < input.actions.length; i++) {
       const a = input.actions[i]
       const due = a.dueDate ? new Date(a.dueDate) : null
+      if (a.id && !ownIds.has(a.id)) {
+        continue
+      }
       if (a.id) {
         await db.action.update({
           where: { id: a.id },
