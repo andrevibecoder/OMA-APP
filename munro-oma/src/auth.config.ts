@@ -6,10 +6,13 @@ export const authConfig = {
   providers: [],
   callbacks: {
     authorized({ auth, request: { nextUrl } }) {
-      const isLoggedIn = !!auth?.user
-      const isLogin = nextUrl.pathname.startsWith("/login")
-      if (isLogin) return isLoggedIn ? Response.redirect(new URL("/", nextUrl)) : true
-      return isLoggedIn
+      // /login always renders. We can't verify the JWT's user still exists /
+      // is active from the edge, so bouncing "logged-in" visitors away from
+      // /login here risks a redirect loop with getSessionUser's DB check
+      // (e.g. after the user row is deleted or deactivated). The login action
+      // redirects to "/" on success, which is enough.
+      if (nextUrl.pathname.startsWith("/login")) return true
+      return !!auth?.user
     },
     jwt({ token, user }) {
       if (user) {

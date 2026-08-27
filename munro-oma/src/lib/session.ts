@@ -7,7 +7,9 @@ export async function getSessionUser(): Promise<SessionUser> {
   const session = await auth()
   if (!session?.user) redirect("/login")
   // Reflect current DB state on every protected page/action rather than trusting
-  // the 30-day JWT claims — deactivation and role/manager changes take effect at once.
+  // the JWT claims — deactivation and role/manager changes take effect at once.
+  // A missing row (e.g. after a reseed) or an inactive user is sent to /login,
+  // which always renders (see auth.config.ts) so this can't loop.
   const dbUser = await db.user.findUnique({
     where: { id: session.user.id },
     select: { name: true, active: true, role: true, businessUnitId: true, managerId: true },
