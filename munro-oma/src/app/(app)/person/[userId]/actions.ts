@@ -22,11 +22,15 @@ export async function createOma(userId: string, periodId: string) {
     select: { sequence: true },
   })
   const nextSeq = (last?.sequence ?? 0) + 1
+  const period = await db.period.findUniqueOrThrow({
+    where: { id: periodId },
+    select: { startDate: true },
+  })
 
   let oma
   try {
     oma = await db.oMA.create({
-      data: { ownerId: userId, periodId, sequence: nextSeq, outcome: "" },
+      data: { ownerId: userId, periodId, sequence: nextSeq, date: period.startDate, outcome: "" },
     })
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {

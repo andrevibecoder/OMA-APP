@@ -66,6 +66,7 @@ model OMA {
   period    Period   @relation(fields: [periodId], references: [id])
   periodId  String
   sequence  Int
+  date      DateTime @default(now())
   outcome   String
   metrics   Metric[]
   actions   Action[]

@@ -61,7 +61,39 @@ export async function saveOma(input: SaveOmaInput): Promise<void> {
   const ops: Prisma.PrismaPromise<unknown>[] = []
 
   if (mayOutcome) {
-    ops.push(db.oMA.update({ where: { id: oma.id }, data: { outcome: data.outcome } }))
+    // Header row: period / OMA number / date. Guard the slot against collisions
+    // before the batch, so the user gets a clear message rather than a raw P2002.
+    const targetPeriod = await db.period.findUnique({
+      where: { id: data.periodId },
+      select: { id: true },
+    })
+    if (!targetPeriod) throw new Error("That period no longer exists.")
+    if (data.periodId !== oma.periodId || data.sequence !== oma.sequence) {
+      const clash = await db.oMA.findFirst({
+        where: {
+          ownerId: oma.owner.id,
+          periodId: data.periodId,
+          sequence: data.sequence,
+          NOT: { id: oma.id },
+        },
+        select: { id: true },
+      })
+      if (clash) {
+        throw new Error(`This person already has an OMA ${data.sequence} in that period.`)
+      }
+    }
+
+    ops.push(
+      db.oMA.update({
+        where: { id: oma.id },
+        data: {
+          outcome: data.outcome,
+          periodId: data.periodId,
+          sequence: data.sequence,
+          date: new Date(data.date),
+        },
+      }),
+    )
     ops.push(db.metric.deleteMany({ where: { omaId: oma.id } }))
     const metrics = data.metrics
       .filter((m) => m.measure.trim())

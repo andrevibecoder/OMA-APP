@@ -16,8 +16,9 @@ type FormMetric = {
 type Oma = {
   id: string
   sequence: number
+  periodId: string
+  date: string // yyyy-mm-dd
   outcome: string
-  period: { label: string; startDate: string }
   metrics: {
     measure: string
     unit: MetricUnit
@@ -55,15 +56,28 @@ function hint(v: string, unit: MetricUnit): string {
   return formatted === v ? "" : formatted
 }
 
+function fmtDate(iso: string): string {
+  return new Date(iso).toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  })
+}
+
 export function OmaEditForm({
   oma,
+  periods,
   canOutcomeMetric,
   canActions,
 }: {
   oma: Oma
+  periods: { id: string; label: string }[]
   canOutcomeMetric: boolean
   canActions: boolean
 }) {
+  const [sequence, setSequence] = useState(oma.sequence)
+  const [periodId, setPeriodId] = useState(oma.periodId)
+  const [date, setDate] = useState(oma.date)
   const [outcome, setOutcome] = useState(oma.outcome)
   const [metrics, setMetrics] = useState<FormMetric[]>(
     (oma.metrics.length ? oma.metrics : [{ ...EMPTY_METRIC, target: 0, current: 0 }]).map((m) => ({
@@ -81,6 +95,9 @@ export function OmaEditForm({
     start(() =>
       saveOma({
         omaId: oma.id,
+        periodId,
+        sequence,
+        date,
         outcome,
         metrics: metrics.map((m) => ({
           measure: m.measure,
@@ -98,21 +115,55 @@ export function OmaEditForm({
 
   return (
     <div className="rounded-2xl border-2 border-mfa-red">
-      <div className="rounded-t-2xl bg-mfa-red px-5 py-3 text-white">
-        <span className="font-serif text-lg">OMA {oma.sequence}</span>
-        <span className="ml-6 text-sm">
-          <span className="font-semibold">Period</span>{" "}
-          <span className="italic">{oma.period.label}</span>
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-2 rounded-t-2xl bg-mfa-red px-5 py-3 text-white">
+        <span className="font-serif text-lg">
+          OMA{" "}
+          {canOutcomeMetric ? (
+            <select
+              value={sequence}
+              onChange={(e) => setSequence(Number(e.target.value))}
+              className="rounded bg-white/15 px-1 font-serif text-white ring-1 ring-white/40 outline-none"
+            >
+              {[1, 2, 3].map((n) => (
+                <option key={n} value={n} className="text-mfa-ink">
+                  {n}
+                </option>
+              ))}
+            </select>
+          ) : (
+            sequence
+          )}
         </span>
-        <span className="ml-6 text-sm">
+        <span className="text-sm">
+          <span className="font-semibold">Period</span>{" "}
+          {canOutcomeMetric ? (
+            <select
+              value={periodId}
+              onChange={(e) => setPeriodId(e.target.value)}
+              className="rounded bg-white/15 px-1 text-white ring-1 ring-white/40 outline-none"
+            >
+              {periods.map((p) => (
+                <option key={p.id} value={p.id} className="text-mfa-ink">
+                  {p.label}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <span className="italic">{periods.find((p) => p.id === periodId)?.label}</span>
+          )}
+        </span>
+        <span className="text-sm">
           <span className="font-semibold">Date</span>{" "}
-          <span className="italic">
-            {new Date(oma.period.startDate).toLocaleDateString("en-GB", {
-              day: "2-digit",
-              month: "short",
-              year: "numeric",
-            })}
-          </span>
+          {canOutcomeMetric ? (
+            <input
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              className="rounded bg-white/15 px-1 text-white ring-1 ring-white/40 outline-none [color-scheme:dark]"
+            />
+          ) : (
+            <span className="italic">{fmtDate(date)}</span>
+          )}
         </span>
       </div>
 

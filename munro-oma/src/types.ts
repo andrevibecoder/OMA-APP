@@ -18,6 +18,9 @@ export interface SessionUser {
 // Runtime schema is the source of truth for saveOma input; SaveOmaInput is derived from it.
 export const saveOmaSchema = z.object({
   omaId: z.string().min(1),
+  periodId: z.string().min(1),
+  sequence: z.number().int().min(1).max(3),
+  date: z.string().min(1), // ISO yyyy-mm-dd
   outcome: z.string().max(2000),
   metrics: z
     .array(

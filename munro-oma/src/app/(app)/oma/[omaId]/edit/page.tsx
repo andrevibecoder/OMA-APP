@@ -2,7 +2,7 @@ import { notFound, redirect } from "next/navigation"
 import { Breadcrumbs } from "@/components/Breadcrumbs"
 import { OmaEditForm } from "@/components/OmaEditForm"
 import { getOma } from "@/lib/queries"
-import { resolvePeriodId } from "@/lib/periods"
+import { listPeriods, resolvePeriodId } from "@/lib/periods"
 import { getSessionUser } from "@/lib/session"
 import { canEditActions, canEditOutcomeMetric, canEditOma } from "@/lib/authz"
 
@@ -20,6 +20,7 @@ export default async function OmaEditPage({
   if (!canEditOma(viewer, authShape)) redirect(`/oma/${oma.id}`)
   const periodId = await resolvePeriodId(searchParams.period)
   const qp = searchParams.period ? `?period=${encodeURIComponent(periodId)}` : ""
+  const periods = await listPeriods()
 
   return (
     <main className="mx-auto max-w-4xl px-8 py-16">
@@ -35,11 +36,13 @@ export default async function OmaEditPage({
       />
       <div className="mt-6">
         <OmaEditForm
+        periods={periods}
         oma={{
           id: oma.id,
           sequence: oma.sequence,
+          periodId: oma.periodId,
+          date: oma.date.toISOString().slice(0, 10),
           outcome: oma.outcome,
-          period: { label: oma.period.label, startDate: oma.period.startDate.toISOString() },
           metrics: oma.metrics.map((m) => ({
             measure: m.measure,
             unit: m.unit,
