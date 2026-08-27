@@ -1,0 +1,44 @@
+import { notFound } from "next/navigation"
+import { Breadcrumbs } from "@/components/Breadcrumbs"
+import { PageTitle } from "@/components/PageTitle"
+import { RagBar } from "@/components/RagBar"
+import { getBusinessUnit } from "@/lib/queries"
+import { db } from "@/lib/db"
+import { resolvePeriodId } from "@/lib/periods"
+
+export default async function BuPage({
+  params,
+  searchParams,
+}: {
+  params: { buId: string }
+  searchParams: { period?: string }
+}) {
+  const periodId = await resolvePeriodId(searchParams.period)
+  const period = await db.period.findUniqueOrThrow({ where: { id: periodId } })
+  const bu = await getBusinessUnit(params.buId, periodId)
+  if (!bu) notFound()
+  const qp = searchParams.period ? `?period=${periodId}` : ""
+
+  return (
+    <main className="mx-auto max-w-4xl px-8 py-16">
+      <Breadcrumbs
+        items={[
+          { label: "Main dashboard", href: `/${qp}` },
+          { label: bu.name },
+          { label: `Q${period.quarter}` },
+        ]}
+      />
+      <div className="mt-3">
+        <PageTitle>{bu.name}</PageTitle>
+      </div>
+      <div className="mt-10">
+        {bu.people.map((p) => (
+          <RagBar key={p.id} label={p.name} value={p.pct} href={`/person/${p.id}${qp}`} />
+        ))}
+      </div>
+      <p className="mt-12 text-sm text-mfa-muted">
+        Department roll-up is the average of its people. Click a name to open their OMAs.
+      </p>
+    </main>
+  )
+}
