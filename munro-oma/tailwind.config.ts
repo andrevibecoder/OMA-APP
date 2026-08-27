@@ -21,8 +21,9 @@ export default {
         },
       },
       fontFamily: {
-        serif: ["Georgia", "Cambria", "Times New Roman", "serif"],
-        sans: ["var(--font-inter)", "Inter", "Calibri", "system-ui", "sans-serif"],
+        // Open Sans only (Brand Guide p.10); Calibri is the sanctioned digital fallback (p.12).
+        sans: ["var(--font-open-sans)", "Open Sans", "Calibri", "system-ui", "sans-serif"],
+        serif: ["var(--font-open-sans)", "Open Sans", "Calibri", "sans-serif"],
       },
     },
   },

@@ -116,13 +116,13 @@ export function OmaEditForm({
   return (
     <div className="rounded-2xl border-2 border-mfa-red">
       <div className="flex flex-wrap items-center gap-x-6 gap-y-2 rounded-t-2xl bg-mfa-red px-5 py-3 text-white">
-        <span className="font-serif text-lg">
+        <span className="text-lg font-bold">
           OMA{" "}
           {canOutcomeMetric ? (
             <select
               value={sequence}
               onChange={(e) => setSequence(Number(e.target.value))}
-              className="rounded bg-white/15 px-1 font-serif text-white ring-1 ring-white/40 outline-none"
+              className="rounded bg-white/15 px-1 font-bold text-white ring-1 ring-white/40 outline-none"
             >
               {[1, 2, 3].map((n) => (
                 <option key={n} value={n} className="text-mfa-ink">
