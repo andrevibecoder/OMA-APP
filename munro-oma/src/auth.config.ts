@@ -6,6 +6,9 @@ export const authConfig = {
   providers: [],
   callbacks: {
     authorized({ auth, request: { nextUrl } }) {
+      // Dev-only: AUTH_DEV_BYPASS in .env skips the auth guard entirely while
+      // working locally. Never active outside `next dev`.
+      if (process.env.NODE_ENV === "development" && process.env.AUTH_DEV_BYPASS) return true
       // /login always renders. We can't verify the JWT's user still exists /
       // is active from the edge, so bouncing "logged-in" visitors away from
       // /login here risks a redirect loop with getSessionUser's DB check

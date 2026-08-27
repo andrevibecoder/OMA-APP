@@ -3,7 +3,28 @@ import { auth } from "@/auth"
 import { db } from "@/lib/db"
 import type { SessionUser } from "@/types"
 
+// Dev-only: set AUTH_DEV_BYPASS to a seeded user's email in .env to skip login
+// entirely while working locally. Ignored unless NODE_ENV is "development".
+const devBypassEmail =
+  process.env.NODE_ENV === "development" ? process.env.AUTH_DEV_BYPASS : undefined
+
 export async function getSessionUser(): Promise<SessionUser> {
+  if (devBypassEmail) {
+    const u = await db.user.findUnique({
+      where: { email: devBypassEmail },
+      select: { id: true, name: true, active: true, role: true, businessUnitId: true, managerId: true },
+    })
+    if (u && u.active) {
+      return {
+        id: u.id,
+        name: u.name,
+        role: u.role,
+        businessUnitId: u.businessUnitId,
+        managerId: u.managerId,
+      }
+    }
+  }
+
   const session = await auth()
   if (!session?.user) redirect("/login")
   // Reflect current DB state on every protected page/action rather than trusting
