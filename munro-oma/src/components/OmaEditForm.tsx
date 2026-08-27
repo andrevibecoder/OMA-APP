@@ -45,10 +45,14 @@ function num(v: string): string {
     : cleaned.slice(0, firstDot + 1) + cleaned.slice(firstDot + 1).replace(/\./g, "")
 }
 
-function preview(v: string, unit: MetricUnit): string {
+// Formatted-value hint shown under a number input — only when the formatting
+// actually differs from what the user typed (e.g. "3000" -> "3 000", "8" -> "R8").
+function hint(v: string, unit: MetricUnit): string {
   if (!v || v === ".") return ""
   const n = Number(v)
-  return Number.isFinite(n) ? formatMetricValue(n, unit) : ""
+  if (!Number.isFinite(n)) return ""
+  const formatted = formatMetricValue(n, unit)
+  return formatted === v ? "" : formatted
 }
 
 export function OmaEditForm({
@@ -190,7 +194,7 @@ export function OmaEditForm({
                     className="mt-1 w-full rounded border border-mfa-track px-2 py-1 disabled:text-mfa-muted"
                   />
                   <span className="mt-1 block h-4 text-xs text-mfa-muted">
-                    {preview(m.target, m.unit)}
+                    {hint(m.target, m.unit)}
                   </span>
                 </label>
                 <label className="block">
@@ -204,7 +208,7 @@ export function OmaEditForm({
                     className="mt-1 w-full rounded border border-mfa-track px-2 py-1 disabled:text-mfa-muted"
                   />
                   <span className="mt-1 block h-4 text-xs text-mfa-muted">
-                    {preview(m.current, m.unit)}
+                    {hint(m.current, m.unit)}
                   </span>
                 </label>
               </div>
