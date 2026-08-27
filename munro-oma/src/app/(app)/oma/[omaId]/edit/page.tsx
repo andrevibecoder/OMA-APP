@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation"
 import { Breadcrumbs } from "@/components/Breadcrumbs"
 import { OmaEditForm } from "@/components/OmaEditForm"
 import { getOma } from "@/lib/queries"
+import { resolvePeriodId } from "@/lib/periods"
 import { getSessionUser } from "@/lib/session"
 import { canEditActions, canEditOutcomeMetric, canEditOma } from "@/lib/authz"
 
@@ -17,7 +18,8 @@ export default async function OmaEditPage({
   const viewer = await getSessionUser()
   const authShape = { ownerId: oma.owner.id, owner: { managerId: oma.owner.managerId } }
   if (!canEditOma(viewer, authShape)) redirect(`/oma/${oma.id}`)
-  const qp = searchParams.period ? `?period=${searchParams.period}` : ""
+  const periodId = await resolvePeriodId(searchParams.period)
+  const qp = searchParams.period ? `?period=${encodeURIComponent(periodId)}` : ""
 
   return (
     <main className="mx-auto max-w-4xl px-8 py-16">

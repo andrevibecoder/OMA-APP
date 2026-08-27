@@ -36,7 +36,11 @@ export async function getBusinessUnit(buId: string, periodId: string) {
   if (!bu) return null
   return {
     name: bu.name,
-    people: bu.users.map((u) => ({ id: u.id, name: u.name, pct: personProgress(u.omas) })),
+    // Only people with >=1 OMA this period — the same population buProgress averages on
+    // Screen 1, so the visible rows here mean out to the BU bar there.
+    people: bu.users
+      .filter((u) => u.omas.length > 0)
+      .map((u) => ({ id: u.id, name: u.name, pct: personProgress(u.omas) })),
   }
 }
 

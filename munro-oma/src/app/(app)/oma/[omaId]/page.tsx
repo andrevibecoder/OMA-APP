@@ -4,6 +4,7 @@ import { Breadcrumbs } from "@/components/Breadcrumbs"
 import { PageTitle } from "@/components/PageTitle"
 import { ActionCheckbox } from "@/components/ActionCheckbox"
 import { getOma } from "@/lib/queries"
+import { resolvePeriodId } from "@/lib/periods"
 import { getSessionUser } from "@/lib/session"
 import { canEditActions, canEditOma } from "@/lib/authz"
 
@@ -20,7 +21,8 @@ export default async function OmaDetailPage({
   const authShape = { ownerId: oma.owner.id, owner: { managerId: oma.owner.managerId } }
   const canTick = canEditActions(viewer, authShape)
   const showEdit = canEditOma(viewer, authShape)
-  const qp = searchParams.period ? `?period=${searchParams.period}` : ""
+  const periodId = await resolvePeriodId(searchParams.period)
+  const qp = searchParams.period ? `?period=${encodeURIComponent(periodId)}` : ""
 
   return (
     <main className="mx-auto max-w-4xl px-8 py-16">
