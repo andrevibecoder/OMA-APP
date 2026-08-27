@@ -20,6 +20,16 @@ function revalidateApp() {
   revalidatePath("/", "layout")
 }
 
+/** True when userId is the only active admin — used to block the console from
+ *  locking everyone out. */
+async function isLastActiveAdmin(userId: string): Promise<boolean> {
+  const admins = await db.user.findMany({
+    where: { role: "ADMIN", active: true },
+    select: { id: true },
+  })
+  return admins.length === 1 && admins[0].id === userId
+}
+
 // --------------------------------------------------------------------------
 // Business Units
 // --------------------------------------------------------------------------
@@ -192,6 +202,9 @@ export async function updateUser(
   if (!parsed.success) return { error: parsed.error.issues[0].message }
   const u = parsed.data
   if (u.managerId === id) return { error: "A user can't be their own manager." }
+  if (u.role !== "ADMIN" && (await isLastActiveAdmin(id))) {
+    return { error: "This is the only admin — promote someone else first." }
+  }
   try {
     await db.user.update({
       where: { id },
@@ -214,6 +227,9 @@ export async function updateUser(
 export async function setUserActive(id: string, active: boolean): Promise<Result> {
   const me = await requireAdmin()
   if (id === me.id && !active) return { error: "You can't deactivate your own account." }
+  if (!active && (await isLastActiveAdmin(id))) {
+    return { error: "This is the only admin — promote someone else first." }
+  }
   await db.user.update({ where: { id }, data: { active } })
   revalidateApp()
   return {}
@@ -231,6 +247,9 @@ export async function resetUserPassword(id: string, password: string): Promise<R
 export async function deleteUser(id: string): Promise<Result> {
   const me = await requireAdmin()
   if (id === me.id) return { error: "You can't delete your own account." }
+  if (await isLastActiveAdmin(id)) {
+    return { error: "This is the only admin — promote someone else first." }
+  }
   const u = await db.user.findUniqueOrThrow({
     where: { id },
     select: { _count: { select: { omas: true, team: true } } },

@@ -10,11 +10,18 @@ const devBypassEmail =
 
 export async function getSessionUser(): Promise<SessionUser> {
   if (devBypassEmail) {
-    const u = await db.user.findUnique({
-      where: { email: devBypassEmail },
-      select: { id: true, name: true, active: true, role: true, businessUnitId: true, managerId: true },
-    })
-    if (u && u.active) {
+    // Prefer the configured account; if it was renamed/removed while editing,
+    // fall back to any active admin so the console can't lock itself out.
+    const u =
+      (await db.user.findFirst({
+        where: { email: devBypassEmail, active: true },
+        select: { id: true, name: true, role: true, businessUnitId: true, managerId: true },
+      })) ??
+      (await db.user.findFirst({
+        where: { role: "ADMIN", active: true },
+        select: { id: true, name: true, role: true, businessUnitId: true, managerId: true },
+      }))
+    if (u) {
       return {
         id: u.id,
         name: u.name,
