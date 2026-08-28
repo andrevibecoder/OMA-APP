@@ -182,7 +182,7 @@ export default async function OmaDetailPage({
           {canAdd && (
             <form action={createOma.bind(null, oma.owner.id, oma.periodId)}>
               <button className="rounded-full border border-mfa-red px-6 py-2 font-semibold text-mfa-red">
-                New OMA
+                + Add OMA
               </button>
             </form>
           )}

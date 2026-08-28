@@ -26,6 +26,7 @@ export function canCreateOMA(
 ): boolean {
   if (currentOmaCount >= 3) return false
   if (user.role === "ADMIN") return true
+  if (user.id === target.id) return true // the person can start their own OMA
   if (user.role === "MANAGER") return target.managerId !== null && target.managerId === user.id
   return false
 }

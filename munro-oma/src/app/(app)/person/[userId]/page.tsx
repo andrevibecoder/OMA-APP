@@ -41,15 +41,8 @@ export default async function PersonPage({
           { label: period.shortLabel },
         ]}
       />
-      <div className="mt-3 flex items-baseline justify-between">
+      <div className="mt-3">
         <PageTitle>{person.name} — OMAs</PageTitle>
-        {canAdd && (
-          <form action={createOma.bind(null, person.id, periodId)}>
-            <button className="rounded-full bg-mfa-red px-4 py-1.5 text-sm font-semibold text-white">
-              New OMA
-            </button>
-          </form>
-        )}
       </div>
       <div className="mt-10">
         {person.omas.map((o) => (
@@ -59,6 +52,15 @@ export default async function PersonPage({
           <p className="text-sm text-mfa-muted">No OMAs set for this period yet.</p>
         )}
       </div>
+
+      {canAdd && (
+        <form action={createOma.bind(null, person.id, periodId)} className="mt-6">
+          <button className="rounded-full bg-mfa-red px-5 py-2 text-sm font-semibold text-white">
+            + Add OMA
+          </button>
+        </form>
+      )}
+
       <p className="mt-12 text-sm text-mfa-muted">
         Three OMAs is the cap — it keeps the review conversation short and honest.
       </p>

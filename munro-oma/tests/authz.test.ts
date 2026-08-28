@@ -46,7 +46,12 @@ describe("canCreateOMA", () => {
   it("manager for own team under the cap", () => expect(canCreateOMA(mgr, target, 2)).toBe(true))
   it("blocked at the cap", () => expect(canCreateOMA(mgr, target, 3)).toBe(false))
   it("manager not for other teams", () => expect(canCreateOMA(mgr, { id: "u2", managerId: "x" }, 0)).toBe(false))
-  it("user never", () => expect(canCreateOMA(user, target, 0)).toBe(false))
+  it("user can create their own", () =>
+    expect(canCreateOMA(user, { id: "u1", managerId: "mgr" }, 0)).toBe(true))
+  it("user not for someone else", () =>
+    expect(canCreateOMA(user, { id: "u2", managerId: "x" }, 0)).toBe(false))
+  it("own OMA still blocked at the cap", () =>
+    expect(canCreateOMA(user, { id: "u1", managerId: "mgr" }, 3)).toBe(false))
   it("admin any team under cap", () => expect(canCreateOMA(admin, { id: "u2", managerId: "x" }, 1)).toBe(true))
   it("admin blocked by cap", () => expect(canCreateOMA(admin, { id: "u2", managerId: "x" }, 3)).toBe(false))
 })
