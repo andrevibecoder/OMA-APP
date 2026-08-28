@@ -1,5 +1,6 @@
 import { notFound, redirect } from "next/navigation"
 import { Breadcrumbs } from "@/components/Breadcrumbs"
+import { BackButton } from "@/components/BackButton"
 import { OmaEditForm } from "@/components/OmaEditForm"
 import { getOma } from "@/lib/queries"
 import { listPeriods, resolvePeriodId } from "@/lib/periods"
@@ -24,6 +25,7 @@ export default async function OmaEditPage({
 
   return (
     <main>
+      <BackButton />
       <Breadcrumbs
         items={[
           ...(oma.owner.businessUnit

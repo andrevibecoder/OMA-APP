@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation"
 import { Breadcrumbs } from "@/components/Breadcrumbs"
 import { PageTitle } from "@/components/PageTitle"
+import { BackButton } from "@/components/BackButton"
 import { RagBar } from "@/components/RagBar"
 import { getPerson } from "@/lib/queries"
 import { db } from "@/lib/db"
@@ -30,6 +31,7 @@ export default async function PersonPage({
 
   return (
     <main>
+      <BackButton />
       <Breadcrumbs
         items={[
           ...(person.businessUnit

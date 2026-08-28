@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation"
 import { Breadcrumbs } from "@/components/Breadcrumbs"
 import { PageTitle } from "@/components/PageTitle"
+import { BackButton } from "@/components/BackButton"
 import { RagBar } from "@/components/RagBar"
 import { getBusinessUnit } from "@/lib/queries"
 import { db } from "@/lib/db"
@@ -21,6 +22,7 @@ export default async function BuPage({
 
   return (
     <main>
+      <BackButton />
       <Breadcrumbs
         items={[
           { label: "Main dashboard", href: `/${qp}` },

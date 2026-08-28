@@ -2,6 +2,7 @@ import Link from "next/link"
 import { notFound } from "next/navigation"
 import { Breadcrumbs } from "@/components/Breadcrumbs"
 import { PageTitle } from "@/components/PageTitle"
+import { BackButton } from "@/components/BackButton"
 import { ActionCheckbox } from "@/components/ActionCheckbox"
 import { getOma } from "@/lib/queries"
 import {
@@ -47,6 +48,7 @@ export default async function OmaDetailPage({
 
   return (
     <main>
+      <BackButton />
       <Breadcrumbs
         items={[
           ...(oma.owner.businessUnit
