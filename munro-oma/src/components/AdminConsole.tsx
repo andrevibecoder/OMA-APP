@@ -17,7 +17,6 @@ import {
 
 type Result = { error?: string }
 type Role = "ADMIN" | "MANAGER" | "USER"
-type Kind = "QUARTER" | "HALF" | "ANNUAL"
 
 const band = "bg-mfa-panel px-4 py-2 text-sm font-semibold text-mfa-red"
 const input = "rounded border border-mfa-track px-2 py-1 text-sm"
@@ -144,34 +143,22 @@ function BusinessUnitRow({
   )
 }
 
-// --------------------------------------------------------------------------
-
-const KIND_LABEL: Record<Kind, string> = {
-  QUARTER: "Quarter",
-  HALF: "Half",
-  ANNUAL: "Full year",
-}
-
-function defaultStart(kind: Kind, num: number, year: number): string {
-  const monthByQuarter = [0, 3, 6, 9]
-  const month = kind === "ANNUAL" ? 0 : kind === "HALF" ? (num === 2 ? 6 : 0) : monthByQuarter[num - 1] ?? 0
-  return `${year}-${String(month + 1).padStart(2, "0")}-01`
+function defaultStart(half: number, year: number): string {
+  return `${year}-${half === 2 ? "07" : "01"}-01`
 }
 
 function PeriodsSection({ data }: { data: AdminData }) {
   const { periods } = data
   const { pending, error, run } = useAction()
-  const [kind, setKind] = useState<Kind>("QUARTER")
-  const [num, setNum] = useState(1)
-  const [year, setYear] = useState(new Date().getFullYear())
-  const [start, setStart] = useState(defaultStart("QUARTER", 1, new Date().getFullYear()))
-  const maxNum = kind === "QUARTER" ? 4 : kind === "HALF" ? 2 : 1
+  const thisYear = new Date().getFullYear()
+  const [half, setHalf] = useState(1)
+  const [year, setYear] = useState(thisYear)
+  const [start, setStart] = useState(defaultStart(1, thisYear))
 
-  function sync(k: Kind, n: number, y: number) {
-    setKind(k)
-    setNum(n)
+  function sync(h: number, y: number) {
+    setHalf(h)
     setYear(y)
-    setStart(defaultStart(k, n, y))
+    setStart(defaultStart(h, y))
   }
 
   return (
@@ -184,42 +171,23 @@ function PeriodsSection({ data }: { data: AdminData }) {
       </ul>
       <div className="flex flex-wrap items-end gap-3 border-t border-mfa-track px-4 py-3 text-sm">
         <label className="flex flex-col">
-          <span className="text-xs text-mfa-muted">Kind</span>
+          <span className="text-xs text-mfa-muted">Half</span>
           <select
             className={input}
-            value={kind}
-            onChange={(e) => sync(e.target.value as Kind, 1, year)}
+            value={half}
+            onChange={(e) => sync(Number(e.target.value), year)}
           >
-            {(Object.keys(KIND_LABEL) as Kind[]).map((k) => (
-              <option key={k} value={k}>
-                {KIND_LABEL[k]}
-              </option>
-            ))}
+            <option value={1}>H1 (Jan–Jun)</option>
+            <option value={2}>H2 (Jul–Dec)</option>
           </select>
         </label>
-        {kind !== "ANNUAL" && (
-          <label className="flex flex-col">
-            <span className="text-xs text-mfa-muted">{kind === "QUARTER" ? "Quarter" : "Half"}</span>
-            <select
-              className={input}
-              value={num}
-              onChange={(e) => sync(kind, Number(e.target.value), year)}
-            >
-              {Array.from({ length: maxNum }, (_, i) => i + 1).map((n) => (
-                <option key={n} value={n}>
-                  {kind === "QUARTER" ? `Q${n}` : `H${n}`}
-                </option>
-              ))}
-            </select>
-          </label>
-        )}
         <label className="flex flex-col">
           <span className="text-xs text-mfa-muted">Year</span>
           <input
             type="number"
             className={`${input} w-24`}
             value={year}
-            onChange={(e) => sync(kind, num, Number(e.target.value))}
+            onChange={(e) => sync(half, Number(e.target.value))}
           />
         </label>
         <label className="flex flex-col">
@@ -234,16 +202,7 @@ function PeriodsSection({ data }: { data: AdminData }) {
         <button
           className={btn}
           disabled={pending}
-          onClick={() =>
-            run(() =>
-              createPeriod({
-                kind,
-                number: kind === "ANNUAL" ? null : num,
-                year,
-                startDate: start,
-              }),
-            )
-          }
+          onClick={() => run(() => createPeriod({ half, year, startDate: start }))}
         >
           Add period
         </button>
@@ -268,7 +227,6 @@ function PeriodRow({ p }: { p: AdminData["periods"][number] }) {
         />
         <span className="font-semibold">{p.label}</span>
       </label>
-      <span className="text-xs text-mfa-muted">{KIND_LABEL[p.kind as Kind]}</span>
       <span className="text-xs text-mfa-muted">
         starts {new Date(p.startDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
       </span>

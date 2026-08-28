@@ -92,8 +92,7 @@ export async function moveBusinessUnit(id: string, direction: "up" | "down"): Pr
 // --------------------------------------------------------------------------
 
 const periodSchema = z.object({
-  kind: z.enum(["QUARTER", "HALF", "ANNUAL"]),
-  number: z.number().int().min(1).max(4).nullable(),
+  half: z.number().int().min(1).max(2),
   year: z.number().int().min(2000).max(2100),
   startDate: z.string().min(1),
 })
@@ -103,26 +102,15 @@ export async function createPeriod(raw: z.infer<typeof periodSchema>): Promise<R
   const parsed = periodSchema.safeParse(raw)
   if (!parsed.success) return { error: parsed.error.issues[0].message }
   const p = parsed.data
-
-  let label: string
-  let shortLabel: string
-  if (p.kind === "ANNUAL") {
-    label = `FY ${p.year}`
-    shortLabel = "FY"
-  } else {
-    const prefix = p.kind === "QUARTER" ? "Q" : "H"
-    const max = p.kind === "QUARTER" ? 4 : 2
-    if (!p.number || p.number > max) return { error: `Pick ${prefix}1–${prefix}${max}` }
-    label = `${prefix}${p.number} ${p.year}`
-    shortLabel = `${prefix}${p.number}`
-  }
+  const label = `H${p.half} ${p.year}`
+  const shortLabel = `H${p.half}`
 
   try {
     await db.period.create({
       data: {
         label,
         shortLabel,
-        kind: p.kind,
+        kind: "HALF",
         year: p.year,
         startDate: new Date(p.startDate),
         isActive: false,
