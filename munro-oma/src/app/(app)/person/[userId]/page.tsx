@@ -26,7 +26,8 @@ export default async function PersonPage({
     where: { id: params.userId },
     select: { id: true, managerId: true },
   })
-  const canAdd = canCreateOMA(viewer, target, person.omas.length)
+  const mayAdd = canCreateOMA(viewer, target, 0) // permission, ignoring the cap
+  const atCap = person.omas.length >= 3
   const qp = searchParams.period ? `?period=${periodId}` : ""
 
   return (
@@ -53,9 +54,17 @@ export default async function PersonPage({
         )}
       </div>
 
-      {canAdd && (
+      {mayAdd && (
         <form action={createOma.bind(null, person.id, periodId)} className="mt-6">
-          <button className="rounded-full bg-mfa-red px-5 py-2 text-sm font-semibold text-white">
+          <button
+            disabled={atCap}
+            title={atCap ? "Three OMAs is the cap" : undefined}
+            className={
+              atCap
+                ? "cursor-not-allowed rounded-full border border-mfa-track px-5 py-2 text-sm font-semibold text-mfa-muted"
+                : "rounded-full bg-mfa-red px-5 py-2 text-sm font-semibold text-white"
+            }
+          >
             + Add OMA
           </button>
         </form>
