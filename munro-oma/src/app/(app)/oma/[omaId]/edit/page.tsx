@@ -44,6 +44,7 @@ export default async function OmaEditPage({
           sequence: oma.sequence,
           periodId: oma.periodId,
           date: oma.date.toISOString().slice(0, 10),
+          endDate: oma.endDate ? oma.endDate.toISOString().slice(0, 10) : null,
           outcome: oma.outcome,
           metrics: oma.metrics.map((m) => ({
             measure: m.measure,
@@ -51,6 +52,10 @@ export default async function OmaEditPage({
             direction: m.direction,
             target: m.target,
             current: m.current,
+            source: m.source,
+            apiUrl: m.apiUrl,
+            apiPath: m.apiPath,
+            apiKey: m.apiKey,
           })),
           actions: oma.actions.map((a) => ({
             id: a.id,
@@ -61,6 +66,7 @@ export default async function OmaEditPage({
         }}
           canOutcomeMetric={canEditOutcomeMetric(viewer, authShape)}
           canActions={canEditActions(viewer, authShape)}
+          isAdmin={viewer.role === "ADMIN"}
         />
       </div>
     </main>

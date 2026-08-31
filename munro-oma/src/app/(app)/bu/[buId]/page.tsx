@@ -38,9 +38,6 @@ export default async function BuPage({
           <RagBar key={p.id} label={p.name} value={p.pct} href={`/person/${p.id}${qp}`} />
         ))}
       </div>
-      <p className="mt-12 text-sm text-mfa-muted">
-        Department roll-up is the average of its people. Click a name to open their OMAs.
-      </p>
     </main>
   )
 }

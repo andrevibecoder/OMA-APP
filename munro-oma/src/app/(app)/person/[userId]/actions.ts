@@ -13,8 +13,7 @@ export async function createOma(userId: string, periodId: string) {
     where: { id: userId },
     select: { id: true, managerId: true, businessUnitId: true },
   })
-  const count = await db.oMA.count({ where: { ownerId: userId, periodId } })
-  if (!canCreateOMA(viewer, target, count)) throw new Error("Not allowed")
+  if (!canCreateOMA(viewer, target)) throw new Error("Not allowed")
 
   const last = await db.oMA.findFirst({
     where: { ownerId: userId, periodId },

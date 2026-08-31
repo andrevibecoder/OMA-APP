@@ -2,8 +2,11 @@
 
 import { useState, useTransition } from "react"
 import { saveOma } from "@/app/(app)/oma/[omaId]/actions"
+import { DeleteOmaButton } from "@/components/DeleteOmaButton"
 import { formatMetricValue } from "@/lib/progress"
 import type { MetricDirection, MetricUnit, SaveOmaInput } from "@/types"
+
+type MetricSource = "MANUAL" | "API"
 
 type FormMetric = {
   measure: string
@@ -11,13 +14,18 @@ type FormMetric = {
   direction: MetricDirection
   target: string
   current: string
+  source: MetricSource
+  apiUrl: string
+  apiPath: string
+  apiKey: string
 }
 
 type Oma = {
   id: string
   sequence: number
   periodId: string
-  date: string // yyyy-mm-dd
+  date: string // yyyy-mm-dd — period "From"
+  endDate: string | null // yyyy-mm-dd — period "To"
   outcome: string
   metrics: {
     measure: string
@@ -25,6 +33,10 @@ type Oma = {
     direction: MetricDirection
     target: number
     current: number
+    source: MetricSource
+    apiUrl: string | null
+    apiPath: string | null
+    apiKey: string | null
   }[]
   actions: { id: string; description: string; dueDate: string | null; completed: boolean }[]
 }
@@ -35,6 +47,10 @@ const EMPTY_METRIC: FormMetric = {
   direction: "HIGHER_BETTER",
   target: "",
   current: "",
+  source: "MANUAL",
+  apiUrl: "",
+  apiPath: "",
+  apiKey: "",
 }
 
 // keep digits and a single decimal point; drop everything else
@@ -69,23 +85,33 @@ export function OmaEditForm({
   periods,
   canOutcomeMetric,
   canActions,
+  isAdmin,
 }: {
   oma: Oma
   periods: { id: string; label: string }[]
   canOutcomeMetric: boolean
   canActions: boolean
+  isAdmin: boolean
 }) {
   const [sequence, setSequence] = useState(oma.sequence)
   const [periodId, setPeriodId] = useState(oma.periodId)
   const [date, setDate] = useState(oma.date)
+  const [endDate, setEndDate] = useState(oma.endDate)
   const [outcome, setOutcome] = useState(oma.outcome)
   const [metrics, setMetrics] = useState<FormMetric[]>(
-    (oma.metrics.length ? oma.metrics : [{ ...EMPTY_METRIC, target: 0, current: 0 }]).map((m) => ({
+    (oma.metrics.length
+      ? oma.metrics
+      : [{ ...EMPTY_METRIC, target: 0, current: 0, apiUrl: null, apiPath: null, apiKey: null }]
+    ).map((m) => ({
       measure: m.measure,
       unit: m.unit,
       direction: m.direction,
       target: m.target ? String(m.target) : "",
       current: m.current ? String(m.current) : "",
+      source: m.source,
+      apiUrl: m.apiUrl ?? "",
+      apiPath: m.apiPath ?? "",
+      apiKey: m.apiKey ?? "",
     })),
   )
   const [actions, setActions] = useState<SaveOmaInput["actions"]>(oma.actions)
@@ -98,6 +124,7 @@ export function OmaEditForm({
         periodId,
         sequence,
         date,
+        endDate,
         outcome,
         metrics: metrics.map((m) => ({
           measure: m.measure,
@@ -105,6 +132,10 @@ export function OmaEditForm({
           direction: m.direction,
           target: Number(m.target) || 0,
           current: Number(m.current) || 0,
+          source: m.source,
+          apiUrl: m.apiUrl.trim() || null,
+          apiPath: m.apiPath.trim() || null,
+          apiKey: m.apiKey.trim() || null,
         })),
         actions,
       }),
@@ -119,17 +150,13 @@ export function OmaEditForm({
         <span className="text-lg font-bold">
           OMA{" "}
           {canOutcomeMetric ? (
-            <select
+            <input
+              type="number"
+              min={1}
               value={sequence}
-              onChange={(e) => setSequence(Number(e.target.value))}
-              className="rounded bg-white/15 px-1 font-bold text-white ring-1 ring-white/40 outline-none"
-            >
-              {[1, 2, 3].map((n) => (
-                <option key={n} value={n} className="text-mfa-ink">
-                  {n}
-                </option>
-              ))}
-            </select>
+              onChange={(e) => setSequence(Math.max(1, Number(e.target.value) || 1))}
+              className="w-14 rounded bg-white/15 px-1 text-center font-bold text-white ring-1 ring-white/40 outline-none"
+            />
           ) : (
             sequence
           )}
@@ -155,21 +182,34 @@ export function OmaEditForm({
         <span className="text-sm">
           <span className="font-semibold">Date</span>{" "}
           {canOutcomeMetric ? (
-            <input
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              className="rounded bg-white/15 px-1 text-white ring-1 ring-white/40 outline-none [color-scheme:dark]"
-            />
+            <>
+              <input
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                className="rounded bg-white/15 px-1 text-white ring-1 ring-white/40 outline-none [color-scheme:dark]"
+              />
+              <span className="px-1">–</span>
+              <input
+                type="date"
+                value={endDate ?? ""}
+                min={date}
+                onChange={(e) => setEndDate(e.target.value || null)}
+                className="rounded bg-white/15 px-1 text-white ring-1 ring-white/40 outline-none [color-scheme:dark]"
+              />
+            </>
           ) : (
-            <span className="italic">{fmtDate(date)}</span>
+            <span className="italic">
+              {fmtDate(date)}
+              {endDate && <> – {fmtDate(endDate)}</>}
+            </span>
           )}
         </span>
       </div>
 
       <section className="border-b border-mfa-track">
-        <div className="bg-mfa-panel px-5 py-2 text-sm font-semibold text-mfa-red">
-          OUTCOME <span className="text-mfa-muted">— the result you&apos;re aiming for</span>
+        <div className="bg-mfa-muted px-5 py-2 text-sm font-semibold text-white">
+          OUTCOME <span className="text-white/70">— the result you&apos;re aiming for</span>
         </div>
         <textarea
           value={outcome}
@@ -181,9 +221,9 @@ export function OmaEditForm({
       </section>
 
       <section className="border-b border-mfa-track">
-        <div className="bg-mfa-panel px-5 py-2 text-sm font-semibold text-mfa-red">
+        <div className="bg-mfa-muted px-5 py-2 text-sm font-semibold text-white">
           METRIC / KPI{" "}
-          <span className="text-mfa-muted">— how you&apos;ll know you&apos;re getting there</span>
+          <span className="text-white/70">— how you&apos;ll know you&apos;re getting there</span>
         </div>
         {metrics.map((m, i) => {
           const setM = (patch: Partial<FormMetric>) =>
@@ -271,6 +311,53 @@ export function OmaEditForm({
                   )}
                 </div>
               )}
+
+              {m.source === "API" &&
+                (isAdmin ? (
+                  <div className="flex w-full flex-wrap items-end gap-3 rounded-lg border border-dashed border-mfa-track bg-mfa-panel/60 px-3 py-2">
+                    <span className="w-full text-xs font-semibold text-mfa-red">
+                      🔗 Linked via API — placeholder, not fetching live data yet
+                    </span>
+                    <label className="flex min-w-[14rem] flex-1 flex-col">
+                      <span className="text-xs text-mfa-muted">API URL</span>
+                      <input
+                        value={m.apiUrl}
+                        placeholder="https://…"
+                        onChange={(e) => setM({ apiUrl: e.target.value })}
+                        className="rounded border border-mfa-track px-2 py-1.5 text-sm"
+                      />
+                    </label>
+                    <label className="flex w-40 flex-col">
+                      <span className="text-xs text-mfa-muted">JSON path</span>
+                      <input
+                        value={m.apiPath}
+                        placeholder="data.value"
+                        onChange={(e) => setM({ apiPath: e.target.value })}
+                        className="rounded border border-mfa-track px-2 py-1.5 text-sm"
+                      />
+                    </label>
+                    <label className="flex w-40 flex-col">
+                      <span className="text-xs text-mfa-muted">API key</span>
+                      <input
+                        value={m.apiKey}
+                        placeholder="optional"
+                        onChange={(e) => setM({ apiKey: e.target.value })}
+                        className="rounded border border-mfa-track px-2 py-1.5 text-sm"
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setM({ source: "MANUAL", apiUrl: "", apiPath: "", apiKey: "" })}
+                      className="text-sm text-mfa-muted"
+                    >
+                      Unlink
+                    </button>
+                  </div>
+                ) : (
+                  <span className="w-full text-xs font-semibold text-mfa-muted">
+                    🔗 Linked via API (set by admin) — placeholder, not syncing yet
+                  </span>
+                ))}
             </div>
           )
         })}
@@ -283,6 +370,15 @@ export function OmaEditForm({
             >
               + Add metric
             </button>
+            {isAdmin && (
+              <button
+                type="button"
+                onClick={() => setMetrics([...metrics, { ...EMPTY_METRIC, source: "API" }])}
+                className="text-mfa-red"
+              >
+                🔗 Link metric via API
+              </button>
+            )}
             {metrics.length > 1 && (
               <button
                 type="button"
@@ -297,9 +393,9 @@ export function OmaEditForm({
       </section>
 
       <section>
-        <div className="bg-mfa-panel px-5 py-2 text-sm font-semibold text-mfa-red">
+        <div className="bg-mfa-muted px-5 py-2 text-sm font-semibold text-white">
           ACTIONS{" "}
-          <span className="text-mfa-muted">— the projects and moves that drive the result</span>
+          <span className="text-white/70">— the projects and moves that drive the result</span>
         </div>
         {actions.map((a, i) => (
           <div
@@ -366,7 +462,8 @@ export function OmaEditForm({
         )}
       </section>
 
-      <div className="flex justify-end p-4">
+      <div className="flex justify-end gap-3 p-4">
+        <DeleteOmaButton omaId={oma.id} sequence={oma.sequence} />
         <button
           onClick={submit}
           disabled={pending}

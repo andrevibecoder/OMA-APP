@@ -11,15 +11,13 @@ export async function getCompanyDashboard(periodId: string) {
       },
     },
   })
-  return bus
-    .map((bu) => ({
-      id: bu.id,
-      name: bu.name,
-      hasOmas: bu.users.some((u) => u.omas.length > 0),
-      pct: buProgress(bu.users.map((u) => ({ omas: u.omas }))),
-    }))
-    .filter((b) => b.hasOmas)
-    .map(({ id, name, pct }) => ({ id, name, pct }))
+  // Always list every business unit, even with no OMAs set yet this period
+  // (0%) — the framework has to stay clickable so people can start from zero.
+  return bus.map((bu) => ({
+    id: bu.id,
+    name: bu.name,
+    pct: buProgress(bu.users.map((u) => ({ omas: u.omas }))),
+  }))
 }
 
 export async function getBusinessUnit(buId: string, periodId: string) {
@@ -36,11 +34,9 @@ export async function getBusinessUnit(buId: string, periodId: string) {
   if (!bu) return null
   return {
     name: bu.name,
-    // Only people with >=1 OMA this period — the same population buProgress averages on
-    // Screen 1, so the visible rows here mean out to the BU bar there.
-    people: bu.users
-      .filter((u) => u.omas.length > 0)
-      .map((u) => ({ id: u.id, name: u.name, pct: personProgress(u.omas) })),
+    // Every active person in the BU, even with no OMAs set yet this period
+    // (0%) — the framework has to stay clickable so people can start from zero.
+    people: bu.users.map((u) => ({ id: u.id, name: u.name, pct: personProgress(u.omas) })),
   }
 }
 
@@ -52,7 +48,12 @@ export async function getPerson(userId: string, periodId: string) {
       omas: {
         where: { periodId },
         orderBy: { sequence: "asc" },
-        include: { metrics: { select: { direction: true, target: true, current: true } } },
+        include: {
+          metrics: {
+            orderBy: { order: "asc" },
+            select: { measure: true, unit: true, direction: true, target: true, current: true },
+          },
+        },
       },
     },
   })
@@ -61,7 +62,15 @@ export async function getPerson(userId: string, periodId: string) {
     id: user.id,
     name: user.name,
     businessUnit: user.businessUnit,
-    omas: user.omas.map((o) => ({ id: o.id, sequence: o.sequence, pct: omaProgress(o) })),
+    // Metrics come along so the OMA list can show a KPI snapshot (measure /
+    // target / current), not just the rolled-up percentage.
+    omas: user.omas.map((o) => ({
+      id: o.id,
+      sequence: o.sequence,
+      pct: omaProgress(o),
+      outcome: o.outcome,
+      metrics: o.metrics,
+    })),
   }
 }
 

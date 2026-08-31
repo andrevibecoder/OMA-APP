@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache"
 import { Prisma } from "@prisma/client"
 import { db } from "@/lib/db"
 import { getSessionUser } from "@/lib/session"
-import { canEditActions, canEditOutcomeMetric } from "@/lib/authz"
+import { canEditActions, canEditOma, canEditOutcomeMetric } from "@/lib/authz"
 import { saveOmaSchema, type SaveOmaInput } from "@/types"
 
 export async function tickAction(actionId: string, completed: boolean): Promise<void> {
@@ -91,10 +91,14 @@ export async function saveOma(input: SaveOmaInput): Promise<void> {
           periodId: data.periodId,
           sequence: data.sequence,
           date: new Date(data.date),
+          endDate: data.endDate ? new Date(data.endDate) : null,
         },
       }),
     )
     ops.push(db.metric.deleteMany({ where: { omaId: oma.id } }))
+    // API-link fields (placeholder for a future live sync) are admin-only —
+    // strip them for anyone else even if the request tried to send them.
+    const isAdmin = viewer.role === "ADMIN"
     const metrics = data.metrics
       .filter((m) => m.measure.trim())
       .map((m, i) => ({
@@ -105,6 +109,10 @@ export async function saveOma(input: SaveOmaInput): Promise<void> {
         target: m.target,
         current: m.current,
         order: i,
+        source: isAdmin ? m.source : "MANUAL",
+        apiUrl: isAdmin && m.source === "API" ? m.apiUrl : null,
+        apiPath: isAdmin && m.source === "API" ? m.apiPath : null,
+        apiKey: isAdmin && m.source === "API" ? m.apiKey : null,
       }))
     if (metrics.length > 0) {
       ops.push(db.metric.createMany({ data: metrics }))
@@ -166,4 +174,40 @@ export async function saveOma(input: SaveOmaInput): Promise<void> {
   if (oma.owner.businessUnitId) revalidatePath(`/bu/${oma.owner.businessUnitId}`)
   revalidatePath("/")
   redirect(`/oma/${oma.id}`)
+}
+
+export async function deleteOma(omaId: string): Promise<void> {
+  const viewer = await getSessionUser()
+  const oma = await db.oMA.findUniqueOrThrow({
+    where: { id: omaId },
+    select: {
+      id: true,
+      ownerId: true,
+      periodId: true,
+      owner: { select: { managerId: true, businessUnitId: true } },
+    },
+  })
+  const authShape = { ownerId: oma.ownerId, owner: { managerId: oma.owner.managerId } }
+  if (!canEditOma(viewer, authShape)) throw new Error("Not allowed")
+
+  const siblings = await db.oMA.findMany({
+    where: { ownerId: oma.ownerId, periodId: oma.periodId, NOT: { id: oma.id } },
+    orderBy: { sequence: "asc" },
+    select: { id: true, sequence: true },
+  })
+
+  // Metrics and actions cascade with the OMA (schema onDelete: Cascade). Renumber
+  // the remaining OMAs 1..n so the gap closes — processed ascending so a lower
+  // target sequence is always vacated before a higher one needs it.
+  const ops: Prisma.PrismaPromise<unknown>[] = [db.oMA.delete({ where: { id: omaId } })]
+  siblings.forEach((s, i) => {
+    const seq = i + 1
+    if (s.sequence !== seq) ops.push(db.oMA.update({ where: { id: s.id }, data: { sequence: seq } }))
+  })
+  await db.$transaction(ops)
+
+  revalidatePath(`/person/${oma.ownerId}`)
+  if (oma.owner.businessUnitId) revalidatePath(`/bu/${oma.owner.businessUnitId}`)
+  revalidatePath("/")
+  redirect(`/person/${oma.ownerId}`)
 }

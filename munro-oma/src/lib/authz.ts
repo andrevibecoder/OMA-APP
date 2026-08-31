@@ -22,9 +22,7 @@ export function canEditActions(user: SessionUser, oma: OmaAuthShape): boolean {
 export function canCreateOMA(
   user: SessionUser,
   target: { id: string; managerId: string | null },
-  currentOmaCount: number,
 ): boolean {
-  if (currentOmaCount >= 3) return false
   if (user.role === "ADMIN") return true
   if (user.id === target.id) return true // the person can start their own OMA
   if (user.role === "MANAGER") return target.managerId !== null && target.managerId === user.id

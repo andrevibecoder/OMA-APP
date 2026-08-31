@@ -26,6 +26,11 @@ enum MetricDirection {
   LOWER_BETTER
 }
 
+enum MetricSource {
+  MANUAL
+  API
+}
+
 enum PeriodKind {
   QUARTER
   HALF
@@ -73,7 +78,8 @@ model OMA {
   period    Period   @relation(fields: [periodId], references: [id])
   periodId  String
   sequence  Int
-  date      DateTime @default(now())
+  date      DateTime @default(now()) // period start ("From")
+  endDate   DateTime? // period end ("To")
   outcome   String
   metrics   Metric[]
   actions   Action[]
@@ -93,6 +99,11 @@ model Metric {
   target    Float
   current   Float           @default(0)
   order     Int             @default(0)
+  source    MetricSource    @default(MANUAL)
+  // Placeholder for a future live sync — captured now, not yet fetched from.
+  apiUrl    String?
+  apiPath   String? // dot-path into the JSON response, e.g. "data.value"
+  apiKey    String?
 }
 
 model Action {

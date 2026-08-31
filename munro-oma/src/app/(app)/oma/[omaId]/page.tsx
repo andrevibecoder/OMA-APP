@@ -4,6 +4,8 @@ import { Breadcrumbs } from "@/components/Breadcrumbs"
 import { PageTitle } from "@/components/PageTitle"
 import { BackButton } from "@/components/BackButton"
 import { ActionCheckbox } from "@/components/ActionCheckbox"
+import { DeleteOmaButton } from "@/components/DeleteOmaButton"
+import { SaveConfirmButton } from "@/components/SaveConfirmButton"
 import { getOma } from "@/lib/queries"
 import {
   formatMetricValue,
@@ -15,7 +17,6 @@ import {
 import { resolvePeriodId } from "@/lib/periods"
 import { getSessionUser } from "@/lib/session"
 import { canCreateOMA, canEditActions, canEditOma } from "@/lib/authz"
-import { db } from "@/lib/db"
 import { createOma } from "@/app/(app)/person/[userId]/actions"
 
 function fmtDate(d: Date): string {
@@ -35,14 +36,7 @@ export default async function OmaDetailPage({
   const authShape = { ownerId: oma.owner.id, owner: { managerId: oma.owner.managerId } }
   const canTick = canEditActions(viewer, authShape)
   const showEdit = canEditOma(viewer, authShape)
-  const omaCount = await db.oMA.count({
-    where: { ownerId: oma.owner.id, periodId: oma.periodId },
-  })
-  const canAdd = canCreateOMA(
-    viewer,
-    { id: oma.owner.id, managerId: oma.owner.managerId },
-    omaCount,
-  )
+  const canAdd = canCreateOMA(viewer, { id: oma.owner.id, managerId: oma.owner.managerId })
   const periodId = await resolvePeriodId(searchParams.period)
   const qp = searchParams.period ? `?period=${encodeURIComponent(periodId)}` : ""
 
@@ -60,17 +54,25 @@ export default async function OmaDetailPage({
         ]}
       />
       <div className="mt-3">
-        <PageTitle>OMA {oma.sequence} — detail</PageTitle>
+        <PageTitle>OMA {oma.sequence}</PageTitle>
       </div>
 
-      <div className="mt-10 grid grid-cols-[8rem_1fr] gap-x-8 gap-y-8">
-        <span className="font-semibold">Outcome</span>
-        <p className="rounded-xl bg-mfa-panel px-5 py-4">
-          {oma.outcome || <em className="text-mfa-muted">Not set yet.</em>}
-        </p>
+      <div className="mt-10 space-y-8">
+        <section>
+          <div className="rounded-xl bg-mfa-muted px-5 py-2 text-sm font-semibold text-white">
+            OUTCOME <span className="text-white/70">— the result you&apos;re aiming for</span>
+          </div>
+          <p className="mt-3 rounded-xl bg-mfa-panel px-5 py-4">
+            {oma.outcome || <em className="text-mfa-muted">Not set yet.</em>}
+          </p>
+        </section>
 
-        <span className="font-semibold">Metric</span>
-        <div className="space-y-3">
+        <section>
+          <div className="rounded-xl bg-mfa-muted px-5 py-2 text-sm font-semibold text-white">
+            METRIC / KPI{" "}
+            <span className="text-white/70">— how you&apos;ll know you&apos;re getting there</span>
+          </div>
+          <div className="mt-3 space-y-3">
           {oma.metrics.map((m) => {
             const bar = metricBarPercent(m)
             const real = metricAttainment(m)
@@ -104,12 +106,18 @@ export default async function OmaDetailPage({
             )
           })}
           {oma.metrics.length === 0 && <p className="text-sm text-mfa-muted">No metric set yet.</p>}
-        </div>
+          </div>
+        </section>
 
-        <span className="font-semibold">Actions</span>
-        {oma.actions.length === 0 ? (
-          <p className="text-sm text-mfa-muted">No actions yet.</p>
-        ) : (
+        <section>
+          <div className="rounded-xl bg-mfa-muted px-5 py-2 text-sm font-semibold text-white">
+            ACTIONS{" "}
+            <span className="text-white/70">— the projects and moves that drive the result</span>
+          </div>
+          <div className="mt-3">
+          {oma.actions.length === 0 ? (
+            <p className="text-sm text-mfa-muted">No actions yet.</p>
+          ) : (
           <div className="space-y-6">
             {(() => {
               const todo = oma.actions
@@ -131,7 +139,7 @@ export default async function OmaDetailPage({
               return (
                 <>
                   <div>
-                    <h3 className={groupHeading}>To do ({todo.length})</h3>
+                    <h3 className={groupHeading}>3-2-Thrive</h3>
                     <ul className="space-y-2">
                       {todo.map((a) => (
                         <li key={a.id} className={row}>
@@ -174,10 +182,12 @@ export default async function OmaDetailPage({
               )
             })()}
           </div>
-        )}
+          )}
+          </div>
+        </section>
       </div>
 
-      {(canAdd || showEdit) && (
+      {(canAdd || showEdit || canTick) && (
         <div className="mt-12 flex justify-end gap-3">
           {canAdd && (
             <form action={createOma.bind(null, oma.owner.id, oma.periodId)}>
@@ -186,6 +196,8 @@ export default async function OmaDetailPage({
               </button>
             </form>
           )}
+          {showEdit && <DeleteOmaButton omaId={oma.id} sequence={oma.sequence} />}
+          {canTick && <SaveConfirmButton />}
           {showEdit && (
             <Link
               href={`/oma/${oma.id}/edit${qp}`}
