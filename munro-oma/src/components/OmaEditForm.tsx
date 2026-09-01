@@ -145,8 +145,8 @@ export function OmaEditForm({
   const cell = "w-full bg-transparent px-3 py-2 outline-none disabled:text-mfa-muted"
 
   return (
-    <div className="rounded-2xl border-2 border-mfa-red">
-      <div className="flex flex-wrap items-center gap-x-6 gap-y-2 rounded-t-2xl bg-mfa-red px-5 py-3 text-white">
+    <div className="overflow-hidden rounded-2xl border-2 border-mfa-red">
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-2 bg-mfa-red px-5 py-3 text-white">
         <span className="text-lg font-bold">
           OMA{" "}
           {canOutcomeMetric ? (

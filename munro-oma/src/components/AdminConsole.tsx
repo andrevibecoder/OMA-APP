@@ -6,6 +6,7 @@ import {
   createBusinessUnit,
   createPeriod,
   createUser,
+  deleteBusinessUnit,
   deleteUser,
   moveBusinessUnit,
   renameBusinessUnit,
@@ -107,6 +108,16 @@ function BusinessUnitRow({
   const [name, setName] = useState(bu.name)
   const dirty = name.trim() !== bu.name
 
+  function confirmDelete() {
+    const tail =
+      bu._count.users > 0
+        ? `\n\n${bu._count.users} ${bu._count.users === 1 ? "person" : "people"} will be unassigned, not deleted — reassign them afterward.`
+        : ""
+    if (window.confirm(`Delete "${bu.name}"?${tail}\n\nThis cannot be undone.`)) {
+      run(() => deleteBusinessUnit(bu.id))
+    }
+  }
+
   return (
     <li className={`flex flex-wrap items-center gap-2 px-4 py-2 ${dirty ? "bg-mfa-panel" : ""}`}>
       <input className={`${input} min-w-[10rem] flex-1`} value={name} onChange={(e) => setName(e.target.value)} />
@@ -138,6 +149,13 @@ function BusinessUnitRow({
           ↓
         </button>
       </div>
+      <button
+        className="rounded-full border border-mfa-red px-3 py-1 text-sm text-mfa-red disabled:cursor-not-allowed disabled:opacity-60"
+        disabled={pending}
+        onClick={confirmDelete}
+      >
+        Delete
+      </button>
       {error && <p className="w-full text-sm text-mfa-red">{error}</p>}
     </li>
   )

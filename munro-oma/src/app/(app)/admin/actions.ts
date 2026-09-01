@@ -68,6 +68,21 @@ export async function renameBusinessUnit(id: string, name: string): Promise<Resu
   return {}
 }
 
+export async function deleteBusinessUnit(id: string): Promise<Result> {
+  await requireAdmin()
+  const bu = await db.businessUnit.findUnique({ where: { id }, select: { id: true } })
+  if (!bu) return {}
+  // Anyone in this business unit is unassigned (businessUnitId -> null), not
+  // deleted with it — they just fall out of every department list until
+  // reassigned.
+  await db.$transaction([
+    db.user.updateMany({ where: { businessUnitId: id }, data: { businessUnitId: null } }),
+    db.businessUnit.delete({ where: { id } }),
+  ])
+  revalidateApp()
+  return {}
+}
+
 export async function moveBusinessUnit(id: string, direction: "up" | "down"): Promise<Result> {
   await requireAdmin()
   const all = await db.businessUnit.findMany({

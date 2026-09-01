@@ -20,6 +20,26 @@ export async function getCompanyDashboard(periodId: string) {
   }))
 }
 
+// Same shape as getCompanyDashboard, but every department's people are
+// listed out (not just rolled up) — the "who's in which department" view.
+export async function getPeopleDashboard(periodId: string) {
+  const bus = await db.businessUnit.findMany({
+    orderBy: { order: "asc" },
+    include: {
+      users: {
+        where: { active: true },
+        orderBy: { name: "asc" },
+        include: { omas: { where: { periodId }, include: { metrics: { select: { direction: true, target: true, current: true } } } } },
+      },
+    },
+  })
+  return bus.map((bu) => ({
+    id: bu.id,
+    name: bu.name,
+    people: bu.users.map((u) => ({ id: u.id, name: u.name, pct: personProgress(u.omas) })),
+  }))
+}
+
 export async function getBusinessUnit(buId: string, periodId: string) {
   const bu = await db.businessUnit.findUnique({
     where: { id: buId },
