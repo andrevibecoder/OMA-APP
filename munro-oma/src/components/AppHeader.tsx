@@ -10,7 +10,7 @@ export async function AppHeader({ period }: { period?: string }) {
   return (
     <header className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 bg-mfa-black px-6 py-4 text-mfa-white sm:px-8">
       <Link href="/" className="text-xl font-bold uppercase tracking-wide text-mfa-red">
-        OMA Performance Systems
+        OMA — Define it. Track it. Do it.
       </Link>
       <div className="flex items-center gap-4">
         {user.role === "ADMIN" && (
