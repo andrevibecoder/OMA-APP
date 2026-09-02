@@ -18,11 +18,16 @@ export default function LoginPage() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-mfa-black px-6">
       <div className="w-full max-w-sm rounded-2xl bg-mfa-white px-8 py-10">
-        <h1 className="text-center text-3xl font-bold text-mfa-ink">
-          OMA —
-          <br />
-          Define it. Track it. Do it.
-        </h1>
+        <div className="text-center">
+          <h1 className="text-4xl font-bold text-mfa-ink">OMA</h1>
+          <p className="mt-1 text-sm font-semibold uppercase tracking-wide text-mfa-muted">
+            Define it.
+            <br />
+            Track it.
+            <br />
+            Do it.
+          </p>
+        </div>
         <form action={action} className="mt-8 space-y-4">
           <input name="email" type="email" required placeholder="Email"
             className="w-full rounded-lg border border-mfa-track px-4 py-2" />
