@@ -395,7 +395,7 @@ export function OmaEditForm({
       <section>
         <div className="bg-mfa-muted px-5 py-2 text-sm font-semibold text-white">
           ACTIONS{" "}
-          <span className="text-white/70">— the projects and moves that drive the result</span>
+          <span className="text-white/70">— projects that drive results</span>
         </div>
         {actions.map((a, i) => (
           <div

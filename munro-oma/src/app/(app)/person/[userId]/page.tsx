@@ -28,7 +28,7 @@ export default async function PersonPage({
     where: { id: params.userId },
     select: { id: true, managerId: true },
   })
-  const mayAdd = canCreateOMA(viewer, target)
+  const mayAdd = canCreateOMA(viewer, target, period.locked)
   const qp = searchParams.period ? `?period=${periodId}` : ""
 
   return (

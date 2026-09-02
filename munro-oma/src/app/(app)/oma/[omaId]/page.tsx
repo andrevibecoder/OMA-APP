@@ -33,10 +33,18 @@ export default async function OmaDetailPage({
   const oma = await getOma(params.omaId)
   if (!oma) notFound()
   const viewer = await getSessionUser()
-  const authShape = { ownerId: oma.owner.id, owner: { managerId: oma.owner.managerId } }
+  const authShape = {
+    ownerId: oma.owner.id,
+    owner: { managerId: oma.owner.managerId },
+    periodLocked: oma.period.locked,
+  }
   const canTick = canEditActions(viewer, authShape)
   const showEdit = canEditOma(viewer, authShape)
-  const canAdd = canCreateOMA(viewer, { id: oma.owner.id, managerId: oma.owner.managerId })
+  const canAdd = canCreateOMA(
+    viewer,
+    { id: oma.owner.id, managerId: oma.owner.managerId },
+    oma.period.locked,
+  )
   const periodId = await resolvePeriodId(searchParams.period)
   const qp = searchParams.period ? `?period=${encodeURIComponent(periodId)}` : ""
 
@@ -112,7 +120,7 @@ export default async function OmaDetailPage({
         <section>
           <div className="rounded-xl bg-mfa-muted px-5 py-2 text-sm font-semibold text-white">
             ACTIONS{" "}
-            <span className="text-white/70">— the projects and moves that drive the result</span>
+            <span className="text-white/70">— projects that drive results</span>
           </div>
           <div className="mt-3">
           {oma.actions.length === 0 ? (

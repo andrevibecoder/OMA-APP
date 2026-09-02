@@ -13,7 +13,11 @@ export async function createOma(userId: string, periodId: string) {
     where: { id: userId },
     select: { id: true, managerId: true, businessUnitId: true },
   })
-  if (!canCreateOMA(viewer, target)) throw new Error("Not allowed")
+  const period = await db.period.findUniqueOrThrow({
+    where: { id: periodId },
+    select: { startDate: true, locked: true },
+  })
+  if (!canCreateOMA(viewer, target, period.locked)) throw new Error("Not allowed")
 
   const last = await db.oMA.findFirst({
     where: { ownerId: userId, periodId },
@@ -21,10 +25,6 @@ export async function createOma(userId: string, periodId: string) {
     select: { sequence: true },
   })
   const nextSeq = (last?.sequence ?? 0) + 1
-  const period = await db.period.findUniqueOrThrow({
-    where: { id: periodId },
-    select: { startDate: true },
-  })
 
   let oma
   try {

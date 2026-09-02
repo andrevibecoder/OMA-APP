@@ -13,8 +13,9 @@ const admin: SessionUser = { id: "admin", name: "A", role: "ADMIN", businessUnit
 const mgr: SessionUser = { id: "mgr", name: "M", role: "MANAGER", businessUnitId: "bu1", managerId: "boss" }
 const user: SessionUser = { id: "u1", name: "U", role: "USER", businessUnitId: "bu1", managerId: "mgr" }
 
-const omaOfU1: OmaAuthShape = { ownerId: "u1", owner: { managerId: "mgr" } }
-const omaOfOther: OmaAuthShape = { ownerId: "u2", owner: { managerId: "other-mgr" } }
+const omaOfU1: OmaAuthShape = { ownerId: "u1", owner: { managerId: "mgr" }, periodLocked: false }
+const omaOfOther: OmaAuthShape = { ownerId: "u2", owner: { managerId: "other-mgr" }, periodLocked: false }
+const closedOmaOfU1: OmaAuthShape = { ...omaOfU1, periodLocked: true }
 
 describe("canEditOutcomeMetric", () => {
   it("admin: any", () => expect(canEditOutcomeMetric(admin, omaOfOther)).toBe(true))
@@ -24,7 +25,13 @@ describe("canEditOutcomeMetric", () => {
   })
   it("user: never", () => expect(canEditOutcomeMetric(user, omaOfU1)).toBe(false))
   it("manager: null managerId blocks", () =>
-    expect(canEditOutcomeMetric(mgr, { ownerId: "x", owner: { managerId: null } })).toBe(false))
+    expect(
+      canEditOutcomeMetric(mgr, { ownerId: "x", owner: { managerId: null }, periodLocked: false }),
+    ).toBe(false))
+  it("closed period: admin still can, manager can't", () => {
+    expect(canEditOutcomeMetric(admin, closedOmaOfU1)).toBe(true)
+    expect(canEditOutcomeMetric(mgr, closedOmaOfU1)).toBe(false)
+  })
 })
 
 describe("canEditActions", () => {
@@ -34,22 +41,36 @@ describe("canEditActions", () => {
   })
   it("manager: own team", () => expect(canEditActions(mgr, omaOfU1)).toBe(true))
   it("manager: own OMA", () =>
-    expect(canEditActions(mgr, { ownerId: "mgr", owner: { managerId: "boss" } })).toBe(true))
+    expect(
+      canEditActions(mgr, { ownerId: "mgr", owner: { managerId: "boss" }, periodLocked: false }),
+    ).toBe(true))
   it("manager: null managerId blocks", () =>
-    expect(canEditActions(mgr, { ownerId: "x", owner: { managerId: null } })).toBe(false))
+    expect(
+      canEditActions(mgr, { ownerId: "x", owner: { managerId: null }, periodLocked: false }),
+    ).toBe(false))
   it("manager: other team blocks", () => expect(canEditActions(mgr, omaOfOther)).toBe(false))
   it("admin: any", () => expect(canEditActions(admin, omaOfOther)).toBe(true))
+  it("closed period: admin still can, owner can't", () => {
+    expect(canEditActions(admin, closedOmaOfU1)).toBe(true)
+    expect(canEditActions(user, closedOmaOfU1)).toBe(false)
+  })
 })
 
 describe("canCreateOMA", () => {
   const target = { id: "u1", managerId: "mgr" }
-  it("manager for own team", () => expect(canCreateOMA(mgr, target)).toBe(true))
-  it("manager not for other teams", () => expect(canCreateOMA(mgr, { id: "u2", managerId: "x" })).toBe(false))
+  it("manager for own team", () => expect(canCreateOMA(mgr, target, false)).toBe(true))
+  it("manager not for other teams", () =>
+    expect(canCreateOMA(mgr, { id: "u2", managerId: "x" }, false)).toBe(false))
   it("user can create their own", () =>
-    expect(canCreateOMA(user, { id: "u1", managerId: "mgr" })).toBe(true))
+    expect(canCreateOMA(user, { id: "u1", managerId: "mgr" }, false)).toBe(true))
   it("user not for someone else", () =>
-    expect(canCreateOMA(user, { id: "u2", managerId: "x" })).toBe(false))
-  it("admin any team", () => expect(canCreateOMA(admin, { id: "u2", managerId: "x" })).toBe(true))
+    expect(canCreateOMA(user, { id: "u2", managerId: "x" }, false)).toBe(false))
+  it("admin any team", () => expect(canCreateOMA(admin, { id: "u2", managerId: "x" }, false)).toBe(true))
+  it("locked period: admin still can, manager and owner can't", () => {
+    expect(canCreateOMA(admin, target, true)).toBe(true)
+    expect(canCreateOMA(mgr, target, true)).toBe(false)
+    expect(canCreateOMA(user, target, true)).toBe(false)
+  })
 })
 
 describe("canEditProfile", () => {

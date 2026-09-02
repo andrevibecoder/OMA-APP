@@ -18,11 +18,17 @@ export async function tickAction(actionId: string, completed: boolean): Promise<
           id: true,
           ownerId: true,
           owner: { select: { managerId: true, businessUnitId: true } },
+          period: { select: { locked: true } },
         },
       },
     },
   })
-  if (!canEditActions(viewer, { ownerId: action.oma.ownerId, owner: action.oma.owner })) {
+  const canTick = canEditActions(viewer, {
+    ownerId: action.oma.ownerId,
+    owner: action.oma.owner,
+    periodLocked: action.oma.period.locked,
+  })
+  if (!canTick) {
     throw new Error("Not allowed")
   }
   // Preserve an existing completion timestamp; only stamp fresh on a false -> true transition.
@@ -49,9 +55,14 @@ export async function saveOma(input: SaveOmaInput): Promise<void> {
     include: {
       owner: { select: { id: true, managerId: true, businessUnitId: true } },
       actions: { select: { id: true, completed: true, completedAt: true } },
+      period: { select: { locked: true } },
     },
   })
-  const authShape = { ownerId: oma.owner.id, owner: { managerId: oma.owner.managerId } }
+  const authShape = {
+    ownerId: oma.owner.id,
+    owner: { managerId: oma.owner.managerId },
+    periodLocked: oma.period.locked,
+  }
   const mayOutcome = canEditOutcomeMetric(viewer, authShape)
   const mayActions = canEditActions(viewer, authShape)
   if (!mayOutcome && !mayActions) throw new Error("Not allowed")
@@ -185,9 +196,14 @@ export async function deleteOma(omaId: string): Promise<void> {
       ownerId: true,
       periodId: true,
       owner: { select: { managerId: true, businessUnitId: true } },
+      period: { select: { locked: true } },
     },
   })
-  const authShape = { ownerId: oma.ownerId, owner: { managerId: oma.owner.managerId } }
+  const authShape = {
+    ownerId: oma.ownerId,
+    owner: { managerId: oma.owner.managerId },
+    periodLocked: oma.period.locked,
+  }
   if (!canEditOma(viewer, authShape)) throw new Error("Not allowed")
 
   const siblings = await db.oMA.findMany({

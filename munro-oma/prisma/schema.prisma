@@ -68,6 +68,11 @@ model Period {
   year       Int
   startDate  DateTime
   isActive   Boolean    @default(false)
+  // Independent of isActive: once locked, only Admin may create/edit OMAs
+  // against this period. Locking doesn't change which period is "active" —
+  // an admin can close off H2 2026 while it's still the default view, ahead
+  // of activating H1 2027.
+  locked     Boolean    @default(false)
   omas       OMA[]
 }
 

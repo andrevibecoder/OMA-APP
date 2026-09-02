@@ -5,6 +5,7 @@ import type { AdminData } from "@/lib/admin"
 import {
   createBusinessUnit,
   createPeriod,
+  setPeriodLocked,
   createUser,
   deleteBusinessUnit,
   deleteUser,
@@ -252,6 +253,18 @@ function PeriodRow({ p }: { p: AdminData["periods"][number] }) {
         {p._count.omas} {p._count.omas === 1 ? "OMA" : "OMAs"}
       </span>
       {p.isActive && <span className="text-xs font-semibold text-mfa-red">ACTIVE</span>}
+      <button
+        className={ghostBtn}
+        disabled={pending}
+        onClick={() => run(() => setPeriodLocked(p.id, !p.locked))}
+      >
+        {p.locked ? "Unlock" : "Lock"}
+      </button>
+      {p.locked && (
+        <span className="text-xs font-semibold text-mfa-muted" title="Only Admin can create or edit OMAs in this period">
+          LOCKED
+        </span>
+      )}
       {error && <p className="w-full text-sm text-mfa-red">{error}</p>}
     </li>
   )

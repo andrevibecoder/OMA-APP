@@ -17,7 +17,11 @@ export default async function OmaEditPage({
   const oma = await getOma(params.omaId)
   if (!oma) notFound()
   const viewer = await getSessionUser()
-  const authShape = { ownerId: oma.owner.id, owner: { managerId: oma.owner.managerId } }
+  const authShape = {
+    ownerId: oma.owner.id,
+    owner: { managerId: oma.owner.managerId },
+    periodLocked: oma.period.locked,
+  }
   if (!canEditOma(viewer, authShape)) redirect(`/oma/${oma.id}`)
   const periodId = await resolvePeriodId(searchParams.period)
   const qp = searchParams.period ? `?period=${encodeURIComponent(periodId)}` : ""

@@ -1,6 +1,12 @@
 import type { SessionUser } from "@/types"
 
-export type OmaAuthShape = { ownerId: string; owner: { managerId: string | null } }
+export type OmaAuthShape = {
+  ownerId: string
+  owner: { managerId: string | null }
+  // A locked period is the historical record — only Admin may still touch
+  // its OMAs (edit, tick actions, delete). Independent of Period.isActive.
+  periodLocked: boolean
+}
 
 function managesOwner(user: SessionUser, oma: OmaAuthShape): boolean {
   return oma.owner.managerId !== null && oma.owner.managerId === user.id
@@ -8,12 +14,14 @@ function managesOwner(user: SessionUser, oma: OmaAuthShape): boolean {
 
 export function canEditOutcomeMetric(user: SessionUser, oma: OmaAuthShape): boolean {
   if (user.role === "ADMIN") return true
+  if (oma.periodLocked) return false
   if (user.role === "MANAGER") return managesOwner(user, oma)
   return false
 }
 
 export function canEditActions(user: SessionUser, oma: OmaAuthShape): boolean {
   if (user.role === "ADMIN") return true
+  if (oma.periodLocked) return false
   if (oma.ownerId === user.id) return true
   if (user.role === "MANAGER") return managesOwner(user, oma)
   return false
@@ -22,8 +30,10 @@ export function canEditActions(user: SessionUser, oma: OmaAuthShape): boolean {
 export function canCreateOMA(
   user: SessionUser,
   target: { id: string; managerId: string | null },
+  periodLocked: boolean,
 ): boolean {
   if (user.role === "ADMIN") return true
+  if (periodLocked) return false
   if (user.id === target.id) return true // the person can start their own OMA
   if (user.role === "MANAGER") return target.managerId !== null && target.managerId === user.id
   return false

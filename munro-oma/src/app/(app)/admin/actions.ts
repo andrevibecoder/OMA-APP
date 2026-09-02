@@ -149,6 +149,16 @@ export async function setActivePeriod(id: string): Promise<Result> {
   return {}
 }
 
+// Independent of isActive — locking a period closes it off to everyone but
+// Admin (create/edit/tick/delete OMAs) without changing which period is the
+// default view.
+export async function setPeriodLocked(id: string, locked: boolean): Promise<Result> {
+  await requireAdmin()
+  await db.period.update({ where: { id }, data: { locked } })
+  revalidateApp()
+  return {}
+}
+
 // --------------------------------------------------------------------------
 // Users
 // --------------------------------------------------------------------------
