@@ -50,7 +50,18 @@ model User {
   managerId      String?
   team           User[]        @relation("TeamMembers")
   omas           OMA[]         @relation("OwnedOMAs")
+  loginEvents    LoginEvent[]
   createdAt      DateTime      @default(now())
+}
+
+model LoginEvent {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
 }
 
 model BusinessUnit {

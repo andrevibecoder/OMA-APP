@@ -52,6 +52,7 @@ export function AdminConsole({ data, viewerId }: { data: AdminData; viewerId: st
       <BusinessUnitsSection data={data} />
       <PeriodsSection data={data} />
       <UsersSection data={data} viewerId={viewerId} />
+      <LoginActivitySection data={data} />
     </div>
   )
 }
@@ -539,5 +540,50 @@ function UserRow({
         </tr>
       )}
     </>
+  )
+}
+
+// --------------------------------------------------------------------------
+
+function fmtLoginAt(d: Date | string): string {
+  return new Date(d).toLocaleString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  })
+}
+
+function LoginActivitySection({ data }: { data: AdminData }) {
+  const { loginEvents } = data
+  return (
+    <section className="overflow-hidden rounded-xl border border-mfa-track">
+      <div className={band}>Login activity</div>
+      {loginEvents.length === 0 ? (
+        <p className="px-4 py-3 text-sm text-mfa-muted">No sign-ins recorded yet.</p>
+      ) : (
+        <div className="max-h-96 overflow-y-auto">
+          <table className="w-full text-left text-sm">
+            <thead className="sticky top-0 bg-mfa-white text-xs uppercase tracking-widest text-mfa-muted">
+              <tr>
+                <th className="px-4 py-2 font-semibold">Name</th>
+                <th className="px-4 py-2 font-semibold">Email</th>
+                <th className="px-4 py-2 font-semibold">Signed in</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-mfa-track">
+              {loginEvents.map((e) => (
+                <tr key={e.id}>
+                  <td className="px-4 py-2 font-semibold">{e.user.name}</td>
+                  <td className="px-4 py-2 text-mfa-muted">{e.user.email}</td>
+                  <td className="px-4 py-2 text-mfa-muted">{fmtLoginAt(e.createdAt)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
   )
 }

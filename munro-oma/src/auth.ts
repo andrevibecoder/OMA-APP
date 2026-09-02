@@ -40,6 +40,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         }
 
         attempts.delete(key)
+        // Awaited (not fire-and-forget) so it isn't dropped when the
+        // serverless function freezes right after authorize() returns.
+        // A logging failure still shouldn't block a real sign-in.
+        try {
+          await db.loginEvent.create({ data: { userId: user.id } })
+        } catch {
+          // ignore — logging is best-effort
+        }
         return {
           id: user.id,
           name: user.name,

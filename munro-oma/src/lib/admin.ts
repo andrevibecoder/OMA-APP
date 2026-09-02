@@ -12,8 +12,10 @@ export async function requireAdmin(): Promise<SessionUser> {
   return user
 }
 
+const LOGIN_LOG_LIMIT = 200
+
 export async function getAdminData() {
-  const [businessUnits, periodsRaw, users] = await Promise.all([
+  const [businessUnits, periodsRaw, users, loginEvents] = await Promise.all([
     db.businessUnit.findMany({
       orderBy: { order: "asc" },
       select: { id: true, name: true, order: true, _count: { select: { users: true } } },
@@ -46,6 +48,11 @@ export async function getAdminData() {
         _count: { select: { omas: true, team: true } },
       },
     }),
+    db.loginEvent.findMany({
+      orderBy: { createdAt: "desc" },
+      take: LOGIN_LOG_LIMIT,
+      select: { id: true, createdAt: true, user: { select: { id: true, name: true, email: true } } },
+    }),
   ])
 
   const periods = periodsRaw.sort(
@@ -55,7 +62,7 @@ export async function getAdminData() {
       a.startDate.getTime() - b.startDate.getTime(),
   )
 
-  return { businessUnits, periods, users }
+  return { businessUnits, periods, users, loginEvents }
 }
 
 export type AdminData = Awaited<ReturnType<typeof getAdminData>>
