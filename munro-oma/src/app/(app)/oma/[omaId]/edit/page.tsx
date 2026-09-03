@@ -67,6 +67,7 @@ export default async function OmaEditPage({
             description: a.description,
             dueDate: a.dueDate ? a.dueDate.toISOString().slice(0, 10) : null,
             completed: a.completed,
+            completedAt: a.completedAt ? a.completedAt.toISOString().slice(0, 10) : null,
           })),
         }}
           canOutcomeMetric={canEditOutcomeMetric(viewer, authShape)}

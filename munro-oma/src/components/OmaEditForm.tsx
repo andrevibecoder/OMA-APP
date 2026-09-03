@@ -38,7 +38,13 @@ type Oma = {
     apiPath: string | null
     apiKey: string | null
   }[]
-  actions: { id: string; description: string; dueDate: string | null; completed: boolean }[]
+  actions: {
+    id: string
+    description: string
+    dueDate: string | null
+    completed: boolean
+    completedAt: string | null
+  }[]
 }
 
 const EMPTY_METRIC: FormMetric = {
@@ -116,6 +122,13 @@ export function OmaEditForm({
   )
   const [actions, setActions] = useState<SaveOmaInput["actions"]>(oma.actions)
   const [pending, start] = useTransition()
+  const [showAllDone, setShowAllDone] = useState(false)
+
+  // Original completedAt per action id — actions state itself doesn't carry it
+  // (saveOma recomputes it server-side), so look it up from the initial load
+  // for display only. A freshly-ticked or freshly-added row has no id match
+  // here yet, so it just shows no date until the next save/reload.
+  const completedAtById = new Map(oma.actions.map((a) => [a.id, a.completedAt]))
 
   function submit() {
     start(() =>
@@ -397,63 +410,126 @@ export function OmaEditForm({
           ACTIONS{" "}
           <span className="text-white/70">— projects that drive results</span>
         </div>
-        {actions.map((a, i) => (
-          <div
-            key={a.id ?? `new-${i}`}
-            className="grid grid-cols-[auto_1fr_auto_auto] items-center gap-2 border-t border-mfa-track px-3 first:border-t-0"
-          >
-            <input
-              type="checkbox"
-              checked={a.completed}
-              disabled={!canActions}
-              onChange={(e) =>
-                setActions(
-                  actions.map((x, j) => (j === i ? { ...x, completed: e.target.checked } : x)),
-                )
-              }
-              className="h-4 w-4 accent-mfa-red"
-            />
-            <input
-              value={a.description}
-              disabled={!canActions}
-              placeholder="Action — what you'll do"
-              onChange={(e) =>
-                setActions(
-                  actions.map((x, j) => (j === i ? { ...x, description: e.target.value } : x)),
-                )
-              }
-              className={cell}
-            />
-            <div className="flex items-center gap-1 px-3 text-sm text-mfa-muted">
-              <span>Due</span>
+        {(() => {
+          const renderRow = (a: SaveOmaInput["actions"][number], i: number) => (
+            <div
+              key={a.id ?? `new-${i}`}
+              className="grid grid-cols-[auto_1fr_auto_auto] items-center gap-2 border-t border-mfa-track px-3 first:border-t-0"
+            >
               <input
-                type="date"
-                value={a.dueDate ?? ""}
+                type="checkbox"
+                checked={a.completed}
                 disabled={!canActions}
                 onChange={(e) =>
                   setActions(
-                    actions.map((x, j) => (j === i ? { ...x, dueDate: e.target.value || null } : x)),
+                    actions.map((x, j) => (j === i ? { ...x, completed: e.target.checked } : x)),
                   )
                 }
-                className="bg-transparent py-2 text-mfa-ink outline-none disabled:text-mfa-muted"
+                className="h-4 w-4 accent-mfa-red"
               />
+              <input
+                value={a.description}
+                disabled={!canActions}
+                placeholder="Action — what you'll do"
+                onChange={(e) =>
+                  setActions(
+                    actions.map((x, j) => (j === i ? { ...x, description: e.target.value } : x)),
+                  )
+                }
+                className={a.completed ? `${cell} text-mfa-muted line-through` : cell}
+              />
+              <div className="flex items-center gap-1 px-3 text-sm text-mfa-muted">
+                {a.completed ? (
+                  <span>
+                    {completedAtById.get(a.id ?? "")
+                      ? `Completed ${fmtDate(completedAtById.get(a.id ?? "")!)}`
+                      : "Completed"}
+                  </span>
+                ) : (
+                  <>
+                    <span>Due</span>
+                    <input
+                      type="date"
+                      value={a.dueDate ?? ""}
+                      disabled={!canActions}
+                      onChange={(e) =>
+                        setActions(
+                          actions.map((x, j) =>
+                            j === i ? { ...x, dueDate: e.target.value || null } : x,
+                          ),
+                        )
+                      }
+                      className="bg-transparent py-2 text-mfa-ink outline-none disabled:text-mfa-muted"
+                    />
+                  </>
+                )}
+              </div>
+              {canActions && (
+                <button
+                  type="button"
+                  onClick={() => setActions(actions.filter((_, j) => j !== i))}
+                  className="px-2 text-mfa-muted"
+                >
+                  ✕
+                </button>
+              )}
             </div>
-            {canActions && (
-              <button
-                type="button"
-                onClick={() => setActions(actions.filter((_, j) => j !== i))}
-                className="px-2 text-mfa-muted"
-              >
-                ✕
-              </button>
-            )}
-          </div>
-        ))}
+          )
+
+          const indexed = actions.map((a, i) => ({ a, i }))
+          const todo = indexed
+            .filter(({ a }) => !a.completed)
+            .sort((x, y) => {
+              if (x.a.dueDate && y.a.dueDate) return x.a.dueDate < y.a.dueDate ? -1 : 1
+              if (x.a.dueDate) return -1
+              if (y.a.dueDate) return 1
+              return 0
+            })
+          const done = indexed
+            .filter(({ a }) => a.completed)
+            .sort((x, y) => {
+              const cx = completedAtById.get(x.a.id ?? "") ?? ""
+              const cy = completedAtById.get(y.a.id ?? "") ?? ""
+              return cx < cy ? -1 : cx > cy ? 1 : 0
+            })
+          const COLLAPSE_AT = 3
+          const visibleDone = showAllDone ? done : done.slice(0, COLLAPSE_AT)
+          const hiddenDone = done.length - visibleDone.length
+
+          return (
+            <>
+              {todo.map(({ a, i }) => renderRow(a, i))}
+              {todo.length === 0 && done.length > 0 && (
+                <p className="border-t border-mfa-track px-5 py-3 text-sm text-mfa-muted">
+                  Nothing outstanding.
+                </p>
+              )}
+              {done.length > 0 && (
+                <div className="border-t border-mfa-track bg-mfa-panel/40 px-5 py-2 text-xs font-semibold uppercase tracking-widest text-mfa-muted">
+                  Completed ({done.length})
+                </div>
+              )}
+              {visibleDone.map(({ a, i }) => renderRow(a, i))}
+              {hiddenDone > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setShowAllDone(true)}
+                  className="w-full border-t border-mfa-track px-5 py-2 text-left text-sm text-mfa-red"
+                >
+                  Show {hiddenDone} more completed
+                </button>
+              )}
+            </>
+          )
+        })()}
         {canActions && (
           <button
             type="button"
             onClick={() =>
-              setActions([...actions, { description: "", dueDate: null, completed: false }])
+              setActions([
+                ...actions,
+                { description: "", dueDate: null, completed: false },
+              ])
             }
             className="px-3 py-2 text-sm text-mfa-red"
           >
