@@ -120,7 +120,7 @@ export default async function OmaDetailPage({
 
         <section>
           <div className="rounded-xl bg-mfa-muted px-5 py-2 text-sm font-semibold text-white">
-            ACTIONS — 3 to Thrive{" "}
+            ACTIONS — 3-2-Thrive{" "}
             <span className="text-white/70">— projects that drive results</span>
           </div>
           <div className="mt-3">
