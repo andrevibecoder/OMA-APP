@@ -123,6 +123,7 @@ export function OmaEditForm({
   const [actions, setActions] = useState<SaveOmaInput["actions"]>(oma.actions)
   const [pending, start] = useTransition()
   const [showAllDone, setShowAllDone] = useState(false)
+  const [showAllTodo, setShowAllTodo] = useState(false)
 
   // Original completedAt per action id — actions state itself doesn't carry it
   // (saveOma recomputes it server-side), so look it up from the initial load
@@ -492,13 +493,26 @@ export function OmaEditForm({
               const cy = completedAtById.get(y.a.id ?? "") ?? ""
               return cx < cy ? -1 : cx > cy ? 1 : 0
             })
-          const COLLAPSE_AT = 3
-          const visibleDone = showAllDone ? done : done.slice(0, COLLAPSE_AT)
+          const TODO_COLLAPSE_AT = 7
+          const visibleTodo = showAllTodo ? todo : todo.slice(0, TODO_COLLAPSE_AT)
+          const hiddenTodo = todo.length - visibleTodo.length
+
+          const DONE_COLLAPSE_AT = 3
+          const visibleDone = showAllDone ? done : done.slice(0, DONE_COLLAPSE_AT)
           const hiddenDone = done.length - visibleDone.length
 
           return (
             <>
-              {todo.map(({ a, i }) => renderRow(a, i))}
+              {visibleTodo.map(({ a, i }) => renderRow(a, i))}
+              {hiddenTodo > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setShowAllTodo(true)}
+                  className="w-full border-t border-mfa-track px-5 py-2 text-left text-sm text-mfa-red"
+                >
+                  See {hiddenTodo} more
+                </button>
+              )}
               {todo.length === 0 && done.length > 0 && (
                 <p className="border-t border-mfa-track px-5 py-3 text-sm text-mfa-muted">
                   Nothing outstanding.
