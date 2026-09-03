@@ -14,23 +14,34 @@ export function RagBar({
   // submit button (e.g. "create and open OMA 1") instead of a link.
   formAction?: () => Promise<void>
 }) {
+  const clickable = !!(href || formAction)
+  // Same padding/hover slot on every row, clickable or not, so a plain row
+  // (e.g. Total Average) still lines up exactly with the clickable ones
+  // around it — only the highlight and chevron are conditional.
   const row = (
-    <div className="flex items-center gap-6 py-3">
+    <div
+      className={`-mx-2 flex items-center gap-6 rounded-md px-2 py-3 ${
+        clickable ? "transition-colors hover:bg-mfa-panel" : ""
+      }`}
+    >
       <span className="w-44 shrink-0 font-semibold">{label}</span>
       <div className="h-6 flex-1 overflow-hidden rounded-md bg-mfa-track">
         <div className="h-full rounded-md" style={{ width: `${value}%`, background: ragColorVar(ragState(value)) }} />
       </div>
       <span className="w-14 shrink-0 text-right font-semibold">{value}%</span>
+      <span className="w-3 shrink-0 text-mfa-muted" aria-hidden>
+        {clickable ? "›" : ""}
+      </span>
     </div>
   )
   if (formAction) {
     return (
       <form action={formAction}>
-        <button type="submit" className="block w-full text-left hover:opacity-80">
+        <button type="submit" className="block w-full text-left">
           {row}
         </button>
       </form>
     )
   }
-  return href ? <Link href={href} className="block hover:opacity-80">{row}</Link> : row
+  return href ? <Link href={href} className="block">{row}</Link> : row
 }

@@ -37,6 +37,7 @@ export default async function OmaDetailPage({
     ownerId: oma.owner.id,
     owner: { managerId: oma.owner.managerId },
     periodLocked: oma.period.locked,
+    createdById: oma.createdById,
   }
   const canTick = canEditActions(viewer, authShape)
   const showEdit = canEditOma(viewer, authShape)

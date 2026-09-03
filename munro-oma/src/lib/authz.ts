@@ -6,6 +6,10 @@ export type OmaAuthShape = {
   // A locked period is the historical record — only Admin may still touch
   // its OMAs (edit, tick actions, delete). Independent of Period.isActive.
   periodLocked: boolean
+  // Who actually started this OMA — distinct from ownerId. An owner may set
+  // their own Outcome/Metric only on an OMA they created themselves; one a
+  // manager set up for them stays manager/admin-only there.
+  createdById: string | null
 }
 
 function managesOwner(user: SessionUser, oma: OmaAuthShape): boolean {
@@ -15,7 +19,8 @@ function managesOwner(user: SessionUser, oma: OmaAuthShape): boolean {
 export function canEditOutcomeMetric(user: SessionUser, oma: OmaAuthShape): boolean {
   if (user.role === "ADMIN") return true
   if (oma.periodLocked) return false
-  if (user.role === "MANAGER") return managesOwner(user, oma)
+  if (user.role === "MANAGER" && managesOwner(user, oma)) return true
+  if (oma.ownerId === user.id && oma.createdById === user.id) return true // self-created, self-defined
   return false
 }
 

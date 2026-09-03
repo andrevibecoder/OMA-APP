@@ -29,7 +29,14 @@ export async function createOma(userId: string, periodId: string) {
   let oma
   try {
     oma = await db.oMA.create({
-      data: { ownerId: userId, periodId, sequence: nextSeq, date: period.startDate, outcome: "" },
+      data: {
+        ownerId: userId,
+        createdById: viewer.id,
+        periodId,
+        sequence: nextSeq,
+        date: period.startDate,
+        outcome: "",
+      },
     })
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {

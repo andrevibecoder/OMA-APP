@@ -21,6 +21,7 @@ export default async function OmaEditPage({
     ownerId: oma.owner.id,
     owner: { managerId: oma.owner.managerId },
     periodLocked: oma.period.locked,
+    createdById: oma.createdById,
   }
   if (!canEditOma(viewer, authShape)) redirect(`/oma/${oma.id}`)
   const periodId = await resolvePeriodId(searchParams.period)

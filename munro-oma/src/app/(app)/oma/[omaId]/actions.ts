@@ -17,6 +17,7 @@ export async function tickAction(actionId: string, completed: boolean): Promise<
         select: {
           id: true,
           ownerId: true,
+          createdById: true,
           owner: { select: { managerId: true, businessUnitId: true } },
           period: { select: { locked: true } },
         },
@@ -27,6 +28,7 @@ export async function tickAction(actionId: string, completed: boolean): Promise<
     ownerId: action.oma.ownerId,
     owner: action.oma.owner,
     periodLocked: action.oma.period.locked,
+    createdById: action.oma.createdById,
   })
   if (!canTick) {
     throw new Error("Not allowed")
@@ -62,6 +64,7 @@ export async function saveOma(input: SaveOmaInput): Promise<void> {
     ownerId: oma.owner.id,
     owner: { managerId: oma.owner.managerId },
     periodLocked: oma.period.locked,
+    createdById: oma.createdById,
   }
   const mayOutcome = canEditOutcomeMetric(viewer, authShape)
   const mayActions = canEditActions(viewer, authShape)
@@ -194,6 +197,7 @@ export async function deleteOma(omaId: string): Promise<void> {
     select: {
       id: true,
       ownerId: true,
+      createdById: true,
       periodId: true,
       owner: { select: { managerId: true, businessUnitId: true } },
       period: { select: { locked: true } },
@@ -203,6 +207,7 @@ export async function deleteOma(omaId: string): Promise<void> {
     ownerId: oma.ownerId,
     owner: { managerId: oma.owner.managerId },
     periodLocked: oma.period.locked,
+    createdById: oma.createdById,
   }
   if (!canEditOma(viewer, authShape)) throw new Error("Not allowed")
 

@@ -50,6 +50,7 @@ model User {
   managerId      String?
   team           User[]        @relation("TeamMembers")
   omas           OMA[]         @relation("OwnedOMAs")
+  createdOmas    OMA[]         @relation("CreatedOMAs")
   loginEvents    LoginEvent[]
   createdAt      DateTime      @default(now())
 }
@@ -88,19 +89,24 @@ model Period {
 }
 
 model OMA {
-  id        String   @id @default(cuid())
-  owner     User     @relation("OwnedOMAs", fields: [ownerId], references: [id])
-  ownerId   String
-  period    Period   @relation(fields: [periodId], references: [id])
-  periodId  String
-  sequence  Int
-  date      DateTime @default(now()) // period start ("From")
-  endDate   DateTime? // period end ("To")
-  outcome   String
-  metrics   Metric[]
-  actions   Action[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String    @id @default(cuid())
+  owner       User      @relation("OwnedOMAs", fields: [ownerId], references: [id])
+  ownerId     String
+  // Who actually started this OMA — distinct from ownerId (whose OMA it is).
+  // An owner may edit their own Outcome/Metric only on OMAs they created
+  // themselves; one a manager set up for them stays manager/admin-only there.
+  createdBy   User?     @relation("CreatedOMAs", fields: [createdById], references: [id], onDelete: SetNull)
+  createdById String?
+  period      Period    @relation(fields: [periodId], references: [id])
+  periodId    String
+  sequence    Int
+  date        DateTime  @default(now()) // period start ("From")
+  endDate     DateTime? // period end ("To")
+  outcome     String
+  metrics     Metric[]
+  actions     Action[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   @@unique([ownerId, periodId, sequence])
 }
