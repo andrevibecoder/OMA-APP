@@ -120,7 +120,7 @@ export default async function OmaDetailPage({
 
         <section>
           <div className="rounded-xl bg-mfa-muted px-5 py-2 text-sm font-semibold text-white">
-            ACTIONS{" "}
+            ACTIONS — 3 to Thrive{" "}
             <span className="text-white/70">— projects that drive results</span>
           </div>
           <div className="mt-3">
@@ -148,7 +148,7 @@ export default async function OmaDetailPage({
               return (
                 <>
                   <div>
-                    <h3 className={groupHeading}>3-2-Thrive</h3>
+                    <h3 className={groupHeading}>To do</h3>
                     <ul className="space-y-2">
                       {todo.map((a) => (
                         <li key={a.id} className={row}>
