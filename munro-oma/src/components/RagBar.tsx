@@ -29,6 +29,9 @@ export function RagBar({
         <div className="h-full rounded-md" style={{ width: `${value}%`, background: ragColorVar(ragState(value)) }} />
       </div>
       <span className="w-14 shrink-0 text-right font-semibold">{value}%</span>
+      <span className="w-9 shrink-0 text-right text-[10px] uppercase tracking-wide text-mfa-muted/50" aria-hidden>
+        {clickable ? "Click" : ""}
+      </span>
       <span className="w-3 shrink-0 text-mfa-muted" aria-hidden>
         {clickable ? "›" : ""}
       </span>
