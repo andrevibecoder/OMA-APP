@@ -62,6 +62,9 @@ export default async function PersonPage({
                   <span className="min-w-0 flex-1 truncate text-sm text-mfa-muted">
                     {o.outcome || <em>Not set yet.</em>}
                   </span>
+                  <span className="shrink-0 text-[10px] uppercase tracking-wide text-mfa-muted/50">
+                    Click
+                  </span>
                   <span className="shrink-0 text-mfa-muted">›</span>
                 </div>
                 {primary ? (
