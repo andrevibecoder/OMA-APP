@@ -4,6 +4,7 @@ import { useState, useTransition } from "react"
 import { saveOma } from "@/app/(app)/oma/[omaId]/actions"
 import { DeleteOmaButton } from "@/components/DeleteOmaButton"
 import { formatMetricValue } from "@/lib/progress"
+import { omaSaveBlockers } from "@/lib/omaValidation"
 import type { MetricDirection, MetricUnit, SaveOmaInput } from "@/types"
 
 type MetricSource = "MANUAL" | "API"
@@ -78,6 +79,19 @@ function hint(v: string, unit: MetricUnit): string {
   return formatted === v ? "" : formatted
 }
 
+// A server action that calls redirect() / notFound() rejects the client promise
+// with a framework "error" carrying this digest. It's control flow, not a failure.
+function isRedirectError(e: unknown): boolean {
+  return (
+    typeof e === "object" &&
+    e !== null &&
+    "digest" in e &&
+    typeof (e as { digest: unknown }).digest === "string" &&
+    ((e as { digest: string }).digest.startsWith("NEXT_REDIRECT") ||
+      (e as { digest: string }).digest === "NEXT_NOT_FOUND")
+  )
+}
+
 function fmtDate(iso: string): string {
   return new Date(iso).toLocaleDateString("en-GB", {
     day: "2-digit",
@@ -122,6 +136,7 @@ export function OmaEditForm({
   )
   const [actions, setActions] = useState<SaveOmaInput["actions"]>(oma.actions)
   const [pending, start] = useTransition()
+  const [error, setError] = useState<string | null>(null)
   const [showAllDone, setShowAllDone] = useState(false)
   const [showAllTodo, setShowAllTodo] = useState(false)
 
@@ -132,6 +147,29 @@ export function OmaEditForm({
   const completedAtById = new Map(oma.actions.map((a) => [a.id, a.completedAt]))
 
   function submit() {
+    const payloadMetrics = metrics.map((m) => ({
+      measure: m.measure,
+      unit: m.unit,
+      direction: m.direction,
+      target: Number(m.target) || 0,
+      current: Number(m.current) || 0,
+      source: m.source,
+      apiUrl: m.apiUrl.trim() || null,
+      apiPath: m.apiPath.trim() || null,
+      apiKey: m.apiKey.trim() || null,
+    }))
+
+    // Stop a half-done save before it leaves the browser — same rule the server
+    // enforces (omaValidation), just without the round trip.
+    if (canOutcomeMetric) {
+      const blockers = omaSaveBlockers({ outcome, metrics: payloadMetrics })
+      if (blockers.length) {
+        setError(blockers.join(" "))
+        return
+      }
+    }
+
+    setError(null)
     start(() =>
       saveOma({
         omaId: oma.id,
@@ -140,18 +178,18 @@ export function OmaEditForm({
         date,
         endDate,
         outcome,
-        metrics: metrics.map((m) => ({
-          measure: m.measure,
-          unit: m.unit,
-          direction: m.direction,
-          target: Number(m.target) || 0,
-          current: Number(m.current) || 0,
-          source: m.source,
-          apiUrl: m.apiUrl.trim() || null,
-          apiPath: m.apiPath.trim() || null,
-          apiKey: m.apiKey.trim() || null,
-        })),
+        metrics: payloadMetrics,
         actions,
+      }).catch((e: unknown) => {
+        // saveOma ends in redirect() on success. Next signals that with a
+        // NEXT_REDIRECT "error" it handles itself — ignore it. Anything else is
+        // a real failure: surface it instead of leaving the button looking idle.
+        if (isRedirectError(e)) return
+        setError(
+          e instanceof Error && e.message
+            ? e.message
+            : "Something went wrong while saving. Please try again.",
+        )
       }),
     )
   }
@@ -552,7 +590,12 @@ export function OmaEditForm({
         )}
       </section>
 
-      <div className="flex justify-end gap-3 p-4">
+      <div className="flex flex-wrap items-center justify-end gap-x-3 gap-y-2 p-4">
+        {error && (
+          <p role="alert" className="mr-auto text-sm font-semibold text-mfa-red">
+            {error}
+          </p>
+        )}
         <DeleteOmaButton omaId={oma.id} sequence={oma.sequence} />
         <button
           onClick={submit}
