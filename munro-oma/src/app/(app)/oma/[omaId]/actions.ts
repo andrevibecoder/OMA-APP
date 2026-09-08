@@ -4,8 +4,10 @@ import { redirect } from "next/navigation"
 import { revalidatePath } from "next/cache"
 import { Prisma } from "@prisma/client"
 import { db } from "@/lib/db"
+import { withDbRetry } from "@/lib/dbRetry"
 import { getSessionUser } from "@/lib/session"
 import { canEditActions, canEditOma, canEditOutcomeMetric } from "@/lib/authz"
+import { omaSaveBlockers } from "@/lib/omaValidation"
 import { saveOmaSchema, type SaveOmaInput } from "@/types"
 
 export async function tickAction(actionId: string, completed: boolean): Promise<void> {
@@ -39,10 +41,12 @@ export async function tickAction(actionId: string, completed: boolean): Promise<
       ? action.completedAt
       : new Date()
     : null
-  await db.action.update({
-    where: { id: actionId },
-    data: { completed, completedAt },
-  })
+  await withDbRetry(() =>
+    db.action.update({
+      where: { id: actionId },
+      data: { completed, completedAt },
+    }),
+  )
   revalidatePath(`/oma/${action.oma.id}`)
   revalidatePath(`/person/${action.oma.ownerId}`)
   if (action.oma.owner.businessUnitId) revalidatePath(`/bu/${action.oma.owner.businessUnitId}`)
@@ -75,6 +79,13 @@ export async function saveOma(input: SaveOmaInput): Promise<void> {
   const ops: Prisma.PrismaPromise<unknown>[] = []
 
   if (mayOutcome) {
+    // Refuse to persist a half-done OMA: an OMA saved with no outcome or no
+    // usable metric shows as 0% / "No metric set yet", which reads to the owner
+    // as "my save didn't work". Only checked for someone who can edit the
+    // Outcome/Metric — an actions-only editor can't fix this and isn't touching it.
+    const blockers = omaSaveBlockers({ outcome: data.outcome, metrics: data.metrics })
+    if (blockers.length) throw new Error(blockers.join(" "))
+
     // Header row: period / OMA number / date. Guard the slot against collisions
     // before the batch, so the user gets a clear message rather than a raw P2002.
     const targetPeriod = await db.period.findUnique({
@@ -181,7 +192,7 @@ export async function saveOma(input: SaveOmaInput): Promise<void> {
     }
   }
 
-  if (ops.length) await db.$transaction(ops)
+  if (ops.length) await withDbRetry(() => db.$transaction(ops))
 
   revalidatePath(`/oma/${oma.id}`)
   revalidatePath(`/person/${oma.owner.id}`)
@@ -225,7 +236,7 @@ export async function deleteOma(omaId: string): Promise<void> {
     const seq = i + 1
     if (s.sequence !== seq) ops.push(db.oMA.update({ where: { id: s.id }, data: { sequence: seq } }))
   })
-  await db.$transaction(ops)
+  await withDbRetry(() => db.$transaction(ops))
 
   revalidatePath(`/person/${oma.ownerId}`)
   if (oma.owner.businessUnitId) revalidatePath(`/bu/${oma.owner.businessUnitId}`)

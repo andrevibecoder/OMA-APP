@@ -4,6 +4,7 @@ import { redirect } from "next/navigation"
 import { revalidatePath } from "next/cache"
 import { Prisma } from "@prisma/client"
 import { db } from "@/lib/db"
+import { withDbRetry } from "@/lib/dbRetry"
 import { getSessionUser } from "@/lib/session"
 import { canCreateOMA } from "@/lib/authz"
 
@@ -28,16 +29,18 @@ export async function createOma(userId: string, periodId: string) {
 
   let oma
   try {
-    oma = await db.oMA.create({
-      data: {
-        ownerId: userId,
-        createdById: viewer.id,
-        periodId,
-        sequence: nextSeq,
-        date: period.startDate,
-        outcome: "",
-      },
-    })
+    oma = await withDbRetry(() =>
+      db.oMA.create({
+        data: {
+          ownerId: userId,
+          createdById: viewer.id,
+          periodId,
+          sequence: nextSeq,
+          date: period.startDate,
+          outcome: "",
+        },
+      }),
+    )
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
       throw new Error("Could not create OMA — please retry.")
