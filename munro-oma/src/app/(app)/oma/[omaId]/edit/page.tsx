@@ -3,7 +3,7 @@ import { Breadcrumbs } from "@/components/Breadcrumbs"
 import { BackButton } from "@/components/BackButton"
 import { OmaEditForm } from "@/components/OmaEditForm"
 import { getOma } from "@/lib/queries"
-import { listPeriods, resolvePeriodId } from "@/lib/periods"
+import { resolvePeriodId } from "@/lib/periods"
 import { getSessionUser } from "@/lib/session"
 import { canEditActions, canEditOutcomeMetric, canEditOma } from "@/lib/authz"
 
@@ -26,7 +26,6 @@ export default async function OmaEditPage({
   if (!canEditOma(viewer, authShape)) redirect(`/oma/${oma.id}`)
   const periodId = await resolvePeriodId(searchParams.period)
   const qp = searchParams.period ? `?period=${encodeURIComponent(periodId)}` : ""
-  const periods = await listPeriods()
 
   return (
     <main>
@@ -37,19 +36,20 @@ export default async function OmaEditPage({
             ? [{ label: oma.owner.businessUnit.name, href: `/bu/${oma.owner.businessUnit.id}${qp}` }]
             : []),
           { label: oma.owner.name, href: `/person/${oma.owner.id}${qp}` },
-          { label: `OMA ${oma.sequence}`, href: `/oma/${oma.id}${qp}` },
+          {
+            label: oma.title ? `OMA ${oma.sequence} · ${oma.title}` : `OMA ${oma.sequence}`,
+            href: `/oma/${oma.id}${qp}`,
+          },
           { label: "Edit" },
         ]}
       />
       <div className="mt-6">
         <OmaEditForm
-        periods={periods}
         oma={{
           id: oma.id,
           sequence: oma.sequence,
-          periodId: oma.periodId,
-          date: oma.date.toISOString().slice(0, 10),
-          endDate: oma.endDate ? oma.endDate.toISOString().slice(0, 10) : null,
+          periodLabel: oma.period.label,
+          title: oma.title,
           outcome: oma.outcome,
           metrics: oma.metrics.map((m) => ({
             measure: m.measure,

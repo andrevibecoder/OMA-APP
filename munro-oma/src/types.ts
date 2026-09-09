@@ -18,10 +18,8 @@ export interface SessionUser {
 // Runtime schema is the source of truth for saveOma input; SaveOmaInput is derived from it.
 export const saveOmaSchema = z.object({
   omaId: z.string().min(1),
-  periodId: z.string().min(1),
   sequence: z.number().int().min(1).max(999), // no product-facing cap; just a sanity ceiling
-  date: z.string().min(1), // ISO yyyy-mm-dd — period "From"
-  endDate: z.string().nullable(), // ISO yyyy-mm-dd — period "To"
+  title: z.string().max(200), // required at save time — see omaSaveBlockers
   outcome: z.string().max(2000),
   metrics: z
     .array(
@@ -51,9 +49,5 @@ export const saveOmaSchema = z.object({
     )
     .max(50),
 })
-  .refine((d) => !d.endDate || d.endDate >= d.date, {
-    message: "End date can't be before the start date.",
-    path: ["endDate"],
-  })
 
 export type SaveOmaInput = z.infer<typeof saveOmaSchema>

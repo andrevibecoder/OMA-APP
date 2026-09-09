@@ -85,6 +85,7 @@ async function main() {
       ownerId: sharine.id,
       periodId: period.id,
       sequence: 1,
+      title: "Qualified lead flow",
       outcome:
         "Marketing delivers a steady flow of qualified leads the sales team can work without rework.",
       metrics: {
@@ -109,6 +110,7 @@ async function main() {
       ownerId: sharine.id,
       periodId: period.id,
       sequence: 2,
+      title: "Consistent brand presence",
       outcome: "The brand shows up consistently across every channel prospects touch.",
       metrics: {
         create: [
@@ -125,6 +127,7 @@ async function main() {
       ownerId: sharine.id,
       periodId: period.id,
       sequence: 3,
+      title: "Revenue attribution",
       outcome: "Marketing can prove its contribution to revenue.",
       metrics: {
         create: [
@@ -141,6 +144,7 @@ async function main() {
       ownerId: john.id,
       periodId: period.id,
       sequence: 1,
+      title: "Predictable content cadence",
       outcome: "Content engine ships on a predictable cadence.",
       metrics: {
         create: [
@@ -157,6 +161,7 @@ async function main() {
       ownerId: sam.id,
       periodId: period.id,
       sequence: 1,
+      title: "Events drive Sales conversations",
       outcome: "Events generate qualified conversations for Sales.",
       metrics: {
         create: [
@@ -193,6 +198,7 @@ async function main() {
         ownerId: u.id,
         periodId: period.id,
         sequence: 1,
+        title: `${bu} half-year commitment`,
         outcome: `${bu} delivers on its core commitment for the half.`,
         metrics: {
           create: [

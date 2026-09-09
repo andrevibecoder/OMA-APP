@@ -6,8 +6,9 @@ import { Prisma } from "@prisma/client"
 import { db } from "@/lib/db"
 import { withDbRetry } from "@/lib/dbRetry"
 import { getSessionUser } from "@/lib/session"
-import { canEditActions, canEditOma, canEditOutcomeMetric } from "@/lib/authz"
+import { canCreateOMA, canEditActions, canEditOma, canEditOutcomeMetric } from "@/lib/authz"
 import { omaSaveBlockers } from "@/lib/omaValidation"
+import { buildCopiedOmaData } from "@/lib/omaCopy"
 import { saveOmaSchema, type SaveOmaInput } from "@/types"
 
 export async function tickAction(actionId: string, completed: boolean): Promise<void> {
@@ -83,21 +84,21 @@ export async function saveOma(input: SaveOmaInput): Promise<void> {
     // usable metric shows as 0% / "No metric set yet", which reads to the owner
     // as "my save didn't work". Only checked for someone who can edit the
     // Outcome/Metric — an actions-only editor can't fix this and isn't touching it.
-    const blockers = omaSaveBlockers({ outcome: data.outcome, metrics: data.metrics })
+    const blockers = omaSaveBlockers({
+      title: data.title,
+      outcome: data.outcome,
+      metrics: data.metrics,
+    })
     if (blockers.length) throw new Error(blockers.join(" "))
 
-    // Header row: period / OMA number / date. Guard the slot against collisions
-    // before the batch, so the user gets a clear message rather than a raw P2002.
-    const targetPeriod = await db.period.findUnique({
-      where: { id: data.periodId },
-      select: { id: true },
-    })
-    if (!targetPeriod) throw new Error("That period no longer exists.")
-    if (data.periodId !== oma.periodId || data.sequence !== oma.sequence) {
+    // The OMA number can be re-sequenced within its period. An OMA never changes
+    // period from here — that's the "Copy to period" action. Guard the slot
+    // before the batch so the user gets a clear message, not a raw P2002.
+    if (data.sequence !== oma.sequence) {
       const clash = await db.oMA.findFirst({
         where: {
           ownerId: oma.owner.id,
-          periodId: data.periodId,
+          periodId: oma.periodId,
           sequence: data.sequence,
           NOT: { id: oma.id },
         },
@@ -112,11 +113,9 @@ export async function saveOma(input: SaveOmaInput): Promise<void> {
       db.oMA.update({
         where: { id: oma.id },
         data: {
+          title: data.title,
           outcome: data.outcome,
-          periodId: data.periodId,
           sequence: data.sequence,
-          date: new Date(data.date),
-          endDate: data.endDate ? new Date(data.endDate) : null,
         },
       }),
     )
@@ -199,6 +198,74 @@ export async function saveOma(input: SaveOmaInput): Promise<void> {
   if (oma.owner.businessUnitId) revalidatePath(`/bu/${oma.owner.businessUnitId}`)
   revalidatePath("/")
   redirect(`/oma/${oma.id}`)
+}
+
+// Carry an OMA over to another period: create a fresh OMA in the target period
+// cloning everything as-is (KPI current values included; actions keep their
+// completed state and completion dates). The original OMA is left untouched.
+export async function copyOmaToPeriod(omaId: string, targetPeriodId: string): Promise<void> {
+  const viewer = await getSessionUser()
+  const source = await db.oMA.findUniqueOrThrow({
+    where: { id: omaId },
+    include: {
+      owner: { select: { id: true, managerId: true, businessUnitId: true } },
+      period: { select: { locked: true } },
+      metrics: { orderBy: { order: "asc" } },
+      actions: { orderBy: { order: "asc" } },
+    },
+  })
+
+  const sourceAuth = {
+    ownerId: source.owner.id,
+    owner: { managerId: source.owner.managerId },
+    periodLocked: source.period.locked,
+    createdById: source.createdById,
+  }
+  if (!canEditOma(viewer, sourceAuth)) throw new Error("Not allowed")
+
+  if (targetPeriodId === source.periodId) throw new Error("That OMA is already in this period.")
+
+  const targetPeriod = await db.period.findUnique({
+    where: { id: targetPeriodId },
+    select: { id: true, startDate: true, locked: true },
+  })
+  if (!targetPeriod) throw new Error("That period no longer exists.")
+  if (
+    !canCreateOMA(
+      viewer,
+      { id: source.owner.id, managerId: source.owner.managerId },
+      targetPeriod.locked,
+    )
+  ) {
+    throw new Error("You can't add an OMA in that period.")
+  }
+
+  const last = await db.oMA.findFirst({
+    where: { ownerId: source.owner.id, periodId: targetPeriod.id },
+    orderBy: { sequence: "desc" },
+    select: { sequence: true },
+  })
+  const data = buildCopiedOmaData(
+    source,
+    { periodId: targetPeriod.id, startDate: targetPeriod.startDate },
+    (last?.sequence ?? 0) + 1,
+    viewer.id,
+  )
+
+  let created
+  try {
+    created = await withDbRetry(() => db.oMA.create({ data }))
+  } catch (e) {
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
+      throw new Error("Could not copy the OMA — please retry.")
+    }
+    throw e
+  }
+
+  revalidatePath(`/person/${source.owner.id}`)
+  if (source.owner.businessUnitId) revalidatePath(`/bu/${source.owner.businessUnitId}`)
+  revalidatePath("/")
+  redirect(`/oma/${created.id}`)
 }
 
 export async function deleteOma(omaId: string): Promise<void> {

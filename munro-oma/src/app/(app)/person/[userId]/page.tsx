@@ -57,15 +57,22 @@ export default async function PersonPage({
                 href={`/oma/${o.id}/edit${qp}`}
                 className="block overflow-hidden rounded-xl bg-mfa-panel hover:bg-mfa-track/50"
               >
-                <div className="flex items-center gap-3 px-5 py-2">
-                  <span className="shrink-0 font-semibold">OMA {o.sequence}</span>
-                  <span className="min-w-0 flex-1 truncate text-sm text-mfa-muted">
-                    {o.outcome || <em>Not set yet.</em>}
-                  </span>
-                  <span className="shrink-0 text-[10px] uppercase tracking-wide text-mfa-muted/50">
-                    Click
-                  </span>
-                  <span className="shrink-0 text-mfa-muted">›</span>
+                <div className="px-5 py-2">
+                  <div className="flex items-center gap-3">
+                    <span className="shrink-0 text-[11px] font-semibold uppercase tracking-wide text-mfa-muted">
+                      OMA {o.sequence}
+                    </span>
+                    <span className="min-w-0 flex-1 truncate font-semibold">
+                      {o.title || <em className="font-normal text-mfa-muted">Untitled</em>}
+                    </span>
+                    <span className="shrink-0 text-[10px] uppercase tracking-wide text-mfa-muted/50">
+                      Click
+                    </span>
+                    <span className="shrink-0 text-mfa-muted">›</span>
+                  </div>
+                  {o.outcome && (
+                    <p className="mt-0.5 truncate text-sm text-mfa-muted">{o.outcome}</p>
+                  )}
                 </div>
                 {primary ? (
                   <div className="grid grid-cols-1 divide-y divide-mfa-track border-t border-mfa-track text-sm sm:grid-cols-3 sm:divide-x sm:divide-y-0">

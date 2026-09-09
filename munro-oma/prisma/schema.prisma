@@ -100,6 +100,10 @@ model OMA {
   period      Period    @relation(fields: [periodId], references: [id])
   periodId    String
   sequence    Int
+  // Short name for the OMA, shown as the heading everywhere it appears.
+  // Required at save time (omaSaveBlockers); defaulted empty so existing rows
+  // and freshly-created shells are valid until their first real edit.
+  title       String    @default("")
   date        DateTime  @default(now()) // period start ("From")
   endDate     DateTime? // period end ("To")
   outcome     String

@@ -24,9 +24,8 @@ type FormMetric = {
 type Oma = {
   id: string
   sequence: number
-  periodId: string
-  date: string // yyyy-mm-dd — period "From"
-  endDate: string | null // yyyy-mm-dd — period "To"
+  periodLabel: string // set by an admin via the period; read-only here
+  title: string
   outcome: string
   metrics: {
     measure: string
@@ -102,21 +101,17 @@ function fmtDate(iso: string): string {
 
 export function OmaEditForm({
   oma,
-  periods,
   canOutcomeMetric,
   canActions,
   isAdmin,
 }: {
   oma: Oma
-  periods: { id: string; label: string }[]
   canOutcomeMetric: boolean
   canActions: boolean
   isAdmin: boolean
 }) {
   const [sequence, setSequence] = useState(oma.sequence)
-  const [periodId, setPeriodId] = useState(oma.periodId)
-  const [date, setDate] = useState(oma.date)
-  const [endDate, setEndDate] = useState(oma.endDate)
+  const [title, setTitle] = useState(oma.title)
   const [outcome, setOutcome] = useState(oma.outcome)
   const [metrics, setMetrics] = useState<FormMetric[]>(
     (oma.metrics.length
@@ -162,7 +157,7 @@ export function OmaEditForm({
     // Stop a half-done save before it leaves the browser — same rule the server
     // enforces (omaValidation), just without the round trip.
     if (canOutcomeMetric) {
-      const blockers = omaSaveBlockers({ outcome, metrics: payloadMetrics })
+      const blockers = omaSaveBlockers({ title, outcome, metrics: payloadMetrics })
       if (blockers.length) {
         setError(blockers.join(" "))
         return
@@ -173,10 +168,8 @@ export function OmaEditForm({
     start(() =>
       saveOma({
         omaId: oma.id,
-        periodId,
         sequence,
-        date,
-        endDate,
+        title,
         outcome,
         metrics: payloadMetrics,
         actions,
@@ -198,65 +191,36 @@ export function OmaEditForm({
 
   return (
     <div className="overflow-hidden rounded-2xl border-2 border-mfa-red">
-      <div className="flex flex-wrap items-center gap-x-6 gap-y-2 bg-mfa-red px-5 py-3 text-white">
-        <span className="text-lg font-bold">
-          OMA{" "}
-          {canOutcomeMetric ? (
-            <input
-              type="number"
-              min={1}
-              value={sequence}
-              onChange={(e) => setSequence(Math.max(1, Number(e.target.value) || 1))}
-              className="w-14 rounded bg-white/15 px-1 text-center font-bold text-white ring-1 ring-white/40 outline-none"
-            />
-          ) : (
-            sequence
-          )}
-        </span>
-        <span className="text-sm">
-          <span className="font-semibold">Period</span>{" "}
-          {canOutcomeMetric ? (
-            <select
-              value={periodId}
-              onChange={(e) => setPeriodId(e.target.value)}
-              className="rounded bg-white/15 px-1 text-white ring-1 ring-white/40 outline-none"
-            >
-              {periods.map((p) => (
-                <option key={p.id} value={p.id} className="text-mfa-ink">
-                  {p.label}
-                </option>
-              ))}
-            </select>
-          ) : (
-            <span className="italic">{periods.find((p) => p.id === periodId)?.label}</span>
-          )}
-        </span>
-        <span className="text-sm">
-          <span className="font-semibold">Date</span>{" "}
-          {canOutcomeMetric ? (
-            <>
+      <div className="bg-mfa-red px-5 py-3 text-white">
+        <div className="flex items-center gap-3 text-sm">
+          <span className="inline-flex items-center gap-1 rounded bg-white/15 px-2 py-0.5 font-bold">
+            OMA{" "}
+            {canOutcomeMetric ? (
               <input
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                className="rounded bg-white/15 px-1 text-white ring-1 ring-white/40 outline-none [color-scheme:dark]"
+                type="number"
+                min={1}
+                value={sequence}
+                onChange={(e) => setSequence(Math.max(1, Number(e.target.value) || 1))}
+                className="w-12 rounded bg-white/20 px-1 text-center font-bold text-white ring-1 ring-white/40 outline-none"
               />
-              <span className="px-1">–</span>
-              <input
-                type="date"
-                value={endDate ?? ""}
-                min={date}
-                onChange={(e) => setEndDate(e.target.value || null)}
-                className="rounded bg-white/15 px-1 text-white ring-1 ring-white/40 outline-none [color-scheme:dark]"
-              />
-            </>
-          ) : (
-            <span className="italic">
-              {fmtDate(date)}
-              {endDate && <> – {fmtDate(endDate)}</>}
-            </span>
-          )}
-        </span>
+            ) : (
+              sequence
+            )}
+          </span>
+          <span className="font-semibold">{oma.periodLabel}</span>
+        </div>
+        {canOutcomeMetric ? (
+          <input
+            value={title}
+            placeholder="Title — name this OMA"
+            onChange={(e) => setTitle(e.target.value)}
+            className="mt-2 w-full rounded bg-white/15 px-3 py-1.5 text-lg font-bold text-white outline-none ring-1 ring-white/30 placeholder:font-normal placeholder:text-white/60 focus:ring-white/60"
+          />
+        ) : (
+          <p className="mt-2 px-3 py-1.5 text-lg font-bold">
+            {title || <span className="text-white/60">OMA {oma.sequence}</span>}
+          </p>
+        )}
       </div>
 
       <section className="border-b border-mfa-track">

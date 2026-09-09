@@ -5,6 +5,7 @@ import { PageTitle } from "@/components/PageTitle"
 import { BackButton } from "@/components/BackButton"
 import { ActionCheckbox } from "@/components/ActionCheckbox"
 import { DeleteOmaButton } from "@/components/DeleteOmaButton"
+import { CopyOmaButton } from "@/components/CopyOmaButton"
 import { SaveConfirmButton } from "@/components/SaveConfirmButton"
 import { getOma } from "@/lib/queries"
 import {
@@ -14,7 +15,7 @@ import {
   ragColorVar,
   ragState,
 } from "@/lib/progress"
-import { resolvePeriodId } from "@/lib/periods"
+import { listPeriods, resolvePeriodId } from "@/lib/periods"
 import { getSessionUser } from "@/lib/session"
 import { canCreateOMA, canEditActions, canEditOma } from "@/lib/authz"
 import { createOma } from "@/app/(app)/person/[userId]/actions"
@@ -48,6 +49,9 @@ export default async function OmaDetailPage({
   )
   const periodId = await resolvePeriodId(searchParams.period)
   const qp = searchParams.period ? `?period=${encodeURIComponent(periodId)}` : ""
+  const otherPeriods = showEdit
+    ? (await listPeriods()).filter((p) => p.id !== oma.periodId)
+    : []
 
   return (
     <main>
@@ -58,12 +62,17 @@ export default async function OmaDetailPage({
             ? [{ label: oma.owner.businessUnit.name, href: `/bu/${oma.owner.businessUnit.id}${qp}` }]
             : []),
           { label: oma.owner.name, href: `/person/${oma.owner.id}${qp}` },
-          { label: `OMA ${oma.sequence}` },
+          {
+            label: oma.title ? `OMA ${oma.sequence} · ${oma.title}` : `OMA ${oma.sequence}`,
+          },
           { label: oma.period.shortLabel },
         ]}
       />
       <div className="mt-3">
-        <PageTitle>OMA {oma.sequence}</PageTitle>
+        <PageTitle>{oma.title || `OMA ${oma.sequence}`}</PageTitle>
+        <p className="mt-1 text-sm font-semibold text-mfa-muted">
+          OMA {oma.sequence} · {oma.period.label}
+        </p>
       </div>
 
       <div className="mt-10 space-y-8">
@@ -197,7 +206,10 @@ export default async function OmaDetailPage({
       </div>
 
       {(canAdd || showEdit || canTick) && (
-        <div className="mt-12 flex justify-end gap-3">
+        <div className="mt-12 flex flex-wrap items-center justify-end gap-3">
+          {showEdit && otherPeriods.length > 0 && (
+            <CopyOmaButton omaId={oma.id} periods={otherPeriods} />
+          )}
           {canAdd && (
             <form action={createOma.bind(null, oma.owner.id, oma.periodId)}>
               <button className="rounded-full border border-mfa-red px-6 py-2 font-semibold text-mfa-red">
