@@ -41,6 +41,7 @@ export default async function ScorecardPage({ params }: { params: { reviewId: st
   const mayScore = canScore(viewer, shape) && review.status === "OPEN"
 
   const items = review.items.map((i) => ({ rating: i.rating }))
+  const ratedCount = items.filter((i) => i.rating !== null).length
   const score = review.status === "COMPLETED" ? review.finalScore : runningAverage(items)
   const scoreLabel = review.status === "COMPLETED" ? "Final score" : "Average so far"
 
@@ -162,11 +163,18 @@ export default async function ScorecardPage({ params }: { params: { reviewId: st
         })}
       </div>
 
-      <div className="mt-10 rounded-xl bg-mfa-panel px-5 py-4">
-        <span className="text-sm font-semibold text-mfa-muted">{scoreLabel}: </span>
-        <span className="text-lg font-bold">
-          {score === null || score === undefined ? "—" : `${score} / 3`}
+      <div className="mt-10 flex flex-wrap items-baseline gap-x-4 gap-y-1 rounded-xl bg-mfa-panel px-5 py-4">
+        <span>
+          <span className="text-sm font-semibold text-mfa-muted">{scoreLabel}: </span>
+          <span className="text-lg font-bold">
+            {score === null || score === undefined ? "—" : `${score} / 3`}
+          </span>
         </span>
+        {review.status !== "COMPLETED" && review.items.length > 0 && (
+          <span className="text-sm text-mfa-muted">
+            {ratedCount} of {review.items.length} OMA{review.items.length === 1 ? "" : "s"} rated
+          </span>
+        )}
       </div>
 
       <ScorecardFooter
