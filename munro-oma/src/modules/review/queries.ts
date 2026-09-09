@@ -1,5 +1,6 @@
 import type { ReviewStatus } from "@prisma/client"
 import { db } from "@/lib/db"
+import { subjectsToOpen } from "@/modules/review/openSelection"
 
 export async function getReview(reviewId: string) {
   return db.review.findUnique({
@@ -82,4 +83,37 @@ export async function getAllReviews(filter: { periodId?: string; status?: Review
     rated: r.items.filter((i) => i.rating !== null).length,
     total: r.items.length,
   }))
+}
+
+// Active users with at least one OMA in the period — the batch-open candidates.
+export async function getEligibleSubjectIds(periodId: string): Promise<string[]> {
+  const users = await db.user.findMany({
+    where: { active: true, omas: { some: { periodId } } },
+    orderBy: { name: "asc" },
+    select: { id: true },
+  })
+  return users.map((u) => u.id)
+}
+
+// How many reviews a batch-open would create right now — computed from the exact
+// same sets `batchOpenReviews` uses, so the button never undershoots when a
+// review exists for a subject who is no longer eligible.
+export async function getSubjectsToOpenCount(periodId: string): Promise<number> {
+  const [eligible, existing] = await Promise.all([
+    getEligibleSubjectIds(periodId),
+    db.review.findMany({ where: { periodId }, select: { subjectId: true } }),
+  ])
+  return subjectsToOpen(
+    eligible,
+    existing.map((r) => r.subjectId),
+  ).length
+}
+
+export async function getPeriodReviewOverview(periodId: string) {
+  const [eligible, reviews, completed] = await Promise.all([
+    getEligibleSubjectIds(periodId).then((ids) => ids.length),
+    db.review.count({ where: { periodId } }),
+    db.review.count({ where: { periodId, status: "COMPLETED" } }),
+  ])
+  return { eligible, reviews, completed }
 }

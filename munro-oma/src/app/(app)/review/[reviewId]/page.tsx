@@ -5,7 +5,7 @@ import { PageTitle } from "@/components/PageTitle"
 import { formatMetricValue } from "@/lib/progress"
 import { getSessionUser } from "@/lib/session"
 import { getReview } from "@/modules/review/queries"
-import { canScore, canViewScorecard } from "@/modules/review/authz"
+import { canDeleteReview, canScore, canViewScorecard } from "@/modules/review/authz"
 import { canComplete, ratingLabel, runningAverage } from "@/modules/review/scoring"
 import { RatingControl } from "@/modules/review/components/RatingControl"
 import { CommentBox, RowNote } from "@/modules/review/components/ItemNotes"
@@ -170,6 +170,7 @@ export default async function ScorecardPage({ params }: { params: { reviewId: st
         status={review.status}
         canScore={canScore(viewer, shape)}
         canComplete={canComplete(review.items.map((i) => ({ rating: i.rating })))}
+        canDelete={canDeleteReview(viewer)}
       />
     </main>
   )

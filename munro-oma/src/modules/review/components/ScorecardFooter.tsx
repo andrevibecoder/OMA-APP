@@ -1,6 +1,6 @@
 "use client"
 
-import { completeReview, refreshReview, reopenReview } from "@/modules/review/actions/lifecycle"
+import { completeReview, deleteReview, refreshReview, reopenReview } from "@/modules/review/actions/lifecycle"
 import { useActionError } from "@/modules/review/components/useActionError"
 
 export function ScorecardFooter({
@@ -8,19 +8,21 @@ export function ScorecardFooter({
   status,
   canScore,
   canComplete,
+  canDelete,
 }: {
   reviewId: string
   status: "OPEN" | "COMPLETED"
   canScore: boolean
   canComplete: boolean
+  canDelete: boolean
 }) {
   const { pending, run, errorNode } = useActionError()
-  if (!canScore) return null
+  if (!canScore && !canDelete) return null
 
   return (
     <div className="mt-6">
       <div className="flex flex-wrap items-center gap-3">
-        {status === "OPEN" && (
+        {canScore && status === "OPEN" && (
           <>
             <button
               type="button"
@@ -41,7 +43,7 @@ export function ScorecardFooter({
             </button>
           </>
         )}
-        {status === "COMPLETED" && (
+        {canScore && status === "COMPLETED" && (
           <button
             type="button"
             disabled={pending}
@@ -49,6 +51,24 @@ export function ScorecardFooter({
             className="rounded-full border border-mfa-red px-5 py-2 text-sm font-semibold text-mfa-red disabled:opacity-60"
           >
             Reopen
+          </button>
+        )}
+        {canDelete && (
+          <button
+            type="button"
+            disabled={pending}
+            onClick={() => {
+              if (
+                window.confirm(
+                  "Delete this review? This removes its scores, comments and notes.\n\nThis cannot be undone.",
+                )
+              ) {
+                run(() => deleteReview(reviewId))
+              }
+            }}
+            className="rounded-full border border-mfa-red px-6 py-2 font-semibold text-mfa-red disabled:opacity-60"
+          >
+            Delete review
           </button>
         )}
       </div>
