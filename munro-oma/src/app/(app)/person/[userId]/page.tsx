@@ -54,7 +54,7 @@ export default async function PersonPage({
             return (
               <Link
                 key={o.id}
-                href={`/oma/${o.id}/edit${qp}`}
+                href={`/oma/${o.id}${qp}`}
                 className="block overflow-hidden rounded-xl bg-mfa-panel hover:bg-mfa-track/50"
               >
                 <div className="px-5 py-2">
