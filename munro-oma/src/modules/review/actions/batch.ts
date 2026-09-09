@@ -6,7 +6,7 @@ import { db } from "@/lib/db"
 import { withDbRetry } from "@/lib/dbRetry"
 import { getSessionUser } from "@/lib/session"
 import { getOmasForReview } from "@/lib/omaForReview"
-import { canBatchOpen } from "@/modules/review/authz"
+import { canBatchOpen, canBeScorer } from "@/modules/review/authz"
 import { buildItems } from "@/modules/review/snapshot"
 import { subjectsToOpen } from "@/modules/review/openSelection"
 import { getEligibleSubjectIds } from "@/modules/review/queries"
@@ -28,16 +28,19 @@ export async function batchOpenReviews(periodId: string): Promise<void> {
   for (const subjectId of targets) {
     const subject = await db.user.findUniqueOrThrow({
       where: { id: subjectId },
-      select: { managerId: true },
+      select: { managerId: true, manager: { select: { role: true } } },
     })
     const omas = await getOmasForReview(subjectId, periodId)
     if (omas.length === 0) continue // guard: eligibility already implies >=1, belt & braces
     const items = buildItems(omas)
+    // A line manager who has since been demoted to USER must not be the scorer —
+    // fall back to the acting admin (canBatchOpen already guarantees ADMIN).
+    const scorerId = canBeScorer(subject.manager) ? subject.managerId! : viewer.id
     await withDbRetry(() =>
       db.review.create({
         data: {
           subjectId,
-          scorerId: subject.managerId ?? viewer.id,
+          scorerId,
           periodId,
           createdById: viewer.id,
           items: {

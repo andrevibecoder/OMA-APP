@@ -1,5 +1,5 @@
 import { Fragment } from "react"
-import { notFound, redirect } from "next/navigation"
+import { notFound } from "next/navigation"
 import { BackButton } from "@/components/BackButton"
 import { PageTitle } from "@/components/PageTitle"
 import { formatMetricValue } from "@/lib/progress"
@@ -26,8 +26,13 @@ export default async function ScorecardPage({ params }: { params: { reviewId: st
     scorerId: review.scorerId,
     status: review.status,
   }
-  if (!canViewScorecard(viewer, shape)) redirect("/review")
+  // notFound, not redirect: an authed user shouldn't be able to tell "missing"
+  // from "forbidden".
+  if (!canViewScorecard(viewer, shape)) notFound()
   const mayScore = canScore(viewer, shape) && review.status === "OPEN"
+
+  const noteFor = (notes: unknown, ref: string): string | null =>
+    ((notes as ItemNote[] | null)?.find((n) => n.ref === ref)?.text ?? "") || null
 
   const items = review.items.map((i) => ({ rating: i.rating }))
   const score = review.status === "COMPLETED" ? review.finalScore : runningAverage(items)
@@ -77,7 +82,7 @@ export default async function ScorecardPage({ params }: { params: { reviewId: st
                           <td className="py-2">Target {formatMetricValue(k.target, k.unit)}</td>
                           <td className="py-2">Current {formatMetricValue(k.current, k.unit)}</td>
                         </tr>
-                        {mayScore && (
+                        {mayScore ? (
                           <tr>
                             <td colSpan={3} className="pb-2">
                               <RowNote
@@ -85,13 +90,20 @@ export default async function ScorecardPage({ params }: { params: { reviewId: st
                                 itemId={item.id}
                                 refId={k.ref}
                                 kind="kpi"
-                                value={
-                                  (item.notes as unknown as ItemNote[])?.find((n) => n.ref === k.ref)
-                                    ?.text ?? ""
-                                }
+                                value={noteFor(item.notes, k.ref) ?? ""}
                               />
                             </td>
                           </tr>
+                        ) : (
+                          noteFor(item.notes, k.ref) && (
+                            <tr>
+                              <td colSpan={3} className="pb-2">
+                                <p className="mt-1 text-xs text-mfa-muted">
+                                  {noteFor(item.notes, k.ref)}
+                                </p>
+                              </td>
+                            </tr>
+                          )
                         )}
                       </Fragment>
                     ))}
@@ -113,17 +125,18 @@ export default async function ScorecardPage({ params }: { params: { reviewId: st
                         {a.description}
                         {a.dueDate ? ` — due ${fmtDate(a.dueDate)}` : ""}
                       </span>
-                      {mayScore && (
+                      {mayScore ? (
                         <RowNote
                           reviewId={review.id}
                           itemId={item.id}
                           refId={a.ref}
                           kind="action"
-                          value={
-                            (item.notes as unknown as ItemNote[])?.find((n) => n.ref === a.ref)
-                              ?.text ?? ""
-                          }
+                          value={noteFor(item.notes, a.ref) ?? ""}
                         />
+                      ) : (
+                        noteFor(item.notes, a.ref) && (
+                          <p className="mt-1 text-xs text-mfa-muted">{noteFor(item.notes, a.ref)}</p>
+                        )
                       )}
                     </li>
                   ))}

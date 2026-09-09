@@ -164,10 +164,12 @@ enum OmaRating {
 
 model Review {
   id          String       @id @default(cuid())
-  subject     User         @relation("ReviewSubject", fields: [subjectId], references: [id])
+  // A person's own scorecards go with them (consistent with their OMAs), while a
+  // review they merely scored survives with an unassigned scorer.
+  subject     User         @relation("ReviewSubject", fields: [subjectId], references: [id], onDelete: Cascade)
   subjectId   String
-  scorer      User         @relation("ReviewScorer", fields: [scorerId], references: [id])
-  scorerId    String
+  scorer      User?        @relation("ReviewScorer", fields: [scorerId], references: [id], onDelete: SetNull)
+  scorerId    String?
   period      Period       @relation(fields: [periodId], references: [id])
   periodId    String
   status      ReviewStatus @default(OPEN)
@@ -180,6 +182,7 @@ model Review {
 
   @@unique([subjectId, periodId])
   @@index([scorerId])
+  @@index([periodId])
   @@index([status])
 }
 

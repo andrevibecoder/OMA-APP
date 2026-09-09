@@ -7,14 +7,14 @@ import { db } from "@/lib/db"
 import { withDbRetry } from "@/lib/dbRetry"
 import { getSessionUser } from "@/lib/session"
 import { getOmasForReview } from "@/lib/omaForReview"
-import { canOpenAdHocFor } from "@/modules/review/authz"
+import { canBeScorer, canOpenAdHocFor } from "@/modules/review/authz"
 import { buildItems } from "@/modules/review/snapshot"
 
 export async function openAdHocReview(subjectId: string, periodId: string): Promise<void> {
   const viewer = await getSessionUser()
   const subject = await db.user.findUniqueOrThrow({
     where: { id: subjectId },
-    select: { id: true, managerId: true },
+    select: { id: true, managerId: true, manager: { select: { id: true, role: true } } },
   })
   if (!canOpenAdHocFor(viewer, subject)) throw new Error("Not allowed")
 
@@ -27,7 +27,10 @@ export async function openAdHocReview(subjectId: string, periodId: string): Prom
   if (omas.length === 0) throw new Error("This person has no OMAs to review this period.")
 
   const items = buildItems(omas)
-  const scorerId = subject.managerId ?? viewer.id
+  // Only a manager who still holds MANAGER/ADMIN may be made the scorer — a
+  // demoted line manager falls back to the acting user (admin or the manager
+  // opening this ad-hoc, both allowed by the gate above).
+  const scorerId = canBeScorer(subject.manager) ? subject.managerId! : viewer.id
 
   let review
   try {

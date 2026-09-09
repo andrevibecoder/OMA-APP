@@ -109,6 +109,7 @@ export async function completeReview(reviewId: string): Promise<void> {
   )
   revalidatePath(`/review/${reviewId}`)
   revalidatePath("/review")
+  revalidatePath("/admin/reviews")
 }
 
 export async function reopenReview(reviewId: string): Promise<void> {
@@ -122,6 +123,7 @@ export async function reopenReview(reviewId: string): Promise<void> {
   )
   revalidatePath(`/review/${reviewId}`)
   revalidatePath("/review")
+  revalidatePath("/admin/reviews")
 }
 
 export async function deleteReview(reviewId: string): Promise<void> {

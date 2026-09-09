@@ -45,6 +45,7 @@ export async function setItemRating(
   await loadOpenItemForScorer(reviewId, itemId)
   await withDbRetry(() => db.reviewItem.update({ where: { id: itemId }, data: { rating } }))
   revalidatePath(`/review/${reviewId}`)
+  revalidatePath("/admin/reviews")
 }
 
 export async function setItemComment(
@@ -61,6 +62,7 @@ export async function setItemComment(
     }),
   )
   revalidatePath(`/review/${reviewId}`)
+  revalidatePath("/admin/reviews")
 }
 
 export async function setItemNote(
@@ -82,4 +84,5 @@ export async function setItemNote(
     }),
   )
   revalidatePath(`/review/${reviewId}`)
+  revalidatePath("/admin/reviews")
 }

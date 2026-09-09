@@ -78,7 +78,7 @@ export async function getAllReviews(filter: { periodId?: string; status?: Review
     status: r.status,
     finalScore: r.finalScore,
     subjectName: r.subject.name,
-    scorerName: r.scorer.name,
+    scorerName: r.scorer?.name ?? "Unassigned",
     periodLabel: r.period.label,
     rated: r.items.filter((i) => i.rating !== null).length,
     total: r.items.length,
