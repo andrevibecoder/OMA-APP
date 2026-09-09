@@ -70,9 +70,6 @@ export default async function PersonPage({
                     </span>
                     <span className="shrink-0 text-mfa-muted">›</span>
                   </div>
-                  {o.outcome && (
-                    <p className="mt-0.5 truncate text-sm text-mfa-muted">{o.outcome}</p>
-                  )}
                 </div>
                 {primary ? (
                   <div className="grid grid-cols-1 divide-y divide-mfa-track border-t border-mfa-track text-sm sm:grid-cols-3 sm:divide-x sm:divide-y-0">

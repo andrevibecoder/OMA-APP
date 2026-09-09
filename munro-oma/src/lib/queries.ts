@@ -89,7 +89,6 @@ export async function getPerson(userId: string, periodId: string) {
       sequence: o.sequence,
       pct: omaProgress(o),
       title: o.title,
-      outcome: o.outcome,
       metrics: o.metrics,
     })),
   }
