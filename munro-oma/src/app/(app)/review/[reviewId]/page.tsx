@@ -14,6 +14,7 @@ import { canDeleteReview, canScore, canViewScorecard } from "@/modules/review/au
 import { canComplete, ratingLabel, runningAverage } from "@/modules/review/scoring"
 import { RatingControl } from "@/modules/review/components/RatingControl"
 import { CommentBox } from "@/modules/review/components/ItemNotes"
+import { ActionList } from "@/modules/review/components/ActionList"
 import { ScorecardFooter } from "@/modules/review/components/ScorecardFooter"
 import type { SnapshotAction, SnapshotKpi } from "@/modules/review/snapshot"
 
@@ -57,8 +58,6 @@ export default async function ScorecardPage({ params }: { params: { reviewId: st
         {review.items.map((item) => {
           const kpis = item.kpis as unknown as SnapshotKpi[]
           const actions = item.actions as unknown as SnapshotAction[]
-          const todo = actions.filter((a) => !a.completed)
-          const done = actions.filter((a) => a.completed)
 
           return (
             <div key={item.id} className="overflow-hidden rounded-2xl border border-mfa-track">
@@ -125,50 +124,8 @@ export default async function ScorecardPage({ params }: { params: { reviewId: st
                     ACTIONS — 3-2-Thrive{" "}
                     <span className="text-white/70">— projects that drive results</span>
                   </div>
-                  <div className="mt-3 space-y-4">
-                    {actions.length === 0 && <p className="text-sm text-mfa-muted">No actions.</p>}
-                    {todo.length > 0 && (
-                      <div>
-                        <h3 className="mb-2 text-xs font-semibold uppercase tracking-widest text-mfa-muted">
-                          To do
-                        </h3>
-                        <ul className="space-y-2">
-                          {todo.map((a) => (
-                            <li
-                              key={a.ref}
-                              className="flex items-center gap-4 rounded-xl bg-mfa-panel px-5 py-3"
-                            >
-                              <span className="flex-1">{a.description}</span>
-                              {a.dueDate && (
-                                <span className="shrink-0 text-sm text-mfa-muted">
-                                  Due {fmtDate(a.dueDate)}
-                                </span>
-                              )}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                    {done.length > 0 && (
-                      <div>
-                        <h3 className="mb-2 text-xs font-semibold uppercase tracking-widest text-mfa-muted">
-                          Done ({done.length})
-                        </h3>
-                        <ul className="space-y-2">
-                          {done.map((a) => (
-                            <li
-                              key={a.ref}
-                              className="flex items-center gap-4 rounded-xl bg-mfa-panel px-5 py-3"
-                            >
-                              <span className="flex-1 text-mfa-muted line-through">
-                                {a.description}
-                              </span>
-                              <span className="shrink-0 text-sm text-mfa-muted">Completed</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
+                  <div className="mt-3">
+                    <ActionList actions={actions} />
                   </div>
                 </section>
 
