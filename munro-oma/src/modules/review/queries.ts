@@ -42,6 +42,29 @@ export async function getReviewsToScore(scorerId: string) {
   }))
 }
 
+// Reviews this person has scored and completed — so a manager can still find a
+// review (and its score) after finishing it. Their OPEN ones are in getReviewsToScore.
+export async function getReviewsScoredBy(scorerId: string) {
+  const rows = await db.review.findMany({
+    where: { scorerId, status: "COMPLETED" },
+    orderBy: { reviewDate: "desc" },
+    select: {
+      id: true,
+      finalScore: true,
+      reviewDate: true,
+      subject: { select: { name: true } },
+      period: { select: { label: true } },
+    },
+  })
+  return rows.map((r) => ({
+    id: r.id,
+    subjectName: r.subject.name,
+    periodLabel: r.period.label,
+    finalScore: r.finalScore,
+    reviewDate: r.reviewDate,
+  }))
+}
+
 export async function getMyScorecards(subjectId: string) {
   const rows = await db.review.findMany({
     where: { subjectId, status: "COMPLETED" },
