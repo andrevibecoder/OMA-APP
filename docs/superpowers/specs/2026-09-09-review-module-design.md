@@ -76,6 +76,7 @@ src/
       authz.ts        who can open / score / view / reopen / delete a review
       scoring.ts      pure: ratings -> average; canComplete; label helpers
       snapshot.ts     pure: buildItems(omas); mergeRefresh(existing, fresh)
+      openSelection.ts pure: subjectsToOpen(eligibleIds, existingIds)
       queries.ts      read helpers for R1 / R2 / R3
       actions/        server actions: openAdHoc, batchOpen, scoreItem,
                       addNote, refresh, complete, reopen, deleteReview
@@ -254,8 +255,12 @@ manage; an admin for anyone.
 
 - Match fresh OMAs to existing items by `omaId`.
 - Existing item: overwrite `title / outcome / kpis / actions / sequence / order`
-  from the fresh snapshot; **keep `rating`, `comment`**; keep each `notes` entry
-  whose `ref` still exists in the new snapshot, drop the rest.
+  from the fresh snapshot (each KPI/action gets a **new** `ref`); **keep `rating`,
+  `comment`**. Re-attach `notes`: a KPI note carries over when the fresh snapshot
+  still has a KPI with the same `measure` (re-pointed to its new `ref`); an action
+  note carries over when a fresh action has the same `description`. Notes with no
+  text match are dropped. *(The OMA module recreates its `Metric` rows on every
+  save, so KPI ids are not stable — text is the only reliable key.)*
 - Fresh OMA with no existing item: add a new unrated item.
 - Existing item whose `omaId` is gone from the fresh set: delete it (its rating
   goes with it).
@@ -411,12 +416,25 @@ export function buildItems(omas: OmaForReview[]): NewItem[]
 export function mergeRefresh(
   existing: ReviewItemRow[],
   fresh: OmaForReview[],
+  makeRef: () => string,
 ): { create: NewItem[]; update: ItemUpdate[]; deleteIds: string[] }
-// match on omaId; preserve rating/comment; keep notes whose ref survives.
+// match items on omaId; preserve rating/comment; re-attach KPI notes by matching
+// `measure`, action notes by matching `description`; drop notes with no match.
 ```
 
-`cuid` generation is injected (a `makeRef: () => string` param) so tests are
-deterministic.
+`ref` generation (via `nanoid`, already a dependency) is injected as a
+`makeRef: () => string` param to both functions so tests are deterministic.
+
+`openSelection.ts`:
+
+```ts
+// Which subjects still need a review created for this period. Pure — the DB
+// query for eligibility and existing reviews lives in the batchOpen action.
+export function subjectsToOpen(
+  eligibleSubjectIds: string[],
+  existingReviewSubjectIds: string[],
+): string[]
+```
 
 ---
 
@@ -428,19 +446,24 @@ deterministic.
   when any item unrated; `runningAverage` ignores unrated items and is `null` when
   none rated; `canComplete` false on empty and on partial; labels/numbers.
 - `snapshot.ts` — `buildItems` shape and `ref` assignment; `mergeRefresh`:
-  unchanged OMA keeps its rating/comment/notes; changed KPIs re-snapshot; a new
-  OMA becomes an unrated item; a vanished OMA is dropped; a note whose `ref` is
-  gone is pruned.
+  unchanged OMA keeps its rating/comment; a KPI note re-attaches when `measure`
+  still matches and is dropped otherwise; an action note re-attaches by
+  `description`; a new OMA becomes an unrated item; a vanished OMA is dropped.
 - `authz.ts` — every row of the §7 table, both branches of "manages the subject".
+- `openSelection.ts` — `subjectsToOpen(eligibleIds, existingReviewSubjectIds)`
+  returns exactly the ids needing a new review (batch-open idempotency, pure).
 
-**DB-backed integration** (seeded/branch DB, like `queries.integration.test.ts`):
+**No automated DB-backed tests.** There is only one database — the live Supabase
+instance — and the existing integration suite reseeds (wipes) it, so it cannot be
+run here. The DB-backed behaviour is instead covered by pushing the logic into the
+pure functions above (`subjectsToOpen`, `finalScore`, `canComplete`, `mergeRefresh`,
+`authz`) so the server actions are thin glue, plus the manual E2E below.
 
-- batch-open creates exactly one review per eligible subject, skips no-OMA people,
-  is idempotent on re-run;
-- `complete` freezes `finalScore` and flips `status`; `canComplete` is enforced
-  server-side;
-- a `USER` querying another person's scorecard, and their own while `OPEN`, gets
-  nothing; gets it once `COMPLETED`.
+**Manual E2E** (browser, against the live DB, before merge): batch-open for a
+period → confirm one review per eligible person, none for people without OMAs →
+score an OMA, add a KPI note → edit that OMA, hit Refresh → confirm rating kept,
+note re-attached → complete → sign in as the subject and confirm the scorecard is
+now visible and read-only → reopen as admin → confirm subject loses visibility.
 
 **Boundary:** the new ESLint rule passes; a deliberate `import` from
 `@/modules/review` into an OMA file (and vice versa) fails lint.
@@ -462,7 +485,7 @@ src/
     omaForReview.ts                     # new — the only seam
   modules/
     review/
-      authz.ts  scoring.ts  snapshot.ts  queries.ts
+      authz.ts  scoring.ts  snapshot.ts  openSelection.ts  queries.ts
       actions/  { open.ts, batch.ts, score.ts, lifecycle.ts }
       components/ { Scorecard.tsx, RatingControl.tsx, ItemNotes.tsx,
                     ReviewList.tsx, AdminReviews.tsx, PersonReviewLink.tsx }
@@ -492,8 +515,9 @@ Existing OMA files: **unchanged**.
    `reopen`, `deleteReview`; wire the R2 controls.
 6. **Ad-hoc open + R1 + entry points.** `openAdHoc`, the review list, the header
    link, `PersonReviewLink`.
-7. **Admin batch-open (R3).** `batchOpen`, eligibility query, the overview + table.
-8. **Integration tests + manual E2E** on the live DB, then merge.
+7. **Admin batch-open (R3).** `batchOpen` (over the pure `subjectsToOpen`), the
+   eligibility query, the overview + table.
+8. **Manual E2E** on the live DB (the §9 script), then merge.
 
 ---
 
@@ -505,4 +529,5 @@ Existing OMA files: **unchanged**.
 - **Confirm at spec review:** the person-page entry point (`PersonReviewLink`) —
   in, or keep the entry points to the header link + R1 only?
 - **Confirm at spec review:** a manual E2E against the live DB is acceptable (no
-  separate branch DB), consistent with how the OMA module is tested.
+  separate branch DB; automated DB-backed tests can't run against the shared
+  instance), with the module's logic pushed into pure, unit-tested functions.
