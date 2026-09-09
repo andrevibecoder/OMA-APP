@@ -83,7 +83,7 @@ export default async function AdminReviewsPage({
               <td className="py-2">
                 {r.status === "COMPLETED" ? "Completed" : `Open (${r.rated}/${r.total})`}
               </td>
-              <td className="py-2">{r.finalScore === null ? "—" : `${r.finalScore} / 3`}</td>
+              <td className="py-2">{r.finalScore === null ? "—" : `Avg ${r.finalScore.toFixed(1)}`}</td>
               <td className="py-2 text-right">
                 <Link href={`/review/${r.id}`} className="font-semibold text-mfa-red">
                   Open ›

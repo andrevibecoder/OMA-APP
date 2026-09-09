@@ -163,18 +163,23 @@ export default async function ScorecardPage({ params }: { params: { reviewId: st
         })}
       </div>
 
-      <div className="mt-10 flex flex-wrap items-baseline gap-x-4 gap-y-1 rounded-xl bg-mfa-panel px-5 py-4">
-        <span>
-          <span className="text-sm font-semibold text-mfa-muted">{scoreLabel}: </span>
-          <span className="text-lg font-bold">
-            {score === null || score === undefined ? "—" : `${score} / 3`}
+      <div className="mt-10 rounded-xl bg-mfa-panel px-5 py-4">
+        <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
+          <span>
+            <span className="text-sm font-semibold text-mfa-muted">{scoreLabel}: </span>
+            <span className="text-lg font-bold">
+              {score === null || score === undefined ? "—" : score.toFixed(1)}
+            </span>
           </span>
-        </span>
-        {review.status !== "COMPLETED" && review.items.length > 0 && (
-          <span className="text-sm text-mfa-muted">
-            {ratedCount} of {review.items.length} OMA{review.items.length === 1 ? "" : "s"} rated
-          </span>
-        )}
+          {review.status !== "COMPLETED" && review.items.length > 0 && (
+            <span className="text-sm text-mfa-muted">
+              {ratedCount} of {review.items.length} OMA{review.items.length === 1 ? "" : "s"} rated
+            </span>
+          )}
+        </div>
+        <p className="mt-1 text-xs text-mfa-muted">
+          Average of the OMA ratings, on the 1–3 scale · 1 Below · 2 Meets · 3 Exceeds
+        </p>
       </div>
 
       <ScorecardFooter

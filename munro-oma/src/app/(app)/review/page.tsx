@@ -65,7 +65,7 @@ export default async function ReviewListPage() {
                 <span className="text-sm text-mfa-muted">{r.periodLabel}</span>
                 <span className="text-sm text-mfa-muted">{fmtDate(r.reviewDate)}</span>
                 <span className="text-sm font-semibold">
-                  {r.finalScore === null ? "—" : `${r.finalScore} / 3`}
+                  {r.finalScore === null ? "—" : `Avg ${r.finalScore.toFixed(1)}`}
                 </span>
                 <span className="text-mfa-muted">›</span>
               </Link>
@@ -89,7 +89,7 @@ export default async function ReviewListPage() {
               <span className="flex-1 font-semibold">{r.periodLabel}</span>
               <span className="text-sm text-mfa-muted">{fmtDate(r.reviewDate)}</span>
               <span className="text-sm font-semibold">
-                {r.finalScore === null ? "—" : `${r.finalScore} / 3`}
+                {r.finalScore === null ? "—" : `Avg ${r.finalScore.toFixed(1)}`}
               </span>
               <span className="text-mfa-muted">›</span>
             </Link>
