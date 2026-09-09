@@ -23,6 +23,7 @@ function fmtDate(d: Date | string): string {
 }
 
 const sectionBar = "rounded-xl bg-mfa-muted px-5 py-2 text-sm font-semibold text-white"
+const ratingBar = "rounded-xl bg-mfa-red px-5 py-2 text-sm font-semibold text-white"
 
 export default async function ScorecardPage({ params }: { params: { reviewId: string } }) {
   const review = await getReview(params.reviewId)
@@ -130,8 +131,8 @@ export default async function ScorecardPage({ params }: { params: { reviewId: st
                 </section>
 
                 <section>
-                  <div className={sectionBar}>
-                    RATING <span className="text-white/70">— 1 Below · 2 Meets · 3 Exceeds</span>
+                  <div className={ratingBar}>
+                    RATING <span className="text-white/80">— 1 Below · 2 Meets · 3 Exceeds</span>
                   </div>
                   <div className="mt-3">
                     {mayScore ? (
