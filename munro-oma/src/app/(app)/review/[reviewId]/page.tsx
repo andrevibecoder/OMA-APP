@@ -131,9 +131,7 @@ export default async function ScorecardPage({ params }: { params: { reviewId: st
                 </section>
 
                 <section>
-                  <div className={ratingBar}>
-                    RATING <span className="text-white/80">— 1 Below · 2 Meets · 3 Exceeds</span>
-                  </div>
+                  <div className={ratingBar}>RATING</div>
                   <div className="mt-3">
                     {mayScore ? (
                       <>
