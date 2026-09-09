@@ -13,9 +13,9 @@ import { getReview } from "@/modules/review/queries"
 import { canDeleteReview, canScore, canViewScorecard } from "@/modules/review/authz"
 import { canComplete, ratingLabel, runningAverage } from "@/modules/review/scoring"
 import { RatingControl } from "@/modules/review/components/RatingControl"
-import { CommentBox, RowNote } from "@/modules/review/components/ItemNotes"
+import { CommentBox } from "@/modules/review/components/ItemNotes"
 import { ScorecardFooter } from "@/modules/review/components/ScorecardFooter"
-import type { ItemNote, SnapshotAction, SnapshotKpi } from "@/modules/review/snapshot"
+import type { SnapshotAction, SnapshotKpi } from "@/modules/review/snapshot"
 
 function fmtDate(d: Date | string): string {
   return new Date(d).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
@@ -38,9 +38,6 @@ export default async function ScorecardPage({ params }: { params: { reviewId: st
   if (!canViewScorecard(viewer, shape)) notFound()
   const mayScore = canScore(viewer, shape) && review.status === "OPEN"
 
-  const noteFor = (notes: unknown, ref: string): string | null =>
-    ((notes as ItemNote[] | null)?.find((n) => n.ref === ref)?.text ?? "") || null
-
   const items = review.items.map((i) => ({ rating: i.rating }))
   const score = review.status === "COMPLETED" ? review.finalScore : runningAverage(items)
   const scoreLabel = review.status === "COMPLETED" ? "Final score" : "Average so far"
@@ -62,28 +59,6 @@ export default async function ScorecardPage({ params }: { params: { reviewId: st
           const actions = item.actions as unknown as SnapshotAction[]
           const todo = actions.filter((a) => !a.completed)
           const done = actions.filter((a) => a.completed)
-
-          const noteRow = (ref: string, kind: "kpi" | "action") => {
-            const note = noteFor(item.notes, ref)
-            if (mayScore) {
-              return (
-                <div className="border-t border-mfa-track px-5 py-2">
-                  <RowNote
-                    reviewId={review.id}
-                    itemId={item.id}
-                    refId={ref}
-                    kind={kind}
-                    value={note ?? ""}
-                  />
-                </div>
-              )
-            }
-            return note ? (
-              <p className="border-t border-mfa-track px-5 py-2 text-xs text-mfa-muted">
-                <span className="font-semibold">Note:</span> {note}
-              </p>
-            ) : null
-          }
 
           return (
             <div key={item.id} className="overflow-hidden rounded-2xl border border-mfa-track">
@@ -138,7 +113,6 @@ export default async function ScorecardPage({ params }: { params: { reviewId: st
                               <span className="shrink-0 text-xs text-mfa-muted">lower is better</span>
                             )}
                           </div>
-                          {noteRow(k.ref, "kpi")}
                         </div>
                       )
                     })}
@@ -160,16 +134,16 @@ export default async function ScorecardPage({ params }: { params: { reviewId: st
                         </h3>
                         <ul className="space-y-2">
                           {todo.map((a) => (
-                            <li key={a.ref} className="overflow-hidden rounded-xl bg-mfa-panel">
-                              <div className="flex items-center gap-4 px-5 py-3">
-                                <span className="flex-1">{a.description}</span>
-                                {a.dueDate && (
-                                  <span className="shrink-0 text-sm text-mfa-muted">
-                                    Due {fmtDate(a.dueDate)}
-                                  </span>
-                                )}
-                              </div>
-                              {noteRow(a.ref, "action")}
+                            <li
+                              key={a.ref}
+                              className="flex items-center gap-4 rounded-xl bg-mfa-panel px-5 py-3"
+                            >
+                              <span className="flex-1">{a.description}</span>
+                              {a.dueDate && (
+                                <span className="shrink-0 text-sm text-mfa-muted">
+                                  Due {fmtDate(a.dueDate)}
+                                </span>
+                              )}
                             </li>
                           ))}
                         </ul>
@@ -182,14 +156,14 @@ export default async function ScorecardPage({ params }: { params: { reviewId: st
                         </h3>
                         <ul className="space-y-2">
                           {done.map((a) => (
-                            <li key={a.ref} className="overflow-hidden rounded-xl bg-mfa-panel">
-                              <div className="flex items-center gap-4 px-5 py-3">
-                                <span className="flex-1 text-mfa-muted line-through">
-                                  {a.description}
-                                </span>
-                                <span className="shrink-0 text-sm text-mfa-muted">Completed</span>
-                              </div>
-                              {noteRow(a.ref, "action")}
+                            <li
+                              key={a.ref}
+                              className="flex items-center gap-4 rounded-xl bg-mfa-panel px-5 py-3"
+                            >
+                              <span className="flex-1 text-mfa-muted line-through">
+                                {a.description}
+                              </span>
+                              <span className="shrink-0 text-sm text-mfa-muted">Completed</span>
                             </li>
                           ))}
                         </ul>

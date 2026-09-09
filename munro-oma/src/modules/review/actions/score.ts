@@ -2,12 +2,10 @@
 
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
-import type { Prisma as PrismaNS } from "@prisma/client"
 import { db } from "@/lib/db"
 import { withDbRetry } from "@/lib/dbRetry"
 import { getSessionUser } from "@/lib/session"
 import { canScore } from "@/modules/review/authz"
-import type { ItemNote } from "@/modules/review/snapshot"
 
 async function loadOpenItemForScorer(reviewId: string, itemId: string) {
   const viewer = await getSessionUser()
@@ -18,7 +16,7 @@ async function loadOpenItemForScorer(reviewId: string, itemId: string) {
       scorerId: true,
       subjectId: true,
       subject: { select: { managerId: true } },
-      items: { where: { id: itemId }, select: { id: true, notes: true } },
+      items: { where: { id: itemId }, select: { id: true } },
     },
   })
   const shape = {
@@ -59,28 +57,6 @@ export async function setItemComment(
     db.reviewItem.update({
       where: { id: itemId },
       data: { comment: clean.trim() || null },
-    }),
-  )
-  revalidatePath(`/review/${reviewId}`)
-  revalidatePath("/admin/reviews")
-}
-
-export async function setItemNote(
-  reviewId: string,
-  itemId: string,
-  ref: string,
-  kind: "kpi" | "action",
-  text: string,
-): Promise<void> {
-  const clean = z.string().max(2000).parse(text).trim()
-  z.enum(["kpi", "action"]).parse(kind)
-  const item = await loadOpenItemForScorer(reviewId, itemId)
-  const notes = ((item.notes as unknown as ItemNote[]) ?? []).filter((n) => n.ref !== ref)
-  if (clean) notes.push({ ref, kind, text: clean })
-  await withDbRetry(() =>
-    db.reviewItem.update({
-      where: { id: itemId },
-      data: { notes: notes as unknown as PrismaNS.InputJsonValue },
     }),
   )
   revalidatePath(`/review/${reviewId}`)

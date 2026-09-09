@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { setItemComment, setItemNote } from "@/modules/review/actions/score"
+import { setItemComment } from "@/modules/review/actions/score"
 import { useActionError } from "@/modules/review/components/useActionError"
 
 export function CommentBox({
@@ -35,47 +35,6 @@ export function CommentBox({
           {pending ? "Saving…" : "Save comment"}
         </button>
       )}
-      {errorNode}
-    </div>
-  )
-}
-
-export function RowNote({
-  reviewId,
-  itemId,
-  refId,
-  kind,
-  value,
-}: {
-  reviewId: string
-  itemId: string
-  refId: string
-  kind: "kpi" | "action"
-  value: string
-}) {
-  const [text, setText] = useState(value)
-  const { pending, run, errorNode } = useActionError()
-  const dirty = text !== value
-  return (
-    <div className="mt-1">
-      <div className="flex items-start gap-2">
-        <input
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder="Add a note"
-          className="flex-1 rounded border border-mfa-track px-2 py-1 text-xs"
-        />
-        {dirty && (
-          <button
-            type="button"
-            disabled={pending}
-            onClick={() => run(() => setItemNote(reviewId, itemId, refId, kind, text))}
-            className="rounded-full bg-mfa-red px-3 py-1 text-xs font-semibold text-white disabled:opacity-60"
-          >
-            Save
-          </button>
-        )}
-      </div>
       {errorNode}
     </div>
   )
