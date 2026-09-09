@@ -1,7 +1,8 @@
 "use client"
 
-import { useState, useTransition } from "react"
+import { useState } from "react"
 import { setItemComment, setItemNote } from "@/modules/review/actions/score"
+import { useActionError } from "@/modules/review/components/useActionError"
 
 export function CommentBox({
   reviewId,
@@ -13,7 +14,7 @@ export function CommentBox({
   value: string | null
 }) {
   const [text, setText] = useState(value ?? "")
-  const [pending, start] = useTransition()
+  const { pending, run, errorNode } = useActionError()
   const dirty = text !== (value ?? "")
   return (
     <div className="mt-2">
@@ -28,12 +29,13 @@ export function CommentBox({
         <button
           type="button"
           disabled={pending}
-          onClick={() => start(() => setItemComment(reviewId, itemId, text))}
+          onClick={() => run(() => setItemComment(reviewId, itemId, text))}
           className="mt-1 rounded-full bg-mfa-red px-4 py-1 text-sm font-semibold text-white disabled:opacity-60"
         >
           {pending ? "Saving…" : "Save comment"}
         </button>
       )}
+      {errorNode}
     </div>
   )
 }
@@ -52,26 +54,29 @@ export function RowNote({
   value: string
 }) {
   const [text, setText] = useState(value)
-  const [pending, start] = useTransition()
+  const { pending, run, errorNode } = useActionError()
   const dirty = text !== value
   return (
-    <div className="mt-1 flex items-start gap-2">
-      <input
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        placeholder="Add a note"
-        className="flex-1 rounded border border-mfa-track px-2 py-1 text-xs"
-      />
-      {dirty && (
-        <button
-          type="button"
-          disabled={pending}
-          onClick={() => start(() => setItemNote(reviewId, itemId, refId, kind, text))}
-          className="rounded-full bg-mfa-red px-3 py-1 text-xs font-semibold text-white disabled:opacity-60"
-        >
-          Save
-        </button>
-      )}
+    <div className="mt-1">
+      <div className="flex items-start gap-2">
+        <input
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          placeholder="Add a note"
+          className="flex-1 rounded border border-mfa-track px-2 py-1 text-xs"
+        />
+        {dirty && (
+          <button
+            type="button"
+            disabled={pending}
+            onClick={() => run(() => setItemNote(reviewId, itemId, refId, kind, text))}
+            className="rounded-full bg-mfa-red px-3 py-1 text-xs font-semibold text-white disabled:opacity-60"
+          >
+            Save
+          </button>
+        )}
+      </div>
+      {errorNode}
     </div>
   )
 }

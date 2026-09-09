@@ -6,9 +6,10 @@ import { formatMetricValue } from "@/lib/progress"
 import { getSessionUser } from "@/lib/session"
 import { getReview } from "@/modules/review/queries"
 import { canScore, canViewScorecard } from "@/modules/review/authz"
-import { ratingLabel, runningAverage } from "@/modules/review/scoring"
+import { canComplete, ratingLabel, runningAverage } from "@/modules/review/scoring"
 import { RatingControl } from "@/modules/review/components/RatingControl"
 import { CommentBox, RowNote } from "@/modules/review/components/ItemNotes"
+import { ScorecardFooter } from "@/modules/review/components/ScorecardFooter"
 import type { ItemNote, SnapshotAction, SnapshotKpi } from "@/modules/review/snapshot"
 
 function fmtDate(d: Date | string): string {
@@ -163,6 +164,13 @@ export default async function ScorecardPage({ params }: { params: { reviewId: st
           {score === null || score === undefined ? "—" : `${score} / 3`}
         </span>
       </div>
+
+      <ScorecardFooter
+        reviewId={review.id}
+        status={review.status}
+        canScore={canScore(viewer, shape)}
+        canComplete={canComplete(review.items.map((i) => ({ rating: i.rating })))}
+      />
     </main>
   )
 }
