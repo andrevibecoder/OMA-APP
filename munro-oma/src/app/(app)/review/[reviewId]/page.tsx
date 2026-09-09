@@ -1,12 +1,15 @@
+import { Fragment } from "react"
 import { notFound, redirect } from "next/navigation"
 import { BackButton } from "@/components/BackButton"
 import { PageTitle } from "@/components/PageTitle"
 import { formatMetricValue } from "@/lib/progress"
 import { getSessionUser } from "@/lib/session"
 import { getReview } from "@/modules/review/queries"
-import { canViewScorecard } from "@/modules/review/authz"
+import { canScore, canViewScorecard } from "@/modules/review/authz"
 import { ratingLabel, runningAverage } from "@/modules/review/scoring"
-import type { SnapshotAction, SnapshotKpi } from "@/modules/review/snapshot"
+import { RatingControl } from "@/modules/review/components/RatingControl"
+import { CommentBox, RowNote } from "@/modules/review/components/ItemNotes"
+import type { ItemNote, SnapshotAction, SnapshotKpi } from "@/modules/review/snapshot"
 
 function fmtDate(d: Date | string): string {
   return new Date(d).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
@@ -23,6 +26,7 @@ export default async function ScorecardPage({ params }: { params: { reviewId: st
     status: review.status,
   }
   if (!canViewScorecard(viewer, shape)) redirect("/review")
+  const mayScore = canScore(viewer, shape) && review.status === "OPEN"
 
   const items = review.items.map((i) => ({ rating: i.rating }))
   const score = review.status === "COMPLETED" ? review.finalScore : runningAverage(items)
@@ -66,11 +70,29 @@ export default async function ScorecardPage({ params }: { params: { reviewId: st
                 <table className="mt-2 w-full text-sm">
                   <tbody>
                     {kpis.map((k) => (
-                      <tr key={k.ref} className="border-t border-mfa-track first:border-t-0">
-                        <td className="py-2 font-semibold">{k.measure}</td>
-                        <td className="py-2">Target {formatMetricValue(k.target, k.unit)}</td>
-                        <td className="py-2">Current {formatMetricValue(k.current, k.unit)}</td>
-                      </tr>
+                      <Fragment key={k.ref}>
+                        <tr className="border-t border-mfa-track first:border-t-0">
+                          <td className="py-2 font-semibold">{k.measure}</td>
+                          <td className="py-2">Target {formatMetricValue(k.target, k.unit)}</td>
+                          <td className="py-2">Current {formatMetricValue(k.current, k.unit)}</td>
+                        </tr>
+                        {mayScore && (
+                          <tr>
+                            <td colSpan={3} className="pb-2">
+                              <RowNote
+                                reviewId={review.id}
+                                itemId={item.id}
+                                refId={k.ref}
+                                kind="kpi"
+                                value={
+                                  (item.notes as unknown as ItemNote[])?.find((n) => n.ref === k.ref)
+                                    ?.text ?? ""
+                                }
+                              />
+                            </td>
+                          </tr>
+                        )}
+                      </Fragment>
                     ))}
                     {kpis.length === 0 && (
                       <tr><td className="py-2 text-mfa-muted">No KPI.</td></tr>
@@ -85,9 +107,23 @@ export default async function ScorecardPage({ params }: { params: { reviewId: st
                 </p>
                 <ul className="mt-2 space-y-1 text-sm">
                   {actions.map((a) => (
-                    <li key={a.ref} className={a.completed ? "text-mfa-muted line-through" : ""}>
-                      {a.description}
-                      {a.dueDate ? ` — due ${fmtDate(a.dueDate)}` : ""}
+                    <li key={a.ref}>
+                      <span className={a.completed ? "text-mfa-muted line-through" : ""}>
+                        {a.description}
+                        {a.dueDate ? ` — due ${fmtDate(a.dueDate)}` : ""}
+                      </span>
+                      {mayScore && (
+                        <RowNote
+                          reviewId={review.id}
+                          itemId={item.id}
+                          refId={a.ref}
+                          kind="action"
+                          value={
+                            (item.notes as unknown as ItemNote[])?.find((n) => n.ref === a.ref)
+                              ?.text ?? ""
+                          }
+                        />
+                      )}
                     </li>
                   ))}
                   {actions.length === 0 && <li className="text-mfa-muted">No actions.</li>}
@@ -98,10 +134,23 @@ export default async function ScorecardPage({ params }: { params: { reviewId: st
                 <p className="text-xs font-semibold uppercase tracking-widest text-mfa-muted">
                   Rating
                 </p>
-                <p className="mt-1 font-semibold">
-                  {item.rating ? ratingLabel(item.rating) : <span className="text-mfa-muted">Not yet rated</span>}
-                </p>
-                {item.comment && <p className="mt-2 text-sm">{item.comment}</p>}
+                {mayScore ? (
+                  <div className="mt-1">
+                    <RatingControl reviewId={review.id} itemId={item.id} value={item.rating} />
+                    <CommentBox reviewId={review.id} itemId={item.id} value={item.comment} />
+                  </div>
+                ) : (
+                  <>
+                    <p className="mt-1 font-semibold">
+                      {item.rating ? (
+                        ratingLabel(item.rating)
+                      ) : (
+                        <span className="text-mfa-muted">Not yet rated</span>
+                      )}
+                    </p>
+                    {item.comment && <p className="mt-2 text-sm">{item.comment}</p>}
+                  </>
+                )}
               </div>
             </section>
           )
