@@ -59,9 +59,7 @@ export default async function PersonPage({
               >
                 <div className="px-5 py-2">
                   <div className="flex items-center gap-3">
-                    <span className="shrink-0 text-[11px] font-semibold uppercase tracking-wide text-mfa-muted">
-                      OMA {o.sequence}
-                    </span>
+                    <span className="shrink-0 font-semibold text-mfa-muted">OMA {o.sequence}</span>
                     <span className="min-w-0 flex-1 truncate font-semibold">
                       {o.title || <em className="font-normal text-mfa-muted">Untitled</em>}
                     </span>
