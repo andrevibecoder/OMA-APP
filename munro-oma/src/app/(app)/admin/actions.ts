@@ -106,9 +106,11 @@ export async function moveBusinessUnit(id: string, direction: "up" | "down"): Pr
 // Periods
 // --------------------------------------------------------------------------
 
+const PERIOD_TERMS = ["Q1", "Q2", "Q3", "Q4", "H1", "H2", "FY"] as const
+
 const periodSchema = z
   .object({
-    half: z.number().int().min(1).max(2),
+    term: z.enum(PERIOD_TERMS),
     year: z.number().int().min(2000).max(2100),
     startDate: z.string().min(1),
     endDate: z.string().min(1),
@@ -118,20 +120,24 @@ const periodSchema = z
     path: ["endDate"],
   })
 
+function periodKind(term: (typeof PERIOD_TERMS)[number]): "QUARTER" | "HALF" | "ANNUAL" {
+  if (term === "FY") return "ANNUAL"
+  return term[0] === "Q" ? "QUARTER" : "HALF"
+}
+
 export async function createPeriod(raw: z.infer<typeof periodSchema>): Promise<Result> {
   await requireAdmin()
   const parsed = periodSchema.safeParse(raw)
   if (!parsed.success) return { error: parsed.error.issues[0].message }
   const p = parsed.data
-  const label = `H${p.half} ${p.year}`
-  const shortLabel = `H${p.half}`
+  const label = `${p.term} ${p.year}`
 
   try {
     await db.period.create({
       data: {
         label,
-        shortLabel,
-        kind: "HALF",
+        shortLabel: p.term,
+        kind: periodKind(p.term),
         year: p.year,
         startDate: new Date(p.startDate),
         endDate: new Date(p.endDate),

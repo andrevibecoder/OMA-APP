@@ -165,11 +165,19 @@ function BusinessUnitRow({
   )
 }
 
-function defaultStart(half: number, year: number): string {
-  return `${year}-${half === 2 ? "07" : "01"}-01`
-}
-function defaultEnd(half: number, year: number): string {
-  return `${year}-${half === 2 ? "12-31" : "06-30"}`
+const PERIOD_TERMS = [
+  { term: "Q1", label: "Q1 (Jan–Mar)", start: "01-01", end: "03-31" },
+  { term: "Q2", label: "Q2 (Apr–Jun)", start: "04-01", end: "06-30" },
+  { term: "Q3", label: "Q3 (Jul–Sep)", start: "07-01", end: "09-30" },
+  { term: "Q4", label: "Q4 (Oct–Dec)", start: "10-01", end: "12-31" },
+  { term: "H1", label: "H1 (Jan–Jun)", start: "01-01", end: "06-30" },
+  { term: "H2", label: "H2 (Jul–Dec)", start: "07-01", end: "12-31" },
+  { term: "FY", label: "FY (full year)", start: "01-01", end: "12-31" },
+] as const
+
+function termWindow(term: string, year: number): { start: string; end: string } {
+  const t = PERIOD_TERMS.find((x) => x.term === term) ?? PERIOD_TERMS[4]
+  return { start: `${year}-${t.start}`, end: `${year}-${t.end}` }
 }
 function isoDay(d: Date | string | null): string {
   return d ? new Date(d).toISOString().slice(0, 10) : ""
@@ -179,16 +187,18 @@ function PeriodsSection({ data }: { data: AdminData }) {
   const { periods } = data
   const { pending, error, run } = useAction()
   const thisYear = new Date().getFullYear()
-  const [half, setHalf] = useState(1)
+  const [term, setTerm] = useState("H1")
   const [year, setYear] = useState(thisYear)
-  const [start, setStart] = useState(defaultStart(1, thisYear))
-  const [end, setEnd] = useState(defaultEnd(1, thisYear))
+  const w0 = termWindow("H1", thisYear)
+  const [start, setStart] = useState(w0.start)
+  const [end, setEnd] = useState(w0.end)
 
-  function sync(h: number, y: number) {
-    setHalf(h)
+  function sync(t: string, y: number) {
+    setTerm(t)
     setYear(y)
-    setStart(defaultStart(h, y))
-    setEnd(defaultEnd(h, y))
+    const w = termWindow(t, y)
+    setStart(w.start)
+    setEnd(w.end)
   }
 
   return (
@@ -201,14 +211,13 @@ function PeriodsSection({ data }: { data: AdminData }) {
       </ul>
       <div className="flex flex-wrap items-end gap-3 border-t border-mfa-track px-4 py-3 text-sm">
         <label className="flex flex-col">
-          <span className="text-xs text-mfa-muted">Half</span>
-          <select
-            className={input}
-            value={half}
-            onChange={(e) => sync(Number(e.target.value), year)}
-          >
-            <option value={1}>H1 (Jan–Jun)</option>
-            <option value={2}>H2 (Jul–Dec)</option>
+          <span className="text-xs text-mfa-muted">Term</span>
+          <select className={input} value={term} onChange={(e) => sync(e.target.value, year)}>
+            {PERIOD_TERMS.map((t) => (
+              <option key={t.term} value={t.term}>
+                {t.label}
+              </option>
+            ))}
           </select>
         </label>
         <label className="flex flex-col">
@@ -217,7 +226,7 @@ function PeriodsSection({ data }: { data: AdminData }) {
             type="number"
             className={`${input} w-24`}
             value={year}
-            onChange={(e) => sync(half, Number(e.target.value))}
+            onChange={(e) => sync(term, Number(e.target.value))}
           />
         </label>
         <label className="flex flex-col">
@@ -242,7 +251,16 @@ function PeriodsSection({ data }: { data: AdminData }) {
         <button
           className={btn}
           disabled={pending}
-          onClick={() => run(() => createPeriod({ half, year, startDate: start, endDate: end }))}
+          onClick={() =>
+            run(() =>
+              createPeriod({
+                term: term as "Q1" | "Q2" | "Q3" | "Q4" | "H1" | "H2" | "FY",
+                year,
+                startDate: start,
+                endDate: end,
+              }),
+            )
+          }
         >
           Add period
         </button>
