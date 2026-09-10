@@ -28,7 +28,7 @@ export default async function DashboardPage({
       <div className="flex flex-wrap items-baseline justify-between gap-y-2">
         <PageTitle>Main dashboard</PageTitle>
         <span className="text-xs font-semibold uppercase tracking-widest text-mfa-red">
-          {period.shortLabel} · All departments
+          {period.label} · All departments
         </span>
       </div>
 
