@@ -36,10 +36,7 @@ export default async function OmaEditPage({
             ? [{ label: oma.owner.businessUnit.name, href: `/bu/${oma.owner.businessUnit.id}${qp}` }]
             : []),
           { label: oma.owner.name, href: `/person/${oma.owner.id}${qp}` },
-          {
-            label: oma.title ? `OMA ${oma.sequence} · ${oma.title}` : `OMA ${oma.sequence}`,
-            href: `/oma/${oma.id}${qp}`,
-          },
+          { label: `OMA ${oma.sequence}`, href: `/oma/${oma.id}${qp}` },
           { label: "Edit" },
         ]}
       />

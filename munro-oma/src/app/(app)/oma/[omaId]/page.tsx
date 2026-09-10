@@ -62,17 +62,12 @@ export default async function OmaDetailPage({
             ? [{ label: oma.owner.businessUnit.name, href: `/bu/${oma.owner.businessUnit.id}${qp}` }]
             : []),
           { label: oma.owner.name, href: `/person/${oma.owner.id}${qp}` },
-          {
-            label: oma.title ? `OMA ${oma.sequence} · ${oma.title}` : `OMA ${oma.sequence}`,
-          },
-          { label: oma.period.shortLabel },
+          { label: `OMA ${oma.sequence}` },
+          { label: oma.period.label },
         ]}
       />
       <div className="mt-3">
         <PageTitle>{oma.title || `OMA ${oma.sequence}`}</PageTitle>
-        <p className="mt-1 text-sm font-semibold text-mfa-muted">
-          OMA {oma.sequence} · {oma.period.label}
-        </p>
       </div>
 
       <div className="mt-10 space-y-8">
