@@ -246,7 +246,7 @@ export function OmaEditForm({
               key={i}
               className="flex flex-wrap items-end gap-x-4 gap-y-2 border-t border-mfa-track px-5 py-4 text-sm first:border-t-0"
             >
-              <label className="flex min-w-[12rem] flex-1 flex-col">
+              <label className="flex w-full flex-col">
                 <span className="text-xs text-mfa-muted">KPI</span>
                 <input
                   value={m.measure}
@@ -292,7 +292,7 @@ export function OmaEditForm({
                 </div>
               </div>
 
-              <label className="flex w-24 flex-col">
+              <label className="flex w-32 flex-col">
                 <span className="text-xs text-mfa-muted">Target</span>
                 <input
                   value={m.target}
@@ -303,7 +303,7 @@ export function OmaEditForm({
                 />
               </label>
 
-              <label className="flex w-24 flex-col">
+              <label className="flex w-32 flex-col">
                 <span className="text-xs text-mfa-muted">Current</span>
                 <input
                   value={m.current}
