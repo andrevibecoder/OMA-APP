@@ -19,14 +19,14 @@ export async function AppHeader({ period }: { period?: string }) {
             Admin
           </Link>
         )}
+        <PeriodSelector periods={periods} value={active} />
+        <span className="font-semibold">{user.name}</span>
         <Link
           href="/review"
           className="text-sm font-semibold text-mfa-white/80 hover:text-mfa-white"
         >
           Reviews
         </Link>
-        <PeriodSelector periods={periods} value={active} />
-        <span className="font-semibold">{user.name}</span>
         <form action={logout}>
           <button
             type="submit"
