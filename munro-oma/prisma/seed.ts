@@ -22,6 +22,8 @@ function actions(n: number, k: number, prefix: string) {
 
 async function main() {
   // wipe (respect FK order)
+  await db.reviewItem.deleteMany()
+  await db.review.deleteMany()
   await db.action.deleteMany()
   await db.metric.deleteMany()
   await db.oMA.deleteMany()

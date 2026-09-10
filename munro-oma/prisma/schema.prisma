@@ -38,21 +38,23 @@ enum PeriodKind {
 }
 
 model User {
-  id             String        @id @default(cuid())
-  name           String
-  email          String        @unique
-  passwordHash   String
-  role           Role          @default(USER)
-  active         Boolean       @default(true)
-  businessUnit   BusinessUnit? @relation(fields: [businessUnitId], references: [id])
-  businessUnitId String?
-  manager        User?         @relation("TeamMembers", fields: [managerId], references: [id])
-  managerId      String?
-  team           User[]        @relation("TeamMembers")
-  omas           OMA[]         @relation("OwnedOMAs")
-  createdOmas    OMA[]         @relation("CreatedOMAs")
-  loginEvents    LoginEvent[]
-  createdAt      DateTime      @default(now())
+  id               String        @id @default(cuid())
+  name             String
+  email            String        @unique
+  passwordHash     String
+  role             Role          @default(USER)
+  active           Boolean       @default(true)
+  businessUnit     BusinessUnit? @relation(fields: [businessUnitId], references: [id])
+  businessUnitId   String?
+  manager          User?         @relation("TeamMembers", fields: [managerId], references: [id])
+  managerId        String?
+  team             User[]        @relation("TeamMembers")
+  omas             OMA[]         @relation("OwnedOMAs")
+  createdOmas      OMA[]         @relation("CreatedOMAs")
+  reviewsAsSubject Review[]      @relation("ReviewSubject")
+  reviewsAsScorer  Review[]      @relation("ReviewScorer")
+  loginEvents      LoginEvent[]
+  createdAt        DateTime      @default(now())
 }
 
 model LoginEvent {
@@ -86,6 +88,7 @@ model Period {
   // of activating H1 2027.
   locked     Boolean    @default(false)
   omas       OMA[]
+  reviews    Review[]
 }
 
 model OMA {
@@ -141,4 +144,62 @@ model Action {
   completed   Boolean   @default(false)
   completedAt DateTime?
   order       Int       @default(0)
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Review module (OMA Scorecard). FKs only to User and Period — never to OMA.
+// Design: docs/superpowers/specs/2026-09-09-review-module-design.md
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum ReviewStatus {
+  OPEN
+  COMPLETED
+}
+
+enum OmaRating {
+  BELOW
+  MEETS
+  EXCEEDS
+}
+
+model Review {
+  id          String       @id @default(cuid())
+  // A person's own scorecards go with them (consistent with their OMAs), while a
+  // review they merely scored survives with an unassigned scorer.
+  subject     User         @relation("ReviewSubject", fields: [subjectId], references: [id], onDelete: Cascade)
+  subjectId   String
+  scorer      User?        @relation("ReviewScorer", fields: [scorerId], references: [id], onDelete: SetNull)
+  scorerId    String?
+  period      Period       @relation(fields: [periodId], references: [id])
+  periodId    String
+  status      ReviewStatus @default(OPEN)
+  finalScore  Float? // mean of item ratings (1..3, 1 dp); frozen on complete
+  reviewDate  DateTime? // stamped on complete
+  createdById String? // who opened it — admin batch or manager ad-hoc
+  createdAt   DateTime     @default(now())
+  completedAt DateTime?
+  items       ReviewItem[]
+
+  @@unique([subjectId, periodId])
+  @@index([scorerId])
+  @@index([periodId])
+  @@index([status])
+}
+
+model ReviewItem {
+  id       String     @id @default(cuid())
+  review   Review     @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  reviewId String
+  omaId    String // reference only — NOT a relation. Survives OMA deletion.
+  order    Int
+  sequence Int
+  title    String
+  outcome  String
+  kpis     Json // [{ ref, measure, unit, direction, target, current }]
+  actions  Json // [{ ref, description, dueDate, completed }]
+  rating   OmaRating?
+  comment  String?
+  notes    Json? // [{ ref, kind: "kpi" | "action", text }]
+
+  @@index([reviewId])
 }

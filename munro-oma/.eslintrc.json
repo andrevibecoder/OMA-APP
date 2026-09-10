@@ -1,1 +1,55 @@
-{ "extends": "next/core-web-vitals" }
+{
+  "extends": "next/core-web-vitals",
+  "overrides": [
+    {
+      "files": ["src/modules/review/**/*.{ts,tsx}"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "@/lib/queries",
+                  "@/lib/omaValidation",
+                  "@/lib/omaCopy",
+                  "@/lib/admin",
+                  "@/components/**",
+                  "@/app/**"
+                ],
+                "message": "review module is sealed: import shared infra from @/lib/{db,session,periods,authz,dbRetry,progress} or the seam @/lib/omaForReview only"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "src/lib/queries.ts",
+        "src/lib/omaValidation.ts",
+        "src/lib/omaCopy.ts",
+        "src/lib/progress.ts",
+        "src/lib/omaForReview.ts",
+        "src/components/Oma*.{ts,tsx}",
+        "src/components/CopyOmaButton.tsx",
+        "src/components/DeleteOmaButton.tsx",
+        "src/app/(app)/oma/**/*.{ts,tsx}",
+        "src/app/(app)/bu/**/*.{ts,tsx}"
+      ],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["@/modules/review", "@/modules/review/*"],
+                "message": "OMA code must not depend on the review module"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

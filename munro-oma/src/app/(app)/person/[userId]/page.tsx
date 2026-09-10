@@ -10,6 +10,7 @@ import { db } from "@/lib/db"
 import { resolvePeriodId } from "@/lib/periods"
 import { getSessionUser } from "@/lib/session"
 import { canCreateOMA } from "@/lib/authz"
+import { PersonReviewLink } from "@/modules/review/components/PersonReviewLink"
 import { createOma } from "./actions"
 
 export default async function PersonPage({
@@ -45,6 +46,9 @@ export default async function PersonPage({
       />
       <div className="mt-3">
         <PageTitle>{person.name} — OMAs</PageTitle>
+        <div className="mt-2">
+          <PersonReviewLink subjectId={person.id} periodId={periodId} periodLabel={period.label} />
+        </div>
       </div>
       <div className="mt-10 space-y-4">
         {person.omas.length > 0 ? (
