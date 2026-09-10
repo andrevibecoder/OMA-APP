@@ -281,17 +281,18 @@ function PeriodRow({ p }: { p: AdminData["periods"][number] }) {
 
   return (
     <li className="flex flex-wrap items-center gap-3 px-4 py-2 text-sm">
-      <label className="flex items-center gap-2">
-        <input
-          type="radio"
-          name="active-period"
-          checked={p.isActive}
-          disabled={pending || p.isActive}
-          onChange={() => run(() => setActivePeriod(p.id))}
-          className="accent-mfa-red"
-        />
-        <span className="font-semibold">{p.label}</span>
-      </label>
+      <span className="min-w-[5.5rem] font-semibold">{p.label}</span>
+      {p.isActive ? (
+        <span className="text-xs font-semibold text-mfa-red">ACTIVE</span>
+      ) : (
+        <button
+          className={ghostBtn}
+          disabled={pending}
+          onClick={() => run(() => setActivePeriod(p.id))}
+        >
+          Set active
+        </button>
+      )}
       <span className="flex items-center gap-1 text-xs text-mfa-muted">
         <input
           type="date"
@@ -322,7 +323,6 @@ function PeriodRow({ p }: { p: AdminData["periods"][number] }) {
       <span className="text-xs text-mfa-muted">
         {p._count.omas} {p._count.omas === 1 ? "OMA" : "OMAs"}
       </span>
-      {p.isActive && <span className="text-xs font-semibold text-mfa-red">ACTIVE</span>}
       <button
         className={ghostBtn}
         disabled={pending}

@@ -2,8 +2,6 @@ import { db } from "@/lib/db"
 import { getSessionUser } from "@/lib/session"
 import type { SessionUser } from "@/types"
 
-const KIND_ORDER = { QUARTER: 0, HALF: 1, ANNUAL: 2 } as const
-
 /** Defense-in-depth for the admin server actions. The page already redirects
  *  non-admins; this makes the mutations safe on their own too. */
 export async function requireAdmin(): Promise<SessionUser> {
@@ -56,11 +54,12 @@ export async function getAdminData() {
     }),
   ])
 
+  // Chronological — a new future period lands at the bottom.
   const periods = periodsRaw.sort(
     (a, b) =>
-      b.year - a.year ||
-      KIND_ORDER[a.kind] - KIND_ORDER[b.kind] ||
-      a.startDate.getTime() - b.startDate.getTime(),
+      a.startDate.getTime() - b.startDate.getTime() ||
+      (a.endDate?.getTime() ?? 0) - (b.endDate?.getTime() ?? 0) ||
+      a.label.localeCompare(b.label),
   )
 
   return { businessUnits, periods, users, loginEvents }
