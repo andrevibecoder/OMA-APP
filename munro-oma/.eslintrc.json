@@ -35,7 +35,8 @@
         "src/components/CopyOmaButton.tsx",
         "src/components/DeleteOmaButton.tsx",
         "src/app/(app)/oma/**/*.{ts,tsx}",
-        "src/app/(app)/bu/**/*.{ts,tsx}"
+        "src/app/(app)/bu/**/*.{ts,tsx}",
+        "src/app/(app)/person/**/*.{ts,tsx}"
       ],
       "rules": {
         "no-restricted-imports": [
