@@ -3,13 +3,10 @@
 import { redirect } from "next/navigation"
 import { revalidatePath } from "next/cache"
 import { Prisma } from "@prisma/client"
-import type { Prisma as PrismaNS } from "@prisma/client"
 import { db } from "@/lib/db"
 import { withDbRetry } from "@/lib/dbRetry"
 import { getSessionUser } from "@/lib/session"
-import { getOmasForReview } from "@/lib/omaForReview"
 import { canDeleteReview, canReassignScorer, canScore } from "@/modules/review/authz"
-import { mergeRefresh, type ExistingItem } from "@/modules/review/snapshot"
 import { canComplete, finalScore } from "@/modules/review/scoring"
 
 async function loadForScorer(reviewId: string) {
@@ -29,65 +26,6 @@ async function loadForScorer(reviewId: string) {
   }
   if (!canScore(viewer, shape)) throw new Error("Not allowed")
   return { viewer, review }
-}
-
-export async function refreshReview(reviewId: string): Promise<void> {
-  const { review } = await loadForScorer(reviewId)
-  if (review.status !== "OPEN") throw new Error("This review is completed.")
-
-  const fresh = await getOmasForReview(review.subjectId, review.periodId)
-  const existing: ExistingItem[] = review.items.map((i) => ({
-    id: i.id,
-    omaId: i.omaId,
-    order: i.order,
-    sequence: i.sequence,
-    title: i.title,
-    outcome: i.outcome,
-    kpis: i.kpis as unknown as ExistingItem["kpis"],
-    actions: i.actions as unknown as ExistingItem["actions"],
-    rating: i.rating,
-    comment: i.comment,
-    notes: (i.notes as unknown as ExistingItem["notes"]) ?? [],
-  }))
-
-  const { create, update, deleteIds } = mergeRefresh(existing, fresh)
-
-  const ops: PrismaNS.PrismaPromise<unknown>[] = []
-  if (deleteIds.length) ops.push(db.reviewItem.deleteMany({ where: { id: { in: deleteIds } } }))
-  for (const u of update) {
-    ops.push(
-      db.reviewItem.update({
-        where: { id: u.id },
-        data: {
-          order: u.data.order,
-          sequence: u.data.sequence,
-          title: u.data.title,
-          outcome: u.data.outcome,
-          kpis: u.data.kpis as unknown as PrismaNS.InputJsonValue,
-          actions: u.data.actions as unknown as PrismaNS.InputJsonValue,
-          notes: u.data.notes as unknown as PrismaNS.InputJsonValue,
-        },
-      }),
-    )
-  }
-  for (const c of create) {
-    ops.push(
-      db.reviewItem.create({
-        data: {
-          reviewId,
-          omaId: c.omaId,
-          order: c.order,
-          sequence: c.sequence,
-          title: c.title,
-          outcome: c.outcome,
-          kpis: c.kpis as unknown as PrismaNS.InputJsonValue,
-          actions: c.actions as unknown as PrismaNS.InputJsonValue,
-        },
-      }),
-    )
-  }
-  if (ops.length) await withDbRetry(() => db.$transaction(ops))
-  revalidatePath(`/review/${reviewId}`)
 }
 
 export async function completeReview(reviewId: string): Promise<void> {
