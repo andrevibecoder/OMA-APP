@@ -159,6 +159,28 @@ export async function setPeriodLocked(id: string, locked: boolean): Promise<Resu
   return {}
 }
 
+// Only an empty, non-active period can be removed. A period that holds OMAs or
+// reviews is history — lock it instead.
+export async function deletePeriod(id: string): Promise<Result> {
+  await requireAdmin()
+  const p = await db.period.findUnique({
+    where: { id },
+    select: { isActive: true, label: true, _count: { select: { omas: true, reviews: true } } },
+  })
+  if (!p) return { error: "That period no longer exists." }
+  if (p.isActive) return { error: "This is the active period — activate another first." }
+  if (p._count.omas > 0 || p._count.reviews > 0) {
+    return {
+      error: `"${p.label}" has ${p._count.omas} OMA${p._count.omas === 1 ? "" : "s"}${
+        p._count.reviews ? ` and ${p._count.reviews} review${p._count.reviews === 1 ? "" : "s"}` : ""
+      } — lock it instead of deleting.`,
+    }
+  }
+  await db.period.delete({ where: { id } })
+  revalidateApp()
+  return {}
+}
+
 // --------------------------------------------------------------------------
 // Users
 // --------------------------------------------------------------------------
