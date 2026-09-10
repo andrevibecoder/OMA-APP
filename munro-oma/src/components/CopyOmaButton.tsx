@@ -4,7 +4,8 @@ import { useState, useTransition } from "react"
 import { copyOmaToPeriod } from "@/app/(app)/oma/[omaId]/actions"
 
 // Carry an OMA over to another period. Creates a new OMA there; this one is
-// untouched. Only rendered for someone who can edit the OMA.
+// untouched. Collapsed to a single button until clicked, so the action bar
+// doesn't stay crowded.
 export function CopyOmaButton({
   omaId,
   periods,
@@ -12,12 +13,13 @@ export function CopyOmaButton({
   omaId: string
   periods: { id: string; label: string }[]
 }) {
+  const [open, setOpen] = useState(false)
   const [target, setTarget] = useState(periods[0]?.id ?? "")
   const [pending, start] = useTransition()
 
   if (periods.length === 0) return null
 
-  function onClick() {
+  function copy() {
     if (!target) return
     const label = periods.find((p) => p.id === target)?.label ?? "that period"
     if (
@@ -29,12 +31,25 @@ export function CopyOmaButton({
     }
   }
 
+  if (!open) {
+    return (
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="rounded-full border border-mfa-red px-4 py-2 font-semibold text-mfa-red"
+      >
+        Copy to period
+      </button>
+    )
+  }
+
   return (
     <div className="flex items-center gap-2">
       <select
         value={target}
         onChange={(e) => setTarget(e.target.value)}
         disabled={pending}
+        autoFocus
         className="rounded-full border border-mfa-red bg-white px-3 py-2 text-sm text-mfa-red outline-none disabled:opacity-60"
       >
         {periods.map((p) => (
@@ -45,11 +60,19 @@ export function CopyOmaButton({
       </select>
       <button
         type="button"
-        onClick={onClick}
+        onClick={copy}
         disabled={pending}
-        className="rounded-full border border-mfa-red px-4 py-2 font-semibold text-mfa-red disabled:opacity-60"
+        className="rounded-full bg-mfa-red px-4 py-2 font-semibold text-white disabled:opacity-60"
       >
-        {pending ? "Copying…" : "Copy to period"}
+        {pending ? "Copying…" : "Copy"}
+      </button>
+      <button
+        type="button"
+        onClick={() => setOpen(false)}
+        disabled={pending}
+        className="px-2 text-sm text-mfa-muted"
+      >
+        Cancel
       </button>
     </div>
   )
