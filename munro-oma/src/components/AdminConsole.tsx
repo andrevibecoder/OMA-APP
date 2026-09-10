@@ -165,14 +165,15 @@ function BusinessUnitRow({
   )
 }
 
+// Default start/end for each term (still editable per period below).
 const PERIOD_TERMS = [
-  { term: "Q1", label: "Q1 (Jan–Mar)", start: "01-01", end: "03-31" },
-  { term: "Q2", label: "Q2 (Apr–Jun)", start: "04-01", end: "06-30" },
-  { term: "Q3", label: "Q3 (Jul–Sep)", start: "07-01", end: "09-30" },
-  { term: "Q4", label: "Q4 (Oct–Dec)", start: "10-01", end: "12-31" },
-  { term: "H1", label: "H1 (Jan–Jun)", start: "01-01", end: "06-30" },
-  { term: "H2", label: "H2 (Jul–Dec)", start: "07-01", end: "12-31" },
-  { term: "FY", label: "FY (full year)", start: "01-01", end: "12-31" },
+  { term: "Q1", start: "01-01", end: "03-31" },
+  { term: "Q2", start: "04-01", end: "06-30" },
+  { term: "Q3", start: "07-01", end: "09-30" },
+  { term: "Q4", start: "10-01", end: "12-31" },
+  { term: "H1", start: "01-01", end: "06-30" },
+  { term: "H2", start: "07-01", end: "12-31" },
+  { term: "FY", start: "01-01", end: "12-31" },
 ] as const
 
 function termWindow(term: string, year: number): { start: string; end: string } {
@@ -215,7 +216,7 @@ function PeriodsSection({ data }: { data: AdminData }) {
           <select className={input} value={term} onChange={(e) => sync(e.target.value, year)}>
             {PERIOD_TERMS.map((t) => (
               <option key={t.term} value={t.term}>
-                {t.label}
+                {t.term}
               </option>
             ))}
           </select>
