@@ -28,6 +28,7 @@ export async function getAdminData() {
         kind: true,
         year: true,
         startDate: true,
+        endDate: true,
         isActive: true,
         locked: true,
         _count: { select: { omas: true } },

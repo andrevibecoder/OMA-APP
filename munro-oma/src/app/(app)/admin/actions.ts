@@ -106,11 +106,17 @@ export async function moveBusinessUnit(id: string, direction: "up" | "down"): Pr
 // Periods
 // --------------------------------------------------------------------------
 
-const periodSchema = z.object({
-  half: z.number().int().min(1).max(2),
-  year: z.number().int().min(2000).max(2100),
-  startDate: z.string().min(1),
-})
+const periodSchema = z
+  .object({
+    half: z.number().int().min(1).max(2),
+    year: z.number().int().min(2000).max(2100),
+    startDate: z.string().min(1),
+    endDate: z.string().min(1),
+  })
+  .refine((d) => d.endDate >= d.startDate, {
+    message: "End date can't be before the start date.",
+    path: ["endDate"],
+  })
 
 export async function createPeriod(raw: z.infer<typeof periodSchema>): Promise<Result> {
   await requireAdmin()
@@ -128,6 +134,7 @@ export async function createPeriod(raw: z.infer<typeof periodSchema>): Promise<R
         kind: "HALF",
         year: p.year,
         startDate: new Date(p.startDate),
+        endDate: new Date(p.endDate),
         isActive: false,
       },
     })
@@ -136,6 +143,24 @@ export async function createPeriod(raw: z.infer<typeof periodSchema>): Promise<R
     throw e
   }
   revalidatePath("/admin")
+  return {}
+}
+
+// Adjust an existing period's window — halves don't always land on the
+// calendar half-boundary.
+export async function setPeriodDates(
+  id: string,
+  startDate: string,
+  endDate: string,
+): Promise<Result> {
+  await requireAdmin()
+  if (!startDate || !endDate) return { error: "Both dates are required." }
+  if (endDate < startDate) return { error: "End date can't be before the start date." }
+  await db.period.update({
+    where: { id },
+    data: { startDate: new Date(startDate), endDate: new Date(endDate) },
+  })
+  revalidateApp()
   return {}
 }
 

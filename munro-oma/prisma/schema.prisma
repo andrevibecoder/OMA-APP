@@ -81,6 +81,7 @@ model Period {
   kind       PeriodKind @default(QUARTER)
   year       Int
   startDate  DateTime
+  endDate    DateTime? // halves can run slightly off the calendar half
   isActive   Boolean    @default(false)
   // Independent of isActive: once locked, only Admin may create/edit OMAs
   // against this period. Locking doesn't change which period is "active" —

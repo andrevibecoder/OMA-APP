@@ -16,7 +16,7 @@ export async function createOma(userId: string, periodId: string) {
   })
   const period = await db.period.findUniqueOrThrow({
     where: { id: periodId },
-    select: { startDate: true, locked: true },
+    select: { startDate: true, endDate: true, locked: true },
   })
   if (!canCreateOMA(viewer, target, period.locked)) throw new Error("Not allowed")
 
@@ -37,6 +37,7 @@ export async function createOma(userId: string, periodId: string) {
           periodId,
           sequence: nextSeq,
           date: period.startDate,
+          endDate: period.endDate,
           outcome: "",
         },
       }),

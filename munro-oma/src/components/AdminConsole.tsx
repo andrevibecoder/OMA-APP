@@ -6,6 +6,7 @@ import {
   createBusinessUnit,
   createPeriod,
   deletePeriod,
+  setPeriodDates,
   setPeriodLocked,
   createUser,
   deleteBusinessUnit,
@@ -167,6 +168,12 @@ function BusinessUnitRow({
 function defaultStart(half: number, year: number): string {
   return `${year}-${half === 2 ? "07" : "01"}-01`
 }
+function defaultEnd(half: number, year: number): string {
+  return `${year}-${half === 2 ? "12-31" : "06-30"}`
+}
+function isoDay(d: Date | string | null): string {
+  return d ? new Date(d).toISOString().slice(0, 10) : ""
+}
 
 function PeriodsSection({ data }: { data: AdminData }) {
   const { periods } = data
@@ -175,11 +182,13 @@ function PeriodsSection({ data }: { data: AdminData }) {
   const [half, setHalf] = useState(1)
   const [year, setYear] = useState(thisYear)
   const [start, setStart] = useState(defaultStart(1, thisYear))
+  const [end, setEnd] = useState(defaultEnd(1, thisYear))
 
   function sync(h: number, y: number) {
     setHalf(h)
     setYear(y)
     setStart(defaultStart(h, y))
+    setEnd(defaultEnd(h, y))
   }
 
   return (
@@ -220,10 +229,20 @@ function PeriodsSection({ data }: { data: AdminData }) {
             onChange={(e) => setStart(e.target.value)}
           />
         </label>
+        <label className="flex flex-col">
+          <span className="text-xs text-mfa-muted">End date</span>
+          <input
+            type="date"
+            className={input}
+            value={end}
+            min={start}
+            onChange={(e) => setEnd(e.target.value)}
+          />
+        </label>
         <button
           className={btn}
           disabled={pending}
-          onClick={() => run(() => createPeriod({ half, year, startDate: start }))}
+          onClick={() => run(() => createPeriod({ half, year, startDate: start, endDate: end }))}
         >
           Add period
         </button>
@@ -235,6 +254,12 @@ function PeriodsSection({ data }: { data: AdminData }) {
 
 function PeriodRow({ p }: { p: AdminData["periods"][number] }) {
   const { pending, error, run } = useAction()
+  const start0 = isoDay(p.startDate)
+  const end0 = isoDay(p.endDate)
+  const [start, setStart] = useState(start0)
+  const [end, setEnd] = useState(end0)
+  const datesDirty = start !== start0 || end !== end0
+
   return (
     <li className="flex flex-wrap items-center gap-3 px-4 py-2 text-sm">
       <label className="flex items-center gap-2">
@@ -248,9 +273,33 @@ function PeriodRow({ p }: { p: AdminData["periods"][number] }) {
         />
         <span className="font-semibold">{p.label}</span>
       </label>
-      <span className="text-xs text-mfa-muted">
-        starts {new Date(p.startDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
+      <span className="flex items-center gap-1 text-xs text-mfa-muted">
+        <input
+          type="date"
+          className={`${input} text-xs`}
+          value={start}
+          disabled={pending}
+          onChange={(e) => setStart(e.target.value)}
+        />
+        to
+        <input
+          type="date"
+          className={`${input} text-xs`}
+          value={end}
+          min={start}
+          disabled={pending}
+          onChange={(e) => setEnd(e.target.value)}
+        />
       </span>
+      {datesDirty && (
+        <button
+          className={btn}
+          disabled={pending}
+          onClick={() => run(() => setPeriodDates(p.id, start, end))}
+        >
+          Save dates
+        </button>
+      )}
       <span className="text-xs text-mfa-muted">
         {p._count.omas} {p._count.omas === 1 ? "OMA" : "OMAs"}
       </span>

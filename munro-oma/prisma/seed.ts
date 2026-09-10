@@ -33,8 +33,8 @@ async function main() {
 
   // Half-year review periods. H2 is the active period.
   const periodSpecs = [
-    { label: "H1 2026", shortLabel: "H1", kind: "HALF" as const, startDate: "2026-01-01" },
-    { label: "H2 2026", shortLabel: "H2", kind: "HALF" as const, startDate: "2026-07-01", active: true },
+    { label: "H1 2026", shortLabel: "H1", kind: "HALF" as const, startDate: "2026-01-01", endDate: "2026-06-30" },
+    { label: "H2 2026", shortLabel: "H2", kind: "HALF" as const, startDate: "2026-07-01", endDate: "2026-12-31", active: true },
   ]
   let period!: Awaited<ReturnType<typeof db.period.create>>
   for (const s of periodSpecs) {
@@ -45,6 +45,7 @@ async function main() {
         kind: s.kind,
         year: 2026,
         startDate: new Date(s.startDate),
+        endDate: new Date(s.endDate),
         isActive: s.active ?? false,
       },
     })
