@@ -152,7 +152,11 @@ export default async function ScorecardPage({ params }: { params: { reviewId: st
                             <span className="text-mfa-muted">Not yet rated</span>
                           )}
                         </p>
-                        {item.comment && <p className="mt-2 text-sm">{item.comment}</p>}
+                        {item.comment && (
+                          <p className="mt-2 text-sm">
+                            <span className="font-semibold">Comments:</span> {item.comment}
+                          </p>
+                        )}
                       </>
                     )}
                   </div>
