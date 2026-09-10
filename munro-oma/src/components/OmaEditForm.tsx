@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react"
 import { saveOma } from "@/app/(app)/oma/[omaId]/actions"
 import { DeleteOmaButton } from "@/components/DeleteOmaButton"
-import { formatMetricValue } from "@/lib/progress"
+import { formatMetricValue, parseAmount } from "@/lib/progress"
 import { omaSaveBlockers } from "@/lib/omaValidation"
 import type { MetricDirection, MetricUnit, SaveOmaInput } from "@/types"
 
@@ -59,23 +59,20 @@ const EMPTY_METRIC: FormMetric = {
   apiKey: "",
 }
 
-// keep digits and a single decimal point; drop everything else
+// Keep the field roughly numeric while still allowing shorthand — digits, one
+// group of letters (k/m/mill/bn…), spaces, commas and a currency mark. parseAmount
+// does the real interpretation.
 function num(v: string): string {
-  const cleaned = v.replace(/[^0-9.]/g, "")
-  const firstDot = cleaned.indexOf(".")
-  return firstDot === -1
-    ? cleaned
-    : cleaned.slice(0, firstDot + 1) + cleaned.slice(firstDot + 1).replace(/\./g, "")
+  return v.replace(/[^0-9.,\s a-zA-Z$]/g, "")
 }
 
-// Formatted-value hint shown under a number input — only when the formatting
-// actually differs from what the user typed (e.g. "3000" -> "3 000", "8" -> "R8").
+// Formatted-value hint shown under a number input — the resolved amount whenever
+// it differs from what the user typed (e.g. "3 mill" -> "R3 000 000", "3000" -> "3 000").
 function hint(v: string, unit: MetricUnit): string {
-  if (!v || v === ".") return ""
-  const n = Number(v)
-  if (!Number.isFinite(n)) return ""
+  const n = parseAmount(v)
+  if (n === null) return ""
   const formatted = formatMetricValue(n, unit)
-  return formatted === v ? "" : formatted
+  return formatted === v.trim() ? "" : formatted
 }
 
 // A server action that calls redirect() / notFound() rejects the client promise
@@ -146,8 +143,8 @@ export function OmaEditForm({
       measure: m.measure,
       unit: m.unit,
       direction: m.direction,
-      target: Number(m.target) || 0,
-      current: Number(m.current) || 0,
+      target: parseAmount(m.target) ?? 0,
+      current: parseAmount(m.current) ?? 0,
       source: m.source,
       apiUrl: m.apiUrl.trim() || null,
       apiPath: m.apiPath.trim() || null,
@@ -300,7 +297,6 @@ export function OmaEditForm({
                 <input
                   value={m.target}
                   disabled={!canOutcomeMetric}
-                  inputMode="decimal"
                   placeholder="0"
                   onChange={(e) => setM({ target: num(e.target.value) })}
                   className="rounded border border-mfa-track px-2 py-1.5 disabled:text-mfa-muted"
@@ -312,7 +308,6 @@ export function OmaEditForm({
                 <input
                   value={m.current}
                   disabled={!canOutcomeMetric}
-                  inputMode="decimal"
                   placeholder="0"
                   onChange={(e) => setM({ current: num(e.target.value) })}
                   className="rounded border border-mfa-track px-2 py-1.5 disabled:text-mfa-muted"

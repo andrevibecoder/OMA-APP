@@ -51,6 +51,33 @@ export function formatMetricValue(value: number, unit: MetricUnit): string {
 }
 
 // ---------------------------------------------------------------------------
+// Lenient number entry — lets a user type "3 mill", "3M", "1.5k", "R3,000,000"
+// into a target/current field and get 3000000 / 3000000 / 1500 / 3000000.
+// Returns null when there's no number to be found.
+// ---------------------------------------------------------------------------
+
+const AMOUNT_SUFFIX: Record<string, number> = {
+  k: 1e3,
+  m: 1e6,
+  mil: 1e6,
+  mill: 1e6,
+  million: 1e6,
+  b: 1e9,
+  bn: 1e9,
+  billion: 1e9,
+}
+
+export function parseAmount(raw: string): number | null {
+  if (!raw) return null
+  const s = raw.trim().toLowerCase().replace(/[r$,\s]/g, "")
+  const m = s.match(/^(-?\d*\.?\d+)(million|mill|mil|billion|bn|k|m|b)?$/)
+  if (!m) return null
+  const n = parseFloat(m[1])
+  if (!Number.isFinite(n)) return null
+  return n * (m[2] ? AMOUNT_SUFFIX[m[2]] : 1)
+}
+
+// ---------------------------------------------------------------------------
 // Attainment — how far current has moved toward target.
 // ---------------------------------------------------------------------------
 
