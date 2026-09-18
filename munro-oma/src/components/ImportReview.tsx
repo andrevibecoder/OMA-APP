@@ -72,6 +72,24 @@ function hint(v: string, unit: MetricUnit): string {
   return formatted === v.trim() ? "" : formatted
 }
 
+// Single source of truth for "is this OMA missing something?" — used by the
+// per-card "Won't save yet" text, the per-row highlight, and the Create
+// button's own disabled check, so all three always agree with each other.
+function omaBlockers(o: ReviewOma): string[] {
+  return draftOmaBlockers({
+    title: o.title,
+    outcome: o.outcome,
+    metrics: o.metrics.map((m) => ({
+      measure: m.measure,
+      unit: m.unit,
+      direction: m.direction,
+      target: parseAmount(m.target) ?? 0,
+      targetText: m.targetText,
+    })),
+    actions: o.actions,
+  })
+}
+
 export function ImportReview({
   subjects,
   periods,
@@ -203,6 +221,7 @@ export function ImportReview({
   }
 
   const cell = "w-full bg-transparent px-3 py-2 outline-none"
+  const anyBlocked = phase.omas.some((o) => omaBlockers(o).length > 0)
 
   return (
     <div className="space-y-6">
@@ -270,18 +289,7 @@ export function ImportReview({
         const removeOma = () =>
           setPhase({ ...phase, omas: phase.omas.filter((_, i) => i !== omaIndex) })
 
-        const blockers = draftOmaBlockers({
-          title: oma.title,
-          outcome: oma.outcome,
-          metrics: oma.metrics.map((m) => ({
-            measure: m.measure,
-            unit: m.unit,
-            direction: m.direction,
-            target: parseAmount(m.target) ?? 0,
-            targetText: m.targetText,
-          })),
-          actions: oma.actions,
-        })
+        const blockers = omaBlockers(oma)
 
         return (
           <div key={omaIndex} className="overflow-hidden rounded-2xl border-2 border-mfa-red">
@@ -469,31 +477,17 @@ export function ImportReview({
             {error}
           </p>
         )}
+        {!error && anyBlocked && (
+          <p className="mr-auto text-sm font-semibold text-mfa-red">
+            ⚠ Check: something above needs attention before continuing.
+          </p>
+        )}
         <button type="button" onClick={() => setPhase({ kind: "upload" })} className="text-sm text-mfa-muted">
           Cancel
         </button>
         <button
           onClick={handleCreate}
-          disabled={
-            pending ||
-            phase.omas.length === 0 ||
-            !phase.periodId ||
-            phase.omas.some(
-              (o) =>
-                draftOmaBlockers({
-                  title: o.title,
-                  outcome: o.outcome,
-                  metrics: o.metrics.map((m) => ({
-                    measure: m.measure,
-                    unit: m.unit,
-                    direction: m.direction,
-                    target: parseAmount(m.target) ?? 0,
-                    targetText: m.targetText,
-                  })),
-                  actions: o.actions,
-                }).length > 0,
-            )
-          }
+          disabled={pending || phase.omas.length === 0 || !phase.periodId || anyBlocked}
           className="rounded-full bg-mfa-red px-6 py-2 font-semibold text-white disabled:opacity-60"
         >
           {pending ? "Creating…" : `Create ${phase.omas.length} OMAs`}
