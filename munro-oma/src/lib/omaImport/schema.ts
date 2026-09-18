@@ -2,8 +2,16 @@ import { z } from "zod/v4"
 
 export const extractedKpiSchema = z.object({
   measure: z.string(),
-  unit: z.enum(["NUMBER", "CURRENCY", "PERCENT", "DAYS"]).nullable(),
-  direction: z.enum(["HIGHER_BETTER", "LOWER_BETTER"]).nullable(),
+  // .meta({ type: "string" }) is load-bearing, not decorative: zod/v4's
+  // z.enum() emits JSON Schema as `{ enum: [...] }` with no "type" key (valid
+  // per spec — enum alone implies the value set), but @anthropic-ai/sdk's
+  // zodOutputFormat() strict-schema transform throws "JSON schema must have
+  // a type defined" on any node lacking type/anyOf/oneOf/allOf. The .meta()
+  // call attaches to zod's global metadata registry, which z.toJSONSchema
+  // merges onto the generated node — restoring the type key the transform
+  // requires, without changing runtime validation.
+  unit: z.enum(["NUMBER", "CURRENCY", "PERCENT", "DAYS"]).meta({ type: "string" }).nullable(),
+  direction: z.enum(["HIGHER_BETTER", "LOWER_BETTER"]).meta({ type: "string" }).nullable(),
   // 3_000_000 from "R3 million"; null from "[TBC]" or pure narrative.
   target: z.number().nullable(),
   // The original target prose — always kept, shown on the review page.
