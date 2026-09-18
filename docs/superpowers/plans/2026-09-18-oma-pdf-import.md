@@ -1252,7 +1252,15 @@ function toReviewOma(o: ImportDraft["omas"][number]): ReviewOma {
       measure: m.measure,
       unit: m.unit,
       direction: m.direction,
-      target: m.target ? String(m.target) : "",
+      // DraftMetric.target is always a finite number (never null/undefined —
+      // toDraft defaults a missing AI target to 0), so String(m.target) is
+      // unconditionally correct. A truthy check here (`m.target ? ... : ""`)
+      // would render a real, meaningful target of 0 as a blank field — and
+      // target: 0 is a first-class case for this feature, not an edge case:
+      // it's exactly what a "no growth intended" clause like "Price largely
+      // constant (0% increase)" resolves to per the compound-target-splitting
+      // rule (D12). Corrected 2026-09-18 during Task 9 review.
+      target: String(m.target),
       targetText: m.targetText,
     })),
     actions: o.actions.map((a) => ({ ...a })),
