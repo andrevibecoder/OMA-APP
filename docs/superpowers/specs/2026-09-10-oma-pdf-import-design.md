@@ -50,6 +50,7 @@ review and create them — instead of retyping.
 | D11 | Model | `claude-opus-5` — fixed, not a cost-driven choice. Budget is not a constraint; extraction quality on messy/compound target cells matters more than the price difference to sonnet/haiku. |
 | D12 | Compound target cells | A target cell holding several independently-numbered sub-targets (e.g. "Volume from 8,750 to 10,500 / Price largely constant / Cost per report from R4,000 to R3,500 / Expenses around R35m to R39m") is split into **one KPI row per sub-target**, not collapsed into one. See §4.2a. |
 | D13 | Entry point | **Button on the person page**, beside "+ Add OMA" (screenshot-confirmed) — not a top-nav link. Pre-scopes subject + period via query params. See §3.1. |
+| D14 | A KPI whose real target is 0 | **Flag it; the reviewer must fix it before Create — no change to the app's shared save/scoring rules.** The final whole-branch review (2026-09-18) found that `target: 0` is NOT, in fact, trackable "the same way" as any other target, contradicting §4.2a's original claim (corrected below): the existing `omaSaveBlockers` (`src/lib/omaValidation.ts`, used by manual OMA editing too, unrelated to this feature) treats `target: 0` as "not targeted" and blocks Create, and separately `metricAttainment` (`src/lib/progress.ts`) returns 0% forever for a `LOWER_BETTER` metric with `target: 0`, regardless of how well it's tracking. Both are pre-existing, app-wide rules — changing them was considered and explicitly declined (bigger change, touches manual OMA editing, needs its own testing cycle, out of scope for an import feature). Instead: `toDraft` adds a specific warning for any KPI whose resolved target is exactly 0, naming the KPI and explaining it can't be saved as-is, so the reviewer sees *why* and fixes it (a real ceiling, e.g. "max +2%") before Create — rather than the generic, unexplained "Every KPI needs both a name and a target." block they'd otherwise hit with no context. |
 
 ---
 
@@ -196,14 +197,18 @@ Output — four `kpis` entries, not one:
 | measure | unit | direction | target | targetText |
 |---|---|---|---|---|
 | Production profit — Volume | NUMBER | HIGHER_BETTER | 10500 | "Volume from 8 750 to 10 500 per year" |
-| Production profit — Price | PERCENT | LOWER_BETTER | 0 | "Price largely constant (0% increase)" |
+| Production profit — Price | PERCENT | LOWER_BETTER | 0 | "Price largely constant (0% increase)" (+ warning per D14: target 0 can't be saved as-is) |
 | Production profit — Cost per report | CURRENCY | LOWER_BETTER | 3500 | "Cost per report from R 4 000 to R 3 500" |
 | Production profit — Expenses | CURRENCY | LOWER_BETTER | 35000000 | "Expenses around R 35m to R39m" (+ warning: range, lower bound used) |
 
 Every split entry is a normal KPI row from here on — it flows through `toDraft`,
-review, and `createImportedOmas` exactly like any other, and rolls into the OMA's and
-dashboard's percentage the same way. No downstream code treats a split entry
-differently from a single-clause one.
+review, and `createImportedOmas` exactly like any other. No downstream code treats a
+split entry differently from a single-clause one *purely because it was split* — but a
+split entry whose target resolves to exactly 0 (like "Price" above) hits the same
+save-blocking and 0%-forever scoring behaviour any manually-entered `target: 0` metric
+would. See D14: this is flagged with a specific, actionable warning rather than fixed
+at the shared-validation level, which is a deliberate, scoped-down choice, not an
+oversight.
 
 ### 4.3 `extract.ts`
 
@@ -369,7 +374,10 @@ repo; sensitive business content):
    OMA 1's two KPI rows stay separate (the template already splits those); OMA 3's
    "Number of people scoring 7/10 or higher" KPI is flagged (`target: null`, prose
    target) since "# of team at +7/10" has no defensible absolute number without knowing
-   headcount.
+   headcount. Per D14: the "Price" row (`target: 0`) carries a warning explaining it
+   can't be saved as-is, and the "Create" button stays disabled for that OMA until the
+   reviewer replaces it with a real number — confirm both the warning text and the
+   disabled state appear.
 
 **Manual E2E:** upload → review → fill a `[TBC]` target → Create → land on
 `/person/<id>` with 4 new OMAs appended → existing OMAs unchanged. A USER importing for
