@@ -15,29 +15,32 @@
     "db:seed": "prisma db seed",
     "db:studio": "prisma studio"
   },
-  "prisma": { "seed": "tsx prisma/seed.ts" },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
   "dependencies": {
-    "next": "14.2.15",
-    "react": "18.3.1",
-    "react-dom": "18.3.1",
-    "next-auth": "5.0.0-beta.25",
+    "@anthropic-ai/sdk": "^0.126.0",
     "@prisma/client": "5.22.0",
     "bcryptjs": "2.4.3",
-    "zod": "3.23.8"
+    "next": "14.2.15",
+    "next-auth": "5.0.0-beta.25",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "zod": "^3.25.8"
   },
   "devDependencies": {
-    "typescript": "5.6.3",
+    "@types/bcryptjs": "2.4.6",
+    "@types/node": "20.16.11",
     "@types/react": "18.3.11",
     "@types/react-dom": "18.3.0",
-    "@types/node": "20.16.11",
-    "@types/bcryptjs": "2.4.6",
-    "tailwindcss": "3.4.14",
-    "postcss": "8.4.47",
     "autoprefixer": "10.4.20",
-    "prisma": "5.22.0",
-    "tsx": "4.19.1",
-    "vitest": "2.1.3",
     "eslint": "8.57.1",
-    "eslint-config-next": "14.2.15"
+    "eslint-config-next": "14.2.15",
+    "postcss": "8.4.47",
+    "prisma": "5.22.0",
+    "tailwindcss": "3.4.14",
+    "tsx": "4.19.1",
+    "typescript": "5.6.3",
+    "vitest": "2.1.3"
   }
 }
