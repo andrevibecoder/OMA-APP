@@ -59,6 +59,7 @@ export async function parsePdf(formData: FormData): Promise<ImportDraft | { erro
     if (e instanceof ImportNotConfiguredError) {
       return { error: "AI import isn't configured on this environment." }
     }
+    console.error("[oma-import] extraction failed:", e)
     return { error: e instanceof Error ? e.message : "Couldn't read that PDF. Please try again." }
   }
 
