@@ -445,20 +445,45 @@ export function OmaEditForm({
                   </span>
                 ) : (
                   <>
-                    <span>Due</span>
-                    <input
-                      type="date"
-                      value={a.dueDate ?? ""}
-                      disabled={!canActions}
-                      onChange={(e) =>
-                        setActions(
-                          actions.map((x, j) =>
-                            j === i ? { ...x, dueDate: e.target.value || null } : x,
-                          ),
-                        )
-                      }
-                      className="bg-transparent py-2 text-mfa-ink outline-none disabled:text-mfa-muted"
-                    />
+                    <label className="flex items-center gap-1">
+                      <input
+                        type="checkbox"
+                        checked={a.dueDate === null}
+                        disabled={!canActions}
+                        onChange={(e) =>
+                          setActions(
+                            actions.map((x, j) =>
+                              j === i
+                                ? {
+                                    ...x,
+                                    dueDate: e.target.checked ? null : new Date().toISOString().slice(0, 10),
+                                  }
+                                : x,
+                            ),
+                          )
+                        }
+                        className="h-3.5 w-3.5 accent-mfa-red disabled:opacity-60"
+                      />
+                      Ongoing
+                    </label>
+                    {a.dueDate !== null && (
+                      <>
+                        <span>Due</span>
+                        <input
+                          type="date"
+                          value={a.dueDate}
+                          disabled={!canActions}
+                          onChange={(e) =>
+                            setActions(
+                              actions.map((x, j) =>
+                                j === i ? { ...x, dueDate: e.target.value || null } : x,
+                              ),
+                            )
+                          }
+                          className="bg-transparent py-2 text-mfa-ink outline-none disabled:text-mfa-muted"
+                        />
+                      </>
+                    )}
                   </>
                 )}
               </div>
