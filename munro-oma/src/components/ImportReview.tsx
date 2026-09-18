@@ -41,7 +41,7 @@ function toReviewOma(o: ImportDraft["omas"][number]): ReviewOma {
       measure: m.measure,
       unit: m.unit,
       direction: m.direction,
-      target: m.target ? String(m.target) : "",
+      target: String(m.target),
       targetText: m.targetText,
     })),
     actions: o.actions.map((a) => ({ ...a })),
