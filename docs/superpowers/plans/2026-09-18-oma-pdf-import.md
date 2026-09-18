@@ -167,12 +167,36 @@ Expected: FAIL — `Cannot find module '@/lib/omaImport/schema'`
 
 ```ts
 // munro-oma/src/lib/omaImport/schema.ts
-import { z } from "zod"
+//
+// Imports from "zod/v4" (the v4 API surface shipped inside the installed
+// zod@3.25.8 package as a coexistence subpath), NOT the classic top-level
+// "zod" import used everywhere else in this codebase (src/types.ts's
+// saveOmaSchema, auth.ts, etc.). Corrected 2026-09-18 during Task 6: the
+// installed @anthropic-ai/sdk's zodOutputFormat() helper hard-requires
+// "zod/v4" internally and calls its z.toJSONSchema(), which only
+// introspects schemas built via the v4 z.object(...) (v4's internal
+// `_zod.def` shape) — passing it a classic v3 schema throws
+// "Cannot read properties of undefined (reading 'def')" both at runtime
+// and in typecheck. Verified: zod/v4's object/string/number/enum/
+// nullable/array API is otherwise identical for this file's purposes, so
+// this is a one-line import change, not a schema rewrite. Scoped to this
+// file only — saveOmaSchema and the rest of the app's zod usage stay on
+// classic "zod" (untouched, unrelated to Anthropic's structured-output
+// feature).
+import { z } from "zod/v4"
 
 export const extractedKpiSchema = z.object({
   measure: z.string(),
-  unit: z.enum(["NUMBER", "CURRENCY", "PERCENT", "DAYS"]).nullable(),
-  direction: z.enum(["HIGHER_BETTER", "LOWER_BETTER"]).nullable(),
+  // .meta({ type: "string" }) is load-bearing, not decorative: zod/v4's
+  // z.enum() emits JSON Schema as bare { enum: [...] } with no "type" key,
+  // which @anthropic-ai/sdk's zodOutputFormat() transform rejects ("JSON
+  // schema must have a type defined..."). The .meta() call merges { type:
+  // "string" } onto the generated schema node without changing runtime
+  // validation. Discovered and verified during Task 6 (932c8d5's fix
+  // resolved the v3/v4 shape mismatch but not this separate enum-specific
+  // JSON-Schema-generation gap).
+  unit: z.enum(["NUMBER", "CURRENCY", "PERCENT", "DAYS"]).meta({ type: "string" }).nullable(),
+  direction: z.enum(["HIGHER_BETTER", "LOWER_BETTER"]).meta({ type: "string" }).nullable(),
   // 3_000_000 from "R3 million"; null from "[TBC]" or pure narrative.
   target: z.number().nullable(),
   // The original target prose — always kept, shown on the review page.
@@ -570,8 +594,13 @@ describe("draftOmaBlockers", () => {
   })
 
   it("blocks an OMA whose only metric has a null-defaulted (zero) target", () => {
+    // The metric still has a measure ("Revenue"), so omaSaveBlockers treats this
+    // as a partial row (named but not targeted), not a fully-empty one — it
+    // reports "Every KPI needs both a name and a target.", not "Add at least
+    // one KPI with a target." (that message is only for an all-blank metrics
+    // list). Corrected 2026-09-18 — the plan originally had this backwards.
     expect(draftOmaBlockers({ ...okOma, metrics: [{ ...okOma.metrics[0], target: 0 }] })).toContain(
-      "Add at least one KPI with a target.",
+      "Every KPI needs both a name and a target.",
     )
   })
 
@@ -1038,14 +1067,21 @@ export async function createImportedOmas(
     orderBy: { sequence: "desc" },
     select: { sequence: true },
   })
-  let nextSeq = (last?.sequence ?? 0) + 1
+  const nextSeq = (last?.sequence ?? 0) + 1
 
   try {
+    // Sequence numbers computed as nextSeq + i, not via a mutated nextSeq++
+    // counter — withDbRetry re-invokes this whole callback (including the
+    // omas.map) on a retriable connection failure (P2024/P1001), and a
+    // post-increment counter would have already advanced past its starting
+    // value from the failed attempt, silently skipping sequence numbers on
+    // retry. Corrected 2026-09-18 during Task 7 review — found by the task
+    // reviewer, not present in the original plan's intent, just its code.
     await withDbRetry(() =>
       db.$transaction(
-        omas.map((oma) =>
+        omas.map((oma, i) =>
           db.oMA.create({
-            data: buildCreatePayload(oma, subjectId, viewer.id, periodId, nextSeq++, period.startDate, period.endDate),
+            data: buildCreatePayload(oma, subjectId, viewer.id, periodId, nextSeq + i, period.startDate, period.endDate),
           }),
         ),
       ),
@@ -1216,7 +1252,15 @@ function toReviewOma(o: ImportDraft["omas"][number]): ReviewOma {
       measure: m.measure,
       unit: m.unit,
       direction: m.direction,
-      target: m.target ? String(m.target) : "",
+      // DraftMetric.target is always a finite number (never null/undefined —
+      // toDraft defaults a missing AI target to 0), so String(m.target) is
+      // unconditionally correct. A truthy check here (`m.target ? ... : ""`)
+      // would render a real, meaningful target of 0 as a blank field — and
+      // target: 0 is a first-class case for this feature, not an edge case:
+      // it's exactly what a "no growth intended" clause like "Price largely
+      // constant (0% increase)" resolves to per the compound-target-splitting
+      // rule (D12). Corrected 2026-09-18 during Task 9 review.
+      target: String(m.target),
       targetText: m.targetText,
     })),
     actions: o.actions.map((a) => ({ ...a })),

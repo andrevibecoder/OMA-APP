@@ -160,11 +160,9 @@ export default async function OmaDetailPage({
                             <ActionCheckbox actionId={a.id} completed={a.completed} disabled={!canTick} />
                           )}
                           <span className="flex-1">{a.description}</span>
-                          {a.dueDate && (
-                            <span className="shrink-0 text-sm text-mfa-muted">
-                              Due {fmtDate(a.dueDate)}
-                            </span>
-                          )}
+                          <span className="shrink-0 text-sm text-mfa-muted">
+                            {a.dueDate ? `Due ${fmtDate(a.dueDate)}` : "Ongoing"}
+                          </span>
                         </li>
                       ))}
                       {todo.length === 0 && (

@@ -39,7 +39,7 @@ function Group({
               {a.description}
             </span>
             <span className="shrink-0 text-sm text-mfa-muted">
-              {done ? "Completed" : a.dueDate ? `Due ${fmtDate(a.dueDate)}` : ""}
+              {done ? "Completed" : a.dueDate ? `Due ${fmtDate(a.dueDate)}` : "Ongoing"}
             </span>
           </li>
         ))}
