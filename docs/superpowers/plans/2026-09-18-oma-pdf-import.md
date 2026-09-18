@@ -1067,14 +1067,21 @@ export async function createImportedOmas(
     orderBy: { sequence: "desc" },
     select: { sequence: true },
   })
-  let nextSeq = (last?.sequence ?? 0) + 1
+  const nextSeq = (last?.sequence ?? 0) + 1
 
   try {
+    // Sequence numbers computed as nextSeq + i, not via a mutated nextSeq++
+    // counter — withDbRetry re-invokes this whole callback (including the
+    // omas.map) on a retriable connection failure (P2024/P1001), and a
+    // post-increment counter would have already advanced past its starting
+    // value from the failed attempt, silently skipping sequence numbers on
+    // retry. Corrected 2026-09-18 during Task 7 review — found by the task
+    // reviewer, not present in the original plan's intent, just its code.
     await withDbRetry(() =>
       db.$transaction(
-        omas.map((oma) =>
+        omas.map((oma, i) =>
           db.oMA.create({
-            data: buildCreatePayload(oma, subjectId, viewer.id, periodId, nextSeq++, period.startDate, period.endDate),
+            data: buildCreatePayload(oma, subjectId, viewer.id, periodId, nextSeq + i, period.startDate, period.endDate),
           }),
         ),
       ),
