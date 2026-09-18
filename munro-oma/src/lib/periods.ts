@@ -24,6 +24,14 @@ export async function listPeriods() {
     .map((p) => ({ id: p.id, label: p.label }))
 }
 
+export type PeriodLite = { id: string; startDate: Date; endDate: Date | null }
+
+// Full date range per period — unlike listPeriods (which strips dates after
+// sorting), this is for period-overlap matching (OMA PDF import, D7).
+export async function getPeriodsWithDates(): Promise<PeriodLite[]> {
+  return db.period.findMany({ select: { id: true, startDate: true, endDate: true } })
+}
+
 export async function resolvePeriodId(searchParam: string | undefined): Promise<string> {
   if (searchParam) {
     const hit = await db.period.findUnique({ where: { id: searchParam }, select: { id: true } })
