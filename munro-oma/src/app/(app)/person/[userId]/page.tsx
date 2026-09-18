@@ -114,13 +114,21 @@ export default async function PersonPage({
         )}
       </div>
 
-      {mayAdd && person.omas.length > 0 && (
-        <div className="mt-12 flex justify-end">
-          <form action={createOma.bind(null, person.id, periodId)}>
-            <button className="rounded-full bg-mfa-red px-6 py-2 font-semibold text-white">
-              + Add OMA
-            </button>
-          </form>
+      {mayAdd && (
+        <div className="mt-12 flex justify-end gap-3">
+          <Link
+            href={`/import?subject=${person.id}&period=${periodId}`}
+            className="rounded-full border-2 border-mfa-red px-6 py-2 font-semibold text-mfa-red"
+          >
+            Upload OMA
+          </Link>
+          {person.omas.length > 0 && (
+            <form action={createOma.bind(null, person.id, periodId)}>
+              <button className="rounded-full bg-mfa-red px-6 py-2 font-semibold text-white">
+                + Add OMA
+              </button>
+            </form>
+          )}
         </div>
       )}
     </main>
