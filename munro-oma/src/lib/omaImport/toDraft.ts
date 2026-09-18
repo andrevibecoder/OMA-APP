@@ -64,35 +64,57 @@ function matchPeriod(
   return { periodId: best.id, warning: null }
 }
 
-function toDraftOma(o: ExtractedOma): DraftOma {
-  return {
-    title: o.title,
-    outcome: o.outcome,
-    metrics: o.kpis.map((k) => ({
+function toDraftOma(o: ExtractedOma): { oma: DraftOma; warnings: string[] } {
+  const warnings: string[] = []
+  const metrics = o.kpis.map((k) => {
+    const target = k.target ?? 0
+    if (target === 0) {
+      // D14: a target of exactly 0 is real and meaningful (e.g. "no growth
+      // intended"), but the app's existing, shared omaSaveBlockers treats it
+      // as "not targeted" and blocks Create — flag it explicitly here rather
+      // than letting the reviewer hit an unexplained generic block message.
+      warnings.push(
+        `"${k.measure}" has a target of 0 — this can't be saved as-is. Set a real number (e.g. a maximum) before creating.`,
+      )
+    }
+    return {
       measure: k.measure,
       unit: k.unit ?? "NUMBER",
       direction: k.direction ?? "HIGHER_BETTER",
-      target: k.target ?? 0,
+      target,
       targetText: k.targetText,
-    })),
-    actions: o.actions.map((a) => ({
-      description: a.description,
-      dueDate: a.dueDate,
-      completed: a.completed,
-      statusText: a.statusText,
-    })),
+    }
+  })
+  return {
+    oma: {
+      title: o.title,
+      outcome: o.outcome,
+      metrics,
+      actions: o.actions.map((a) => ({
+        description: a.description,
+        dueDate: a.dueDate,
+        completed: a.completed,
+        statusText: a.statusText,
+      })),
+    },
+    warnings,
   }
 }
 
 export function toDraft(x: ExtractedImport, periods: PeriodLite[], filename: string): ImportDraft {
   const { periodId, warning } = matchPeriod(x.periodStart, x.periodEnd, periods)
-  const warnings = warning ? [...x.warnings, warning] : [...x.warnings]
+  const results = x.omas.map(toDraftOma)
+  const warnings = [
+    ...x.warnings,
+    ...(warning ? [warning] : []),
+    ...results.flatMap((r) => r.warnings),
+  ]
 
   return {
     subjectName: x.subjectName,
     periodId,
     filename,
     warnings: [...new Set(warnings)], // dedupe, keep first-occurrence order
-    omas: x.omas.map(toDraftOma),
+    omas: results.map((r) => r.oma),
   }
 }
