@@ -109,18 +109,26 @@ export function ImportReview({
     const formData = new FormData()
     formData.set("file", file)
     start(async () => {
-      const result = await parsePdf(formData)
-      if ("error" in result) {
-        setError(result.error)
-        return
+      try {
+        const result = await parsePdf(formData)
+        if ("error" in result) {
+          setError(result.error)
+          return
+        }
+        setPhase({
+          kind: "review",
+          draft: result,
+          omas: result.omas.map(toReviewOma),
+          subjectId: uploadSubjectId,
+          periodId: result.periodId ?? defaultPeriodId ?? periods[0]?.id ?? "",
+        })
+      } catch (e) {
+        setError(
+          e instanceof Error && e.message
+            ? e.message
+            : "Something went wrong while reading that PDF. Please try again.",
+        )
       }
-      setPhase({
-        kind: "review",
-        draft: result,
-        omas: result.omas.map(toReviewOma),
-        subjectId: uploadSubjectId,
-        periodId: result.periodId ?? defaultPeriodId ?? periods[0]?.id ?? "",
-      })
     })
   }
 
