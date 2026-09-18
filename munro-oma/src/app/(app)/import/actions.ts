@@ -73,7 +73,19 @@ export async function createImportedOmas(
   omas: DraftOma[],
 ): Promise<{ error: string } | void> {
   const viewer = await getSessionUser()
-  const parsedOmas = z.array(draftOmaInputSchema).parse(omas)
+
+  let parsedOmas: DraftOma[]
+  try {
+    parsedOmas = z.array(draftOmaInputSchema).parse(omas)
+  } catch (e) {
+    if (e instanceof z.ZodError) {
+      const issue = e.issues[0]
+      const omaIndex = typeof issue.path[0] === "number" ? issue.path[0] + 1 : "?"
+      const field = issue.path.slice(1).join(".") || "field"
+      return { error: `OMA ${omaIndex}: ${field} — ${issue.message}` }
+    }
+    throw e
+  }
   const subject = await db.user.findUniqueOrThrow({
     where: { id: subjectId },
     select: { id: true, managerId: true, businessUnitId: true },
