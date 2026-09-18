@@ -7,6 +7,8 @@ import { ImportReview } from "@/components/ImportReview"
 import { PageTitle } from "@/components/PageTitle"
 import { BackButton } from "@/components/BackButton"
 
+export const maxDuration = 300
+
 export default async function ImportPage({
   searchParams,
 }: {
