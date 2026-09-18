@@ -66,14 +66,14 @@ export async function createImportedOmas(
     orderBy: { sequence: "desc" },
     select: { sequence: true },
   })
-  let nextSeq = (last?.sequence ?? 0) + 1
+  const nextSeq = (last?.sequence ?? 0) + 1
 
   try {
     await withDbRetry(() =>
       db.$transaction(
-        omas.map((oma) =>
+        omas.map((oma, i) =>
           db.oMA.create({
-            data: buildCreatePayload(oma, subjectId, viewer.id, periodId, nextSeq++, period.startDate, period.endDate),
+            data: buildCreatePayload(oma, subjectId, viewer.id, periodId, nextSeq + i, period.startDate, period.endDate),
           }),
         ),
       ),
