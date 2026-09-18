@@ -6,7 +6,7 @@ const okOma: DraftOma = {
   title: "Grow revenue",
   outcome: "Grow revenue this year",
   metrics: [
-    { measure: "Revenue", unit: "CURRENCY", direction: "HIGHER_BETTER", target: 3_000_000, targetText: "R3 million" },
+    { measure: "Revenue", unit: "CURRENCY", direction: "HIGHER_BETTER", target: 3_000_000, current: 500_000, targetText: "R3 million" },
   ],
   actions: [
     { description: "Launch campaign", dueDate: "2027-01-01", completed: false, statusText: "In progress" },
@@ -66,7 +66,7 @@ describe("buildCreatePayload", () => {
     expect(payload.metrics.create[0]).toMatchObject({
       measure: "Revenue",
       target: 3_000_000,
-      current: 0,
+      current: 500_000,
       order: 0,
       source: "MANUAL",
     })
@@ -82,7 +82,7 @@ describe("buildCreatePayload", () => {
     const payload = buildCreatePayload(
       {
         ...okOma,
-        metrics: [...okOma.metrics, { measure: "  ", unit: "NUMBER", direction: "HIGHER_BETTER", target: 5, targetText: "" }],
+        metrics: [...okOma.metrics, { measure: "  ", unit: "NUMBER", direction: "HIGHER_BETTER", target: 5, current: 0, targetText: "" }],
       },
       "u",
       "c",

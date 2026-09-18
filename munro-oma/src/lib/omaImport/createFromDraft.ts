@@ -24,8 +24,8 @@ export function draftOmaBlockers(oma: DraftOma): string[] {
 
 // Mirrors buildCopiedOmaData's shape exactly (src/lib/omaCopy.ts) — a single
 // db.oMA.create({ data }) payload with nested metric/action creates. Imported
-// metrics always start current: 0 and source: "MANUAL" (import never links
-// an API metric).
+// metrics default to current: 0 (editable on the review page) and always
+// source: "MANUAL" (import never links an API metric).
 export function buildCreatePayload(
   oma: DraftOma,
   ownerId: string,
@@ -52,7 +52,7 @@ export function buildCreatePayload(
           unit: m.unit,
           direction: m.direction,
           target: m.target,
-          current: 0,
+          current: m.current,
           order: i,
           source: "MANUAL" as const,
           apiUrl: null,

@@ -12,6 +12,7 @@ type ReviewMetric = {
   unit: MetricUnit
   direction: MetricDirection
   target: string // shorthand-friendly text ("3 mill"), like OmaEditForm's FormMetric.target
+  current: string // same shorthand-friendly text, mirrors OmaEditForm's FormMetric.current
   targetText: string
 }
 
@@ -42,6 +43,7 @@ function toReviewOma(o: ImportDraft["omas"][number]): ReviewOma {
       unit: m.unit,
       direction: m.direction,
       target: String(m.target),
+      current: String(m.current),
       targetText: m.targetText,
     })),
     actions: o.actions.map((a) => ({ ...a })),
@@ -84,6 +86,7 @@ function omaBlockers(o: ReviewOma): string[] {
       unit: m.unit,
       direction: m.direction,
       target: parseAmount(m.target) ?? 0,
+      current: parseAmount(m.current) ?? 0,
       targetText: m.targetText,
     })),
     actions: o.actions,
@@ -161,6 +164,7 @@ export function ImportReview({
         unit: m.unit,
         direction: m.direction,
         target: parseAmount(m.target) ?? 0,
+        current: parseAmount(m.current) ?? 0,
         targetText: m.targetText,
       })),
       actions: o.actions.map((a) => ({
@@ -377,6 +381,15 @@ export function ImportReview({
                         className={`rounded border px-2 py-1.5 ${needsTarget ? "border-mfa-red" : "border-mfa-track"}`}
                       />
                     </label>
+                    <label className="flex w-32 flex-col">
+                      <span className="text-xs text-mfa-muted">Current</span>
+                      <input
+                        value={m.current}
+                        placeholder="0"
+                        onChange={(e) => setM({ current: num(e.target.value) })}
+                        className="rounded border border-mfa-track px-2 py-1.5"
+                      />
+                    </label>
                     <button type="button" onClick={removeM} className="px-2 text-mfa-muted">
                       ✕
                     </button>
@@ -385,9 +398,12 @@ export function ImportReview({
                         ⚠ Needs a target greater than 0 before this can be saved.
                       </p>
                     )}
-                    {(hint(m.target, m.unit) || m.targetText) && (
+                    {(hint(m.target, m.unit) || hint(m.current, m.unit) || m.targetText) && (
                       <div className="w-full text-xs text-mfa-muted">
-                        {hint(m.target, m.unit) && <span>Resolves to: {hint(m.target, m.unit)}</span>}
+                        {hint(m.target, m.unit) && <span>Target resolves to: {hint(m.target, m.unit)}</span>}
+                        {hint(m.current, m.unit) && (
+                          <span className="ml-4">Current resolves to: {hint(m.current, m.unit)}</span>
+                        )}
                         {m.targetText && <span className="ml-4 italic">From PDF: &quot;{m.targetText}&quot;</span>}
                       </div>
                     )}
@@ -401,7 +417,7 @@ export function ImportReview({
                     setOma({
                       metrics: [
                         ...oma.metrics,
-                        { measure: "", unit: "NUMBER", direction: "HIGHER_BETTER", target: "", targetText: "" },
+                        { measure: "", unit: "NUMBER", direction: "HIGHER_BETTER", target: "", current: "", targetText: "" },
                       ],
                     })
                   }

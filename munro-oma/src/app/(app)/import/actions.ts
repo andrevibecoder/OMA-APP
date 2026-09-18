@@ -23,6 +23,7 @@ const draftOmaInputSchema = z.object({
         unit: z.enum(["NUMBER", "CURRENCY", "PERCENT", "DAYS"]),
         direction: z.enum(["HIGHER_BETTER", "LOWER_BETTER"]),
         target: z.number().finite(),
+        current: z.number().finite(),
         targetText: z.string().max(2000),
       }),
     )

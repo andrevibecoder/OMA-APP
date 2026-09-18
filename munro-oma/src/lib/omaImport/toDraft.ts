@@ -11,6 +11,10 @@ export type DraftMetric = {
   unit: MetricUnit
   direction: MetricDirection
   target: number
+  // Always 0 out of extraction — these documents set forward targets, not
+  // report current progress. Editable on the review page for anyone
+  // importing mid-period who already has a real current value to record.
+  current: number
   targetText: string
 }
 
@@ -82,6 +86,7 @@ function toDraftOma(o: ExtractedOma): { oma: DraftOma; warnings: string[] } {
       unit: k.unit ?? "NUMBER",
       direction: k.direction ?? "HIGHER_BETTER",
       target,
+      current: 0,
       targetText: k.targetText,
     }
   })
