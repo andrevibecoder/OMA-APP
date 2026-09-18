@@ -187,8 +187,16 @@ import { z } from "zod/v4"
 
 export const extractedKpiSchema = z.object({
   measure: z.string(),
-  unit: z.enum(["NUMBER", "CURRENCY", "PERCENT", "DAYS"]).nullable(),
-  direction: z.enum(["HIGHER_BETTER", "LOWER_BETTER"]).nullable(),
+  // .meta({ type: "string" }) is load-bearing, not decorative: zod/v4's
+  // z.enum() emits JSON Schema as bare { enum: [...] } with no "type" key,
+  // which @anthropic-ai/sdk's zodOutputFormat() transform rejects ("JSON
+  // schema must have a type defined..."). The .meta() call merges { type:
+  // "string" } onto the generated schema node without changing runtime
+  // validation. Discovered and verified during Task 6 (932c8d5's fix
+  // resolved the v3/v4 shape mismatch but not this separate enum-specific
+  // JSON-Schema-generation gap).
+  unit: z.enum(["NUMBER", "CURRENCY", "PERCENT", "DAYS"]).meta({ type: "string" }).nullable(),
+  direction: z.enum(["HIGHER_BETTER", "LOWER_BETTER"]).meta({ type: "string" }).nullable(),
   // 3_000_000 from "R3 million"; null from "[TBC]" or pure narrative.
   target: z.number().nullable(),
   // The original target prose — always kept, shown on the review page.
