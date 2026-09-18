@@ -434,13 +434,26 @@ export function ImportReview({
                       onChange={(e) => setA({ description: e.target.value })}
                       className={cell}
                     />
-                    <div className="flex flex-col text-xs text-mfa-muted">
-                      <input
-                        type="date"
-                        value={a.dueDate ?? ""}
-                        onChange={(e) => setA({ dueDate: e.target.value || null })}
-                        className="bg-transparent py-1 outline-none"
-                      />
+                    <div className="flex flex-col gap-1 text-xs text-mfa-muted">
+                      <label className="flex items-center gap-1">
+                        <input
+                          type="checkbox"
+                          checked={a.dueDate === null}
+                          onChange={(e) =>
+                            setA({ dueDate: e.target.checked ? null : new Date().toISOString().slice(0, 10) })
+                          }
+                          className="h-3.5 w-3.5 accent-mfa-red"
+                        />
+                        Ongoing
+                      </label>
+                      {a.dueDate !== null && (
+                        <input
+                          type="date"
+                          value={a.dueDate}
+                          onChange={(e) => setA({ dueDate: e.target.value || null })}
+                          className="bg-transparent py-1 outline-none"
+                        />
+                      )}
                       {a.statusText && <span className="italic">From PDF: &quot;{a.statusText}&quot;</span>}
                     </div>
                     <button type="button" onClick={removeA} className="px-2 text-mfa-muted">
