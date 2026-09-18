@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation"
 import { revalidatePath } from "next/cache"
 import { Prisma } from "@prisma/client"
+import { z } from "zod"
 import { db } from "@/lib/db"
 import { withDbRetry } from "@/lib/dbRetry"
 import { getSessionUser } from "@/lib/session"
@@ -11,6 +12,32 @@ import { getPeriodsWithDates } from "@/lib/periods"
 import { extractFromPdf, ImportNotConfiguredError } from "@/lib/omaImport/extract"
 import { toDraft, type DraftOma, type ImportDraft } from "@/lib/omaImport/toDraft"
 import { draftOmaBlockers, buildCreatePayload } from "@/lib/omaImport/createFromDraft"
+
+const draftOmaInputSchema = z.object({
+  title: z.string().max(200),
+  outcome: z.string().max(2000),
+  metrics: z
+    .array(
+      z.object({
+        measure: z.string().max(200),
+        unit: z.enum(["NUMBER", "CURRENCY", "PERCENT", "DAYS"]),
+        direction: z.enum(["HIGHER_BETTER", "LOWER_BETTER"]),
+        target: z.number().finite(),
+        targetText: z.string().max(2000),
+      }),
+    )
+    .max(10),
+  actions: z
+    .array(
+      z.object({
+        description: z.string().max(500),
+        dueDate: z.string().nullable(),
+        completed: z.boolean(),
+        statusText: z.string().max(500),
+      }),
+    )
+    .max(50),
+})
 
 const MAX_PDF_BYTES = 10 * 1024 * 1024
 
@@ -45,6 +72,7 @@ export async function createImportedOmas(
   omas: DraftOma[],
 ): Promise<{ error: string } | void> {
   const viewer = await getSessionUser()
+  const parsedOmas = z.array(draftOmaInputSchema).parse(omas)
   const subject = await db.user.findUniqueOrThrow({
     where: { id: subjectId },
     select: { id: true, managerId: true, businessUnitId: true },
@@ -54,10 +82,10 @@ export async function createImportedOmas(
     select: { startDate: true, endDate: true, locked: true },
   })
   if (!canCreateOMA(viewer, subject, period.locked)) return { error: "Not allowed" }
-  if (omas.length === 0) return { error: "Nothing to import." }
+  if (parsedOmas.length === 0) return { error: "Nothing to import." }
 
-  for (let i = 0; i < omas.length; i++) {
-    const blockers = draftOmaBlockers(omas[i])
+  for (let i = 0; i < parsedOmas.length; i++) {
+    const blockers = draftOmaBlockers(parsedOmas[i])
     if (blockers.length) return { error: `OMA ${i + 1}: ${blockers.join(" ")}` }
   }
 
@@ -71,7 +99,7 @@ export async function createImportedOmas(
   try {
     await withDbRetry(() =>
       db.$transaction(
-        omas.map((oma, i) =>
+        parsedOmas.map((oma, i) =>
           db.oMA.create({
             data: buildCreatePayload(oma, subjectId, viewer.id, periodId, nextSeq + i, period.startDate, period.endDate),
           }),
