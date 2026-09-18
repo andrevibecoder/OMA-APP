@@ -167,7 +167,23 @@ Expected: FAIL — `Cannot find module '@/lib/omaImport/schema'`
 
 ```ts
 // munro-oma/src/lib/omaImport/schema.ts
-import { z } from "zod"
+//
+// Imports from "zod/v4" (the v4 API surface shipped inside the installed
+// zod@3.25.8 package as a coexistence subpath), NOT the classic top-level
+// "zod" import used everywhere else in this codebase (src/types.ts's
+// saveOmaSchema, auth.ts, etc.). Corrected 2026-09-18 during Task 6: the
+// installed @anthropic-ai/sdk's zodOutputFormat() helper hard-requires
+// "zod/v4" internally and calls its z.toJSONSchema(), which only
+// introspects schemas built via the v4 z.object(...) (v4's internal
+// `_zod.def` shape) — passing it a classic v3 schema throws
+// "Cannot read properties of undefined (reading 'def')" both at runtime
+// and in typecheck. Verified: zod/v4's object/string/number/enum/
+// nullable/array API is otherwise identical for this file's purposes, so
+// this is a one-line import change, not a schema rewrite. Scoped to this
+// file only — saveOmaSchema and the rest of the app's zod usage stay on
+// classic "zod" (untouched, unrelated to Anthropic's structured-output
+// feature).
+import { z } from "zod/v4"
 
 export const extractedKpiSchema = z.object({
   measure: z.string(),
