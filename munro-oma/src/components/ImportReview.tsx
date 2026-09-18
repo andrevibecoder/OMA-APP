@@ -359,7 +359,7 @@ export function ImportReview({
                     <button type="button" onClick={removeM} className="px-2 text-mfa-muted">
                       ✕
                     </button>
-                    {(hint(m.target, m.unit) || (!m.target && m.targetText)) && (
+                    {(hint(m.target, m.unit) || m.targetText) && (
                       <div className="w-full text-xs text-mfa-muted">
                         {hint(m.target, m.unit) && <span>Resolves to: {hint(m.target, m.unit)}</span>}
                         {m.targetText && <span className="ml-4 italic">From PDF: &quot;{m.targetText}&quot;</span>}
