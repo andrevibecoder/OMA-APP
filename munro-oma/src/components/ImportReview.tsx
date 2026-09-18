@@ -238,6 +238,12 @@ export function ImportReview({
             ))}
           </select>
         </label>
+        {phase.draft.subjectName && (
+          <p className="w-full text-xs text-mfa-muted">
+            This document appears to be for <span className="font-semibold">{phase.draft.subjectName}</span> —
+            confirm the subject above is correct.
+          </p>
+        )}
         <p className="w-full text-xs text-mfa-muted">
           AI-drafted from <code>{phase.draft.filename}</code>. Check every field — targets and
           statuses especially.
