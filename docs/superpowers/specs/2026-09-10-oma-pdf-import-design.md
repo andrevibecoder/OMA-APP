@@ -1,6 +1,6 @@
 # Munro FA — OMA PDF Import (AI-assisted) · Design Spec
 
-Status: **draft for review** · 10 Sept 2026
+Status: **approved, resumed 18 Sept 2026** (paused 10 Sept for budget; no longer a constraint) · 10 Sept 2026, updated 18 Sept 2026
 Follows on from `2026-08-27-munro-oma-app-design.md` (the OMA app, live).
 
 ---
@@ -47,7 +47,9 @@ review and create them — instead of retyping.
 | D8 | Review step | **One import-review page** — all drafted OMAs, editable, then "Create all". |
 | D9 | Persistence | **Transient.** No PDF stored, no import record, no schema change. |
 | D10 | Existing OMAs | **Append.** Imported OMAs take the next sequence numbers after any the person already has for that period; nothing existing is touched. |
-| D11 | Model | Default `claude-opus-5` (per the claude-api skill). A one-line constant — the owner may switch to `claude-sonnet-5` / `claude-haiku-4-5` to cut cost; this is a consistent-template extraction and a strong candidate for it. |
+| D11 | Model | `claude-opus-5` — fixed, not a cost-driven choice. Budget is not a constraint; extraction quality on messy/compound target cells matters more than the price difference to sonnet/haiku. |
+| D12 | Compound target cells | A target cell holding several independently-numbered sub-targets (e.g. "Volume from 8,750 to 10,500 / Price largely constant / Cost per report from R4,000 to R3,500 / Expenses around R35m to R39m") is split into **one KPI row per sub-target**, not collapsed into one. See §4.2a. |
+| D13 | Entry point | **Button on the person page**, beside "+ Add OMA" (screenshot-confirmed) — not a top-nav link. Pre-scopes subject + period via query params. See §3.1. |
 
 ---
 
@@ -82,8 +84,14 @@ Shared touch-points, total:
 
 - `package.json` — `+ @anthropic-ai/sdk`
 - `.env` / `.env.example` — `+ ANTHROPIC_API_KEY`
-- `src/components/AppHeader.tsx` — one "Import" nav link *(entry-point placement is an
-  open decision — see §12)*
+- `src/app/(app)/person/[userId]/page.tsx:117-125` — an "Upload OMA" button beside the
+  existing "+ Add OMA" button (D13, resolved from screenshot review). Links to
+  `/import?subject={person.id}&period={periodId}`, pre-filling the subject and period
+  pickers on the import page. Shown whenever `mayAdd` is true — unlike "+ Add OMA",
+  which only renders once `person.omas.length > 0` (an empty OMA list already has its
+  own "start OMA 1" affordance via the `RagBar`), "Upload OMA" renders whenever `mayAdd`
+  regardless of existing OMA count, since first-time bulk import is the main case where
+  a person has zero OMAs yet.
 
 ### 3.2 Rendering & data flow
 
@@ -154,6 +162,49 @@ type ExtractedOma = {
 - `warnings`: one entry per `null` target, per action with no `dueDate` and a vague
   status, and per KPI where `unit`/`direction` had to be guessed.
 
+### 4.2a Splitting a compound target cell (D12)
+
+No schema change — `kpis` is already an array; the rule is entirely in the prompt.
+When one "Metric — what you measure" row's target cell contains **more than one
+independently-numbered clause**, emit **one `kpis` entry per clause**, not one entry
+for the row:
+
+- `measure` on each split entry is `"<parent line's measure> — <clause label>"`, so the
+  review page still shows which paragraph it came from.
+- Each clause is scored on its own defensible number using the normal target/unit/
+  direction rules from §4.2 — including a clause with **no growth intended**. "Price
+  largely constant (0% increase)" is not narrative to discard, it is a real, trackable
+  target: `target: 0`, `unit: "PERCENT"`, `direction: "LOWER_BETTER"`.
+- A clause that gives only a single number with no "from X" baseline (e.g. "Expenses
+  around R35m to R39m" — a range, not a from/to) follows the existing range rule: lower
+  bound + a `warnings` entry.
+- A row with only one number stays one `kpis` entry, as today — this rule only fires
+  when a cell has multiple independently-numbered clauses.
+
+**Worked example** (Munro's own OMA 2, "Production profit" row):
+
+Input cell:
+```
+Volume from 8 750 to 10 500 per year
+Price largely constant (0% increase)
+Cost per report from R 4 000 to R 3 500
+Expenses around R 35m to R39m
+```
+
+Output — four `kpis` entries, not one:
+
+| measure | unit | direction | target | targetText |
+|---|---|---|---|---|
+| Production profit — Volume | NUMBER | HIGHER_BETTER | 10500 | "Volume from 8 750 to 10 500 per year" |
+| Production profit — Price | PERCENT | LOWER_BETTER | 0 | "Price largely constant (0% increase)" |
+| Production profit — Cost per report | CURRENCY | LOWER_BETTER | 3500 | "Cost per report from R 4 000 to R 3 500" |
+| Production profit — Expenses | CURRENCY | LOWER_BETTER | 35000000 | "Expenses around R 35m to R39m" (+ warning: range, lower bound used) |
+
+Every split entry is a normal KPI row from here on — it flows through `toDraft`,
+review, and `createImportedOmas` exactly like any other, and rolls into the OMA's and
+dashboard's percentage the same way. No downstream code treats a split entry
+differently from a single-clause one.
+
 ### 4.3 `extract.ts`
 
 ```ts
@@ -212,9 +263,14 @@ metrics: {...}, actions: {...} }` shape.
 
 ### /import — upload (Server Component + a small client form)
 
+- Reads optional `?subject=<userId>&period=<periodId>` query params (set when reached
+  via the person page's "Upload OMA" button, D13).
 - Subject picker: a `<select>` of people the viewer may import for
   (`canCreateOMA`-filtered — self only for a USER, team for a MANAGER, everyone for an
-  ADMIN). Defaults to the viewer themselves.
+  ADMIN). Defaults to `?subject` when present and importable, else the viewer
+  themselves.
+- Period picker: defaults to `?period` when present, else unset (picked after parsing,
+  same as today — see D7's best-overlap fallback in `toDraft`).
 - File input (`accept="application/pdf"`).
 - "Import from PDF" button → calls `parsePdf`; on success the page renders
   `<ImportReview draft={…} subjects={…} periods={…} />`.
@@ -301,10 +357,19 @@ period blocks the create, same message as manual creation.
 carries a `document` block with the base64 PDF and the JSON schema; never call the real
 API. `ImportNotConfiguredError` when the key is unset.
 
-**One manual API check** (localhost, before merge): the attached
-`OMA Template_Marketing Manager_Sharine Potgieter_Sep2026.pdf` → 4 OMAs come out with
-sane titles, verbatim outcomes, `[TBC]` targets flagged, "Ongoing" actions not marked
-complete.
+**Two manual API checks** (localhost, before merge — real PDFs, not committed to the
+repo; sensitive business content):
+
+1. `OMA Template_Marketing Manager_Sharine Potgieter_Sep2026.pdf` → 4 OMAs come out with
+   sane titles, verbatim outcomes, `[TBC]` targets flagged, "Ongoing" actions not marked
+   complete.
+2. `~/Downloads/OMA_Template_Alex_Munro.pdf` (D12's real-world compound-target case) → 3
+   OMAs; OMA 2's "Production profit" row comes out as **4 separate `kpis` entries**
+   (Volume / Price / Cost per report / Expenses, per the §4.2a worked example), not one;
+   OMA 1's two KPI rows stay separate (the template already splits those); OMA 3's
+   "Number of people scoring 7/10 or higher" KPI is flagged (`target: null`, prose
+   target) since "# of team at +7/10" has no defensible absolute number without knowing
+   headcount.
 
 **Manual E2E:** upload → review → fill a `[TBC]` target → Create → land on
 `/person/<id>` with 4 new OMAs appended → existing OMAs unchanged. A USER importing for
@@ -327,7 +392,7 @@ tests/omaImport/
   toDraft.test.ts  createFromDraft.test.ts  extract.test.ts
 package.json          # + @anthropic-ai/sdk
 .env / .env.example   # + ANTHROPIC_API_KEY
-src/components/AppHeader.tsx   # + "Import" link
+src/app/(app)/person/[userId]/page.tsx   # + "Upload OMA" button (D13)
 ```
 
 Existing OMA / admin / review files: unchanged.
@@ -345,17 +410,17 @@ Existing OMA / admin / review files: unchanged.
 5. **`actions.ts`** — `parsePdf` (file guards + extract + toDraft), `createImportedOmas`
    (auth + `omaSaveBlockers` + transaction + redirect).
 6. **`/import/page.tsx` + `ImportReview.tsx`** — upload form, the N-OMA review, Create.
-7. **Nav link** + `.env.example` + `@anthropic-ai/sdk` in `package.json`.
-8. **Manual API check** with the Sharine PDF, then **manual E2E**, then merge.
+7. **"Upload OMA" button** on the person page + `.env.example` + `@anthropic-ai/sdk` in
+   `package.json`.
+8. **Both manual API checks** (Sharine + Alex Munro PDFs), then **manual E2E**, then
+   merge.
 
 ---
 
-## 12. Prerequisites from the user
+## 12. Prerequisites from the user — resolved 2026-09-18
 
-- **`ANTHROPIC_API_KEY`** — a key with Messages API access, in `munro-oma/.env` for
-  local testing and Vercel's env for production. (Confirm whether an existing Anthropic
-  account/key is available or a new one is needed.)
-- **Model choice** — accept the `claude-opus-5` default (~$0.03–0.08 per import), or
-  name `claude-sonnet-5` / `claude-haiku-4-5` to cut cost.
-- **Import entry point** — a link in the top nav, or a button on the person page and
-  dashboard (or both). Decide at spec review.
+- **`ANTHROPIC_API_KEY`** — user has an existing Anthropic account/key. Add it to
+  `munro-oma/.env` (local) and Vercel's env (production) before the manual API check in
+  Task order §11 step 8.
+- **Model choice** — `claude-opus-5` (D11).
+- **Import entry point** — person page button beside "+ Add OMA" (D13).
