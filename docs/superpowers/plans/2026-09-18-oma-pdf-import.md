@@ -570,8 +570,13 @@ describe("draftOmaBlockers", () => {
   })
 
   it("blocks an OMA whose only metric has a null-defaulted (zero) target", () => {
+    // The metric still has a measure ("Revenue"), so omaSaveBlockers treats this
+    // as a partial row (named but not targeted), not a fully-empty one — it
+    // reports "Every KPI needs both a name and a target.", not "Add at least
+    // one KPI with a target." (that message is only for an all-blank metrics
+    // list). Corrected 2026-09-18 — the plan originally had this backwards.
     expect(draftOmaBlockers({ ...okOma, metrics: [{ ...okOma.metrics[0], target: 0 }] })).toContain(
-      "Add at least one KPI with a target.",
+      "Every KPI needs both a name and a target.",
     )
   })
 
