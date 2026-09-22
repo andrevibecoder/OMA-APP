@@ -324,16 +324,17 @@ export function ImportReview({
                 const setM = (patch: Partial<ReviewMetric>) =>
                   setOma({ metrics: oma.metrics.map((x, j) => (j === mi ? { ...x, ...patch } : x)) })
                 const removeM = () => setOma({ metrics: oma.metrics.filter((_, j) => j !== mi) })
-                // Mirrors omaSaveBlockers' own "targeted" check (target > 0) — this is
+                // Mirrors omaSaveBlockers' own "named" check — a KPI with no name is
                 // the exact condition that blocks Create, surfaced right on the row
                 // that causes it instead of only in the top warnings box and the
                 // generic "Won't save yet" line at the bottom of the whole card.
-                const needsTarget = !((parseAmount(m.target) ?? 0) > 0)
+                // Target/current are optional — some owners are still gathering that data.
+                const needsName = !m.measure.trim()
                 return (
                   <div
                     key={mi}
                     className={`flex flex-wrap items-end gap-x-4 gap-y-2 border-t px-5 py-4 text-sm first:border-t-0 ${
-                      needsTarget ? "border-mfa-red bg-red-50" : "border-mfa-track"
+                      needsName ? "border-mfa-red bg-red-50" : "border-mfa-track"
                     }`}
                   >
                     <label className="flex w-full flex-col">
@@ -378,7 +379,7 @@ export function ImportReview({
                         value={m.target}
                         placeholder="0"
                         onChange={(e) => setM({ target: num(e.target.value) })}
-                        className={`rounded border px-2 py-1.5 ${needsTarget ? "border-mfa-red" : "border-mfa-track"}`}
+                        className="rounded border border-mfa-track px-2 py-1.5"
                       />
                     </label>
                     <label className="flex w-32 flex-col">
@@ -393,9 +394,9 @@ export function ImportReview({
                     <button type="button" onClick={removeM} className="px-2 text-mfa-muted">
                       ✕
                     </button>
-                    {needsTarget && (
+                    {needsName && (
                       <p className="w-full text-xs font-semibold text-mfa-red">
-                        ⚠ Needs a target greater than 0 before this can be saved.
+                        ⚠ Needs a KPI name before this can be saved.
                       </p>
                     )}
                     {(hint(m.target, m.unit) || hint(m.current, m.unit) || m.targetText) && (

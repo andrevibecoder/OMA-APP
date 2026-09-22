@@ -26,10 +26,8 @@ describe("draftOmaBlockers", () => {
     expect(draftOmaBlockers({ ...okOma, outcome: "" })).toContain("Add an outcome before saving.")
   })
 
-  it("blocks an OMA whose only metric has a null-defaulted (zero) target", () => {
-    expect(draftOmaBlockers({ ...okOma, metrics: [{ ...okOma.metrics[0], target: 0 }] })).toContain(
-      "Every KPI needs both a name and a target.",
-    )
+  it("does not block an OMA whose only metric has a null-defaulted (zero) target — still gathering data", () => {
+    expect(draftOmaBlockers({ ...okOma, metrics: [{ ...okOma.metrics[0], target: 0 }] })).toEqual([])
   })
 
   it("blocks more than 10 KPI rows", () => {

@@ -2,6 +2,10 @@
 // (instant feedback on the edit form) and server-side (saveOma refuses to persist
 // a half-done OMA). An OMA that saved without a title or a metric shows as a bare
 // "OMA 1" / 0% / "No metric set yet", which reads to the owner as "it didn't save".
+//
+// A KPI's target/current are deliberately not required here — some owners know
+// what they're measuring before they have the number for it, and still gathering
+// that data shouldn't block the OMA from saving.
 
 type MetricShape = { measure: string; target: number }
 
@@ -16,18 +20,8 @@ export function omaSaveBlockers(input: {
 
   if (!input.outcome.trim()) problems.push("Add an outcome before saving.")
 
-  const rows = input.metrics.map((m) => ({
-    named: m.measure.trim().length > 0,
-    targeted: m.target > 0,
-  }))
-  const complete = rows.filter((r) => r.named && r.targeted)
-  const partial = rows.filter((r) => (r.named || r.targeted) && !(r.named && r.targeted))
-
-  if (partial.length > 0) {
-    problems.push("Every KPI needs both a name and a target.")
-  } else if (complete.length === 0) {
-    problems.push("Add at least one KPI with a target.")
-  }
+  const named = input.metrics.filter((m) => m.measure.trim().length > 0)
+  if (named.length === 0) problems.push("Add at least one KPI.")
 
   return problems
 }

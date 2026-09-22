@@ -22,12 +22,12 @@ describe("omaSaveBlockers", () => {
   })
 
   it("blocks when there are no metrics at all", () => {
-    expect(omaSaveBlockers({ ...ok, metrics: [] })).toContain("Add at least one KPI with a target.")
+    expect(omaSaveBlockers({ ...ok, metrics: [] })).toContain("Add at least one KPI.")
   })
 
   it("blocks when the only metric row is untouched (no name, no target)", () => {
     expect(omaSaveBlockers({ ...ok, metrics: [{ measure: "", target: 0 }] })).toContain(
-      "Add at least one KPI with a target.",
+      "Add at least one KPI.",
     )
   })
 
@@ -40,32 +40,26 @@ describe("omaSaveBlockers", () => {
   it("blocks a metric that has a target but no name (the silent-drop case)", () => {
     expect(
       omaSaveBlockers({ ...ok, metrics: [{ measure: "  ", target: 600 }] }),
-    ).toContain("Every KPI needs both a name and a target.")
+    ).toContain("Add at least one KPI.")
   })
 
-  it("blocks a metric that has a name but no target", () => {
+  it("does not require a target once a metric has a name — the owner may still be gathering that data", () => {
     expect(
       omaSaveBlockers({ ...ok, metrics: [{ measure: "Call volume", target: 0 }] }),
-    ).toContain("Every KPI needs both a name and a target.")
-  })
-
-  it("does not also nag 'add at least one' when a partial row is the problem", () => {
-    expect(
-      omaSaveBlockers({ ...ok, metrics: [{ measure: "Call volume", target: 0 }] }),
-    ).not.toContain("Add at least one KPI with a target.")
+    ).toEqual([])
   })
 
   it("reports every distinct problem at once", () => {
     expect(omaSaveBlockers({ title: "", outcome: "", metrics: [] })).toEqual([
       "Add a title before saving.",
       "Add an outcome before saving.",
-      "Add at least one KPI with a target.",
+      "Add at least one KPI.",
     ])
   })
 
-  it("treats a negative target as not a target", () => {
+  it("does not care whether a named metric's target is negative, zero or positive", () => {
     expect(
       omaSaveBlockers({ ...ok, metrics: [{ measure: "Revenue", target: -5 }] }),
-    ).toContain("Every KPI needs both a name and a target.")
+    ).toEqual([])
   })
 })

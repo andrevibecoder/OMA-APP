@@ -72,15 +72,6 @@ function toDraftOma(o: ExtractedOma): { oma: DraftOma; warnings: string[] } {
   const warnings: string[] = []
   const metrics = o.kpis.map((k) => {
     const target = k.target ?? 0
-    if (target === 0) {
-      // D14: a target of exactly 0 is real and meaningful (e.g. "no growth
-      // intended"), but the app's existing, shared omaSaveBlockers treats it
-      // as "not targeted" and blocks Create — flag it explicitly here rather
-      // than letting the reviewer hit an unexplained generic block message.
-      warnings.push(
-        `"${k.measure}" has a target of 0 — this can't be saved as-is. Set a real number (e.g. a maximum) before creating.`,
-      )
-    }
     return {
       measure: k.measure,
       unit: k.unit ?? "NUMBER",

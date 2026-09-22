@@ -120,12 +120,12 @@ describe("toDraft", () => {
     expect(draft.omas[0].metrics[1].measure).toBe("Cost per report")
   })
 
-  it("warns when a KPI's target resolves to exactly 0", () => {
+  it("does not warn when a KPI's target resolves to exactly 0 — a real, meaningful value", () => {
     const zeroTargetOma = {
       ...baseOma,
       kpis: [{ ...baseOma.kpis[0], measure: "Price", target: 0, targetText: "Price largely constant (0% increase)" }],
     }
     const draft = toDraft(extracted({ omas: [zeroTargetOma] }), [period2026H2], "test.pdf")
-    expect(draft.warnings.some((w) => w.includes('"Price" has a target of 0'))).toBe(true)
+    expect(draft.warnings.some((w) => w.includes("Price"))).toBe(false)
   })
 })
