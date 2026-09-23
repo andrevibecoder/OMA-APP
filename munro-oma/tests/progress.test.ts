@@ -178,8 +178,8 @@ describe("hasNoRecordedProgress", () => {
 })
 
 describe("zeroBarReason", () => {
-  it("is null when there are no OMAs — a different empty state entirely", () => {
-    expect(zeroBarReason([])).toBeNull()
+  it("is a generic catch-all when there are no OMAs at all — nothing to diagnose which gap it is", () => {
+    expect(zeroBarReason([])).toBe("Targets or progress not complete.")
   })
 
   it("flags missing targets over missing progress when both are true", () => {
