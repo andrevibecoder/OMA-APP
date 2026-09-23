@@ -12,7 +12,7 @@ export default async function AdminPage() {
 
   return (
     <main>
-      <BackButton />
+      <BackButton href="/" />
       <PageTitle>Admin</PageTitle>
       <p className="mt-2 text-sm text-mfa-muted">
         Business units, review periods and people. Text edits save when you press

@@ -33,7 +33,7 @@ export default async function PersonPage({
 
   return (
     <main>
-      <BackButton />
+      <BackButton href={person.businessUnit ? `/bu/${person.businessUnit.id}${qp}` : `/${qp}`} />
       <Breadcrumbs
         items={[
           ...(person.businessUnit

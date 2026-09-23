@@ -19,7 +19,7 @@ export default async function ReviewListPage() {
 
   return (
     <main>
-      <BackButton />
+      <BackButton href="/" />
       <div className="mt-3">
         <PageTitle>Reviews</PageTitle>
       </div>

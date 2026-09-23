@@ -47,7 +47,7 @@ export default async function ScorecardPage({ params }: { params: { reviewId: st
 
   return (
     <main>
-      <BackButton />
+      <BackButton href="/review" />
       <div className="mt-3">
         <PageTitle>{review.subject.name} — OMA Scorecard</PageTitle>
         <p className="mt-1 text-sm font-semibold text-mfa-muted">

@@ -29,7 +29,7 @@ export default async function OmaEditPage({
 
   return (
     <main>
-      <BackButton />
+      <BackButton href={`/oma/${oma.id}${qp}`} />
       <Breadcrumbs
         items={[
           ...(oma.owner.businessUnit

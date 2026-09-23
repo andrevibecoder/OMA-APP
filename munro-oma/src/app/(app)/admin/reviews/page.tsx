@@ -31,7 +31,7 @@ export default async function AdminReviewsPage({
 
   return (
     <main>
-      <BackButton />
+      <BackButton href="/review" />
       <div className="mt-3">
         <PageTitle>Reviews — Admin</PageTitle>
       </div>

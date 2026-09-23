@@ -22,7 +22,7 @@ export default async function BuPage({
 
   return (
     <main>
-      <BackButton />
+      <BackButton href={`/${qp}`} />
       <Breadcrumbs
         items={[
           { label: "Main dashboard", href: `/${qp}` },

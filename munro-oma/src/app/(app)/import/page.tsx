@@ -33,10 +33,11 @@ export default async function ImportPage({
     searchParams.subject && importable.some((c) => c.id === searchParams.subject)
       ? searchParams.subject
       : viewer.id
+  const qp = searchParams.period ? `?period=${searchParams.period}` : ""
 
   return (
     <main>
-      <BackButton />
+      <BackButton href={`/person/${defaultSubjectId}${qp}`} />
       <div className="mt-3">
         <PageTitle>Import OMAs from a PDF</PageTitle>
       </div>

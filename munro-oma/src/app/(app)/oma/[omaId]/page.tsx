@@ -55,7 +55,7 @@ export default async function OmaDetailPage({
 
   return (
     <main>
-      <BackButton />
+      <BackButton href={`/person/${oma.owner.id}${qp}`} />
       <Breadcrumbs
         items={[
           ...(oma.owner.businessUnit
