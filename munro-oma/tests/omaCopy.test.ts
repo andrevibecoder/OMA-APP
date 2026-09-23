@@ -18,6 +18,7 @@ const source = {
       apiUrl: null,
       apiPath: null,
       apiKey: null,
+      sourceNote: null,
     },
     {
       measure: "Pipeline value",
@@ -30,6 +31,7 @@ const source = {
       apiUrl: "https://crm.example/pipeline",
       apiPath: "data.total",
       apiKey: "secret",
+      sourceNote: "Target expressed as a range; collapsed to the lower bound.",
     },
   ],
   actions: [
@@ -73,7 +75,7 @@ describe("buildCopiedOmaData", () => {
     expect(data.createdById).toBe("manager-9")
   })
 
-  it("clones every metric field, including the API-link fields, as-is", () => {
+  it("clones every metric field, including the API-link fields and source note, as-is", () => {
     const data = buildCopiedOmaData(source, target, 3, "manager-9")
     expect(data.metrics.create).toEqual([
       {
@@ -87,6 +89,7 @@ describe("buildCopiedOmaData", () => {
         apiUrl: null,
         apiPath: null,
         apiKey: null,
+        sourceNote: null,
       },
       {
         measure: "Pipeline value",
@@ -99,6 +102,7 @@ describe("buildCopiedOmaData", () => {
         apiUrl: "https://crm.example/pipeline",
         apiPath: "data.total",
         apiKey: "secret",
+        sourceNote: "Target expressed as a range; collapsed to the lower bound.",
       },
     ])
   })

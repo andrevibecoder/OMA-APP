@@ -58,6 +58,7 @@ export function buildCreatePayload(
           apiUrl: null,
           apiPath: null,
           apiKey: null,
+          sourceNote: m.note?.trim() || null,
         })),
     },
     actions: {

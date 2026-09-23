@@ -23,6 +23,7 @@ const baseOma: ExtractedOma = {
       direction: "HIGHER_BETTER",
       target: 3_000_000,
       targetText: "R3 million",
+      note: null,
     },
   ],
   actions: [
@@ -112,12 +113,24 @@ describe("toDraft", () => {
       ...baseOma,
       kpis: [
         baseOma.kpis[0],
-        { measure: "Cost per report", unit: "CURRENCY", direction: "LOWER_BETTER", target: 3500, targetText: "R3 500" },
+        { measure: "Cost per report", unit: "CURRENCY", direction: "LOWER_BETTER", target: 3500, targetText: "R3 500", note: null },
       ],
     }
     const draft = toDraft(extracted({ omas: [twoKpiOma] }), [period2026H2], "test.pdf")
     expect(draft.omas[0].metrics).toHaveLength(2)
     expect(draft.omas[0].metrics[1].measure).toBe("Cost per report")
+  })
+
+  it("carries a KPI's note through unchanged, and defaults a null note to null", () => {
+    const draft = toDraft(
+      extracted({
+        omas: [{ ...baseOma, kpis: [{ ...baseOma.kpis[0], note: "Range collapsed to its lower bound." }] }],
+      }),
+      [period2026H2],
+      "test.pdf",
+    )
+    expect(draft.omas[0].metrics[0].note).toBe("Range collapsed to its lower bound.")
+    expect(toDraft(extracted(), [period2026H2], "test.pdf").omas[0].metrics[0].note).toBeNull()
   })
 
   it("does not warn when a KPI's target resolves to exactly 0 — a real, meaningful value", () => {

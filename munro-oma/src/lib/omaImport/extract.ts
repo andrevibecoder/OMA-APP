@@ -29,16 +29,24 @@ For each row under "METRIC / KPI":
   "Production profit — Volume", "Production profit — Cost per report". A cell with
   only one number stays one entry.
 - "target": only a number you can defend from the text (e.g. "R3 million" -> 3000000,
-  "≥ 90%" -> 90). A range ("10-15%" or "R35m to R39m") -> the LOWER bound, and add a
-  warnings entry noting a range was collapsed. A clause stating no change is a real,
-  trackable target, not narrative to discard — "Price largely constant (0% increase)"
-  -> target 0, unit PERCENT, direction LOWER_BETTER. If the target is "[TBC]", a bare
-  date, or pure narrative with no figure -> target null. In every case, always copy
-  the original clause text into "targetText" verbatim.
+  "≥ 90%" -> 90). A range ("10-15%" or "R35m to R39m") -> the LOWER bound. A clause
+  stating no change is a real, trackable target, not narrative to discard — "Price
+  largely constant (0% increase)" -> target 0, unit PERCENT, direction LOWER_BETTER.
+  If the target is "[TBC]", a bare date, or pure narrative with no figure -> target
+  null. In every case, always copy the original clause text into "targetText" verbatim.
 - "unit": CURRENCY for "R…"/"ZAR"/"Rand"; PERCENT for "%"/"NPS"/"score"; DAYS for
   "days"/"turnaround"; else NUMBER. null only if genuinely unclear.
 - "direction": LOWER_BETTER for "reduce"/"turnaround"/"drop-off"/"rework"/a
   no-increase constraint; else HIGHER_BETTER. null only if genuinely unclear.
+- "note": null when the target/unit/direction above were unambiguous. Otherwise a
+  short, one-sentence, human-readable explanation of what happened, so it can be
+  shown right under this KPI once it's saved — e.g. a range was collapsed to its
+  lower bound ("Target expressed as banded ranges (redesign <90% · focus 90–95% ·
+  grow 95–98% · multiply >98%); collapsed to the lower bound of the 'focus' band
+  (90)."), a value was marked TBC/provisional in the source, the target is missing
+  entirely ("Target is null — stated as '...' with no figure."), or unit/direction
+  had to be guessed. This travels with the KPI, not the document, so write it as a
+  standalone sentence naming the KPI's own measure only when that adds clarity.
 
 For each row under "ACTIONS":
 - "description": the action text.
@@ -53,9 +61,9 @@ Also return:
 - "periodStart" / "periodEnd": ISO dates parsed from the document's "Period" line
   (e.g. "Sep 2026 – Aug 2027" -> "2026-09-01" / "2027-08-31"), or null if you can't
   read them.
-- "warnings": one entry per null target, per action with no dueDate and a vague
-  status, per KPI where unit/direction had to be guessed, and per range collapsed to
-  its lower bound.`
+- "warnings": document- and action-level issues only — a missing/unreadable subject
+  name or period line, an action with no dueDate and a vague status. Per-KPI target
+  issues go on that KPI's own "note" field instead, not here.`
 
 function getClient(): Anthropic {
   if (!process.env.ANTHROPIC_API_KEY) {

@@ -35,6 +35,9 @@ export const saveOmaSchema = z.object({
         apiUrl: z.string().max(500).nullable(),
         apiPath: z.string().max(200).nullable(),
         apiKey: z.string().max(500).nullable(),
+        // Explanation carried over from a PDF import — editable/clearable on
+        // the edit form, not otherwise set by hand.
+        sourceNote: z.string().max(2000).nullable(),
       }),
     )
     .max(10),

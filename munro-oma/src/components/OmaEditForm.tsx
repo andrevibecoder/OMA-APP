@@ -19,6 +19,7 @@ type FormMetric = {
   apiUrl: string
   apiPath: string
   apiKey: string
+  sourceNote: string
 }
 
 type Oma = {
@@ -37,6 +38,7 @@ type Oma = {
     apiUrl: string | null
     apiPath: string | null
     apiKey: string | null
+    sourceNote: string | null
   }[]
   actions: {
     id: string
@@ -57,6 +59,7 @@ const EMPTY_METRIC: FormMetric = {
   apiUrl: "",
   apiPath: "",
   apiKey: "",
+  sourceNote: "",
 }
 
 // Keep the field roughly numeric while still allowing shorthand — digits, one
@@ -113,7 +116,17 @@ export function OmaEditForm({
   const [metrics, setMetrics] = useState<FormMetric[]>(
     (oma.metrics.length
       ? oma.metrics
-      : [{ ...EMPTY_METRIC, target: 0, current: 0, apiUrl: null, apiPath: null, apiKey: null }]
+      : [
+          {
+            ...EMPTY_METRIC,
+            target: 0,
+            current: 0,
+            apiUrl: null,
+            apiPath: null,
+            apiKey: null,
+            sourceNote: null,
+          },
+        ]
     ).map((m) => ({
       measure: m.measure,
       unit: m.unit,
@@ -124,6 +137,7 @@ export function OmaEditForm({
       apiUrl: m.apiUrl ?? "",
       apiPath: m.apiPath ?? "",
       apiKey: m.apiKey ?? "",
+      sourceNote: m.sourceNote ?? "",
     })),
   )
   const [actions, setActions] = useState<SaveOmaInput["actions"]>(oma.actions)
@@ -149,6 +163,7 @@ export function OmaEditForm({
       apiUrl: m.apiUrl.trim() || null,
       apiPath: m.apiPath.trim() || null,
       apiKey: m.apiKey.trim() || null,
+      sourceNote: m.sourceNote.trim() || null,
     }))
 
     // Stop a half-done save before it leaves the browser — same rule the server
@@ -319,6 +334,33 @@ export function OmaEditForm({
                   {hint(m.target, m.unit) && <span>Target: {hint(m.target, m.unit)}</span>}
                   {hint(m.current, m.unit) && (
                     <span className="ml-4">Current: {hint(m.current, m.unit)}</span>
+                  )}
+                </div>
+              )}
+
+              {m.sourceNote && (
+                <div className="w-full rounded-lg border border-yellow-400 bg-yellow-50 p-3 text-sm text-yellow-900">
+                  <div className="mb-1 flex items-center justify-between gap-3">
+                    <span className="font-semibold">⚠ Note from import</span>
+                    {canOutcomeMetric && (
+                      <button
+                        type="button"
+                        onClick={() => setM({ sourceNote: "" })}
+                        className="text-xs text-yellow-900/70 underline"
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
+                  {canOutcomeMetric ? (
+                    <textarea
+                      value={m.sourceNote}
+                      onChange={(e) => setM({ sourceNote: e.target.value })}
+                      rows={2}
+                      className="w-full rounded border border-yellow-400/60 bg-white/60 px-2 py-1 text-sm outline-none"
+                    />
+                  ) : (
+                    <p>{m.sourceNote}</p>
                   )}
                 </div>
               )}

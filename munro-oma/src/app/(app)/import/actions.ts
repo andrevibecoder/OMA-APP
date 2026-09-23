@@ -25,6 +25,7 @@ const draftOmaInputSchema = z.object({
         target: z.number().finite(),
         current: z.number().finite(),
         targetText: z.string().max(2000),
+        note: z.string().max(2000).nullable(),
       }),
     )
     .max(10),

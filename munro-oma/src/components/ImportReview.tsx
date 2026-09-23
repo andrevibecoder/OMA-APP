@@ -14,6 +14,7 @@ type ReviewMetric = {
   target: string // shorthand-friendly text ("3 mill"), like OmaEditForm's FormMetric.target
   current: string // same shorthand-friendly text, mirrors OmaEditForm's FormMetric.current
   targetText: string
+  note: string | null
 }
 
 type ReviewAction = {
@@ -45,6 +46,7 @@ function toReviewOma(o: ImportDraft["omas"][number]): ReviewOma {
       target: String(m.target),
       current: String(m.current),
       targetText: m.targetText,
+      note: m.note,
     })),
     actions: o.actions.map((a) => ({ ...a })),
   }
@@ -88,6 +90,7 @@ function omaBlockers(o: ReviewOma): string[] {
       target: parseAmount(m.target) ?? 0,
       current: parseAmount(m.current) ?? 0,
       targetText: m.targetText,
+      note: m.note,
     })),
     actions: o.actions,
   })
@@ -166,6 +169,7 @@ export function ImportReview({
         target: parseAmount(m.target) ?? 0,
         current: parseAmount(m.current) ?? 0,
         targetText: m.targetText,
+        note: m.note?.trim() || null,
       })),
       actions: o.actions.map((a) => ({
         description: a.description,
@@ -408,6 +412,26 @@ export function ImportReview({
                         {m.targetText && <span className="ml-4 italic">From PDF: &quot;{m.targetText}&quot;</span>}
                       </div>
                     )}
+                    {m.note !== null && (
+                      <div className="w-full rounded-lg border border-yellow-400 bg-yellow-50 p-3 text-sm text-yellow-900">
+                        <div className="mb-1 flex items-center justify-between gap-3">
+                          <span className="font-semibold">⚠ Note — will be saved with this KPI</span>
+                          <button
+                            type="button"
+                            onClick={() => setM({ note: null })}
+                            className="text-xs text-yellow-900/70 underline"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                        <textarea
+                          value={m.note}
+                          onChange={(e) => setM({ note: e.target.value })}
+                          rows={2}
+                          className="w-full rounded border border-yellow-400/60 bg-white/60 px-2 py-1 text-sm outline-none"
+                        />
+                      </div>
+                    )}
                   </div>
                 )
               })}
@@ -418,7 +442,15 @@ export function ImportReview({
                     setOma({
                       metrics: [
                         ...oma.metrics,
-                        { measure: "", unit: "NUMBER", direction: "HIGHER_BETTER", target: "", current: "", targetText: "" },
+                        {
+                          measure: "",
+                          unit: "NUMBER",
+                          direction: "HIGHER_BETTER",
+                          target: "",
+                          current: "",
+                          targetText: "",
+                          note: null,
+                        },
                       ],
                     })
                   }

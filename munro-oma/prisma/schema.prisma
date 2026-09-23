@@ -134,6 +134,12 @@ model Metric {
   apiUrl    String?
   apiPath   String? // dot-path into the JSON response, e.g. "data.value"
   apiKey    String?
+  // Explanation carried over from a PDF import when this KPI's target didn't
+  // fit the app's model cleanly (a collapsed range, a TBC value, a guessed
+  // unit/direction) — shown under the KPI so that context isn't lost once
+  // it's a normal saved OMA. Null for a KPI that was never imported, or one
+  // the source data described unambiguously.
+  sourceNote String?
 }
 
 model Action {

@@ -6,7 +6,7 @@ const okOma: DraftOma = {
   title: "Grow revenue",
   outcome: "Grow revenue this year",
   metrics: [
-    { measure: "Revenue", unit: "CURRENCY", direction: "HIGHER_BETTER", target: 3_000_000, current: 500_000, targetText: "R3 million" },
+    { measure: "Revenue", unit: "CURRENCY", direction: "HIGHER_BETTER", target: 3_000_000, current: 500_000, targetText: "R3 million", note: null },
   ],
   actions: [
     { description: "Launch campaign", dueDate: "2027-01-01", completed: false, statusText: "In progress" },
@@ -76,11 +76,39 @@ describe("buildCreatePayload", () => {
     })
   })
 
+  it("carries a KPI's note through as the created metric's sourceNote", () => {
+    const payload = buildCreatePayload(
+      { ...okOma, metrics: [{ ...okOma.metrics[0], note: "Target range collapsed to its lower bound." }] },
+      "u",
+      "c",
+      "p",
+      1,
+      new Date(),
+      null,
+    )
+    expect(payload.metrics.create[0]).toMatchObject({
+      sourceNote: "Target range collapsed to its lower bound.",
+    })
+  })
+
+  it("stores a null sourceNote when the KPI's note is null or blank", () => {
+    const payload = buildCreatePayload(
+      { ...okOma, metrics: [{ ...okOma.metrics[0], note: "   " }] },
+      "u",
+      "c",
+      "p",
+      1,
+      new Date(),
+      null,
+    )
+    expect(payload.metrics.create[0]).toMatchObject({ sourceNote: null })
+  })
+
   it("drops a metric row with a blank measure", () => {
     const payload = buildCreatePayload(
       {
         ...okOma,
-        metrics: [...okOma.metrics, { measure: "  ", unit: "NUMBER", direction: "HIGHER_BETTER", target: 5, current: 0, targetText: "" }],
+        metrics: [...okOma.metrics, { measure: "  ", unit: "NUMBER", direction: "HIGHER_BETTER", target: 5, current: 0, targetText: "", note: null }],
       },
       "u",
       "c",

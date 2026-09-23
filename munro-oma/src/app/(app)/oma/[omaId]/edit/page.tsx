@@ -58,6 +58,7 @@ export default async function OmaEditPage({
             apiUrl: m.apiUrl,
             apiPath: m.apiPath,
             apiKey: m.apiKey,
+            sourceNote: m.sourceNote,
           })),
           actions: oma.actions.map((a) => ({
             id: a.id,

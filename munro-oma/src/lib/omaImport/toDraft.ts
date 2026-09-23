@@ -16,6 +16,9 @@ export type DraftMetric = {
   // importing mid-period who already has a real current value to record.
   current: number
   targetText: string
+  // Carried straight from the extraction — set only when this KPI's target
+  // didn't fit cleanly. Editable on the review page; saved onto the metric.
+  note: string | null
 }
 
 export type DraftAction = {
@@ -79,6 +82,7 @@ function toDraftOma(o: ExtractedOma): { oma: DraftOma; warnings: string[] } {
       target,
       current: 0,
       targetText: k.targetText,
+      note: k.note,
     }
   })
   return {

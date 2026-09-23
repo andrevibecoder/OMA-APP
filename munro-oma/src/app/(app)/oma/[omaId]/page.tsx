@@ -115,6 +115,11 @@ export default async function OmaDetailPage({
                     <span className="shrink-0 text-xs text-mfa-muted">lower is better</span>
                   )}
                 </div>
+                {m.sourceNote && (
+                  <div className="border-t border-mfa-track bg-yellow-50 px-5 py-2 text-sm text-yellow-900">
+                    <span className="font-semibold">⚠ Note from import:</span> {m.sourceNote}
+                  </div>
+                )}
               </div>
             )
           })}

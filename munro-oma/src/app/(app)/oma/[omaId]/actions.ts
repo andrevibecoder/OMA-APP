@@ -137,6 +137,7 @@ export async function saveOma(input: SaveOmaInput): Promise<void> {
         apiUrl: isAdmin && m.source === "API" ? m.apiUrl : null,
         apiPath: isAdmin && m.source === "API" ? m.apiPath : null,
         apiKey: isAdmin && m.source === "API" ? m.apiKey : null,
+        sourceNote: m.sourceNote?.trim() || null,
       }))
     if (metrics.length > 0) {
       ops.push(db.metric.createMany({ data: metrics }))

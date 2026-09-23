@@ -16,6 +16,11 @@ export const extractedKpiSchema = z.object({
   target: z.number().nullable(),
   // The original target prose — always kept, shown on the review page.
   targetText: z.string(),
+  // Only set when this KPI's target didn't fit the app's single-number model
+  // cleanly — a collapsed range, a TBC/provisional value, a guessed
+  // unit/direction. Null when the source was unambiguous. Carried onto the
+  // saved metric so the explanation isn't lost once it's a normal OMA.
+  note: z.string().nullable(),
 })
 
 export const extractedActionSchema = z.object({

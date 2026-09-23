@@ -15,6 +15,7 @@ type SourceMetric = {
   apiUrl: string | null
   apiPath: string | null
   apiKey: string | null
+  sourceNote: string | null
 }
 
 type SourceAction = {
@@ -66,6 +67,7 @@ export function buildCopiedOmaData(
         apiUrl: m.apiUrl,
         apiPath: m.apiPath,
         apiKey: m.apiKey,
+        sourceNote: m.sourceNote,
       })),
     },
     actions: {

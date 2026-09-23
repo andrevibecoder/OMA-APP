@@ -7,6 +7,7 @@ const validKpi = {
   direction: "HIGHER_BETTER",
   target: 3_000_000,
   targetText: "R3 million",
+  note: null,
 }
 
 const validOma = {
@@ -49,6 +50,25 @@ describe("extractedImportSchema", () => {
         omas: [{ ...validOma, kpis: [{ ...validKpi, unit: null, direction: null, target: null }] }],
       }).success,
     ).toBe(true)
+  })
+
+  it("accepts a non-null note on a KPI", () => {
+    expect(
+      extractedImportSchema.safeParse({
+        ...validImport,
+        omas: [{ ...validOma, kpis: [{ ...validKpi, note: "Range collapsed to its lower bound." }] }],
+      }).success,
+    ).toBe(true)
+  })
+
+  it("rejects a missing note field on a KPI", () => {
+    const { note: _note, ...kpiWithoutNote } = validKpi
+    expect(
+      extractedImportSchema.safeParse({
+        ...validImport,
+        omas: [{ ...validOma, kpis: [kpiWithoutNote] }],
+      }).success,
+    ).toBe(false)
   })
 
   it("rejects a missing omas field", () => {
