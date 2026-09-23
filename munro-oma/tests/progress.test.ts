@@ -178,16 +178,16 @@ describe("hasNoRecordedProgress", () => {
 })
 
 describe("zeroBarReason", () => {
-  it("is a generic catch-all when there are no OMAs at all — nothing to diagnose which gap it is", () => {
+  it("is the catch-all when there are no OMAs at all", () => {
     expect(zeroBarReason([])).toBe("Targets or progress not complete.")
   })
 
-  it("flags missing targets over missing progress when both are true", () => {
-    expect(zeroBarReason([{ metrics: [hi(0, 0)] }])).toBe("Targets not yet set.")
+  it("is the catch-all when a target is missing", () => {
+    expect(zeroBarReason([{ metrics: [hi(0, 0)] }])).toBe("Targets or progress not complete.")
   })
 
-  it("flags missing progress when real targets exist but nothing's been recorded", () => {
-    expect(zeroBarReason([{ metrics: [hi(40, 0)] }])).toBe("No progress recorded yet.")
+  it("is the catch-all when real targets exist but nothing's been recorded", () => {
+    expect(zeroBarReason([{ metrics: [hi(40, 0)] }])).toBe("Targets or progress not complete.")
   })
 
   it("is null once there's a real target and a real recorded current, even if attainment rounds to 0%", () => {

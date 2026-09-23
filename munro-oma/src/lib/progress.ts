@@ -157,15 +157,13 @@ export function hasNoRecordedProgress(omas: OmaLike[]): boolean {
 
 // What a 0% bar should say instead of just "0%" — null when 0% is a real,
 // unambiguous progress figure (a target exists and a current has been
-// recorded against it, and it genuinely computes to 0). No OMAs at all is
-// its own case: there's nothing to inspect to say which of targets/progress
-// is missing, so it gets the generic catch-all rather than a blank bar that
-// reads as "broken" instead of "not started". Where an OMA does exist,
-// targets take priority over current, since a missing target is the more
-// fundamental gap.
+// recorded against it, and it genuinely computes to 0). One catch-all
+// covering "no OMA at all", "no target set" and "target set but nothing
+// recorded" — all three are just "there's nothing real to show yet", not
+// three flavors a viewer needs told apart.
 export function zeroBarReason(omas: OmaLike[]): string | null {
-  if (omas.length === 0) return "Targets or progress not complete."
-  if (hasOmasWithNoTargets(omas)) return "Targets not yet set."
-  if (hasNoRecordedProgress(omas)) return "No progress recorded yet."
+  if (omas.length === 0 || hasOmasWithNoTargets(omas) || hasNoRecordedProgress(omas)) {
+    return "Targets or progress not complete."
+  }
   return null
 }
