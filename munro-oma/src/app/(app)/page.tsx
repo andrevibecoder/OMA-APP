@@ -3,7 +3,7 @@ import { PageTitle } from "@/components/PageTitle"
 import { RagBar } from "@/components/RagBar"
 import { getCompanyDashboard, getPeopleDashboard } from "@/lib/queries"
 import { mean } from "@/lib/progress"
-import { resolvePeriodId } from "@/lib/periods"
+import { periodRangeLabel, resolvePeriodId } from "@/lib/periods"
 import { db } from "@/lib/db"
 
 type View = "functional" | "people"
@@ -28,7 +28,7 @@ export default async function DashboardPage({
       <div className="flex flex-wrap items-baseline justify-between gap-y-2">
         <PageTitle>Main dashboard</PageTitle>
         <span className="text-xs font-semibold uppercase tracking-widest text-mfa-red">
-          {period.label} · All departments
+          {periodRangeLabel(period)} · All departments
         </span>
       </div>
 

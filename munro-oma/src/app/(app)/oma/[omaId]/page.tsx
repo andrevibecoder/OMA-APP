@@ -15,7 +15,7 @@ import {
   ragColorVar,
   ragState,
 } from "@/lib/progress"
-import { listPeriods, resolvePeriodId } from "@/lib/periods"
+import { listPeriods, periodRangeLabel, resolvePeriodId } from "@/lib/periods"
 import { getSessionUser } from "@/lib/session"
 import { canCreateOMA, canEditActions, canEditOma } from "@/lib/authz"
 import { createOma } from "@/app/(app)/person/[userId]/actions"
@@ -63,7 +63,7 @@ export default async function OmaDetailPage({
             : []),
           { label: oma.owner.name, href: `/person/${oma.owner.id}${qp}` },
           { label: `OMA ${oma.sequence}` },
-          { label: oma.period.label },
+          { label: periodRangeLabel(oma.period) },
         ]}
       />
       <div className="mt-3">
