@@ -227,6 +227,48 @@ describe("toDraft", () => {
     expect(draft.omas[0].metrics[0].target).toBe(dateSerial("2026-09-30"))
   })
 
+  it("falls back to the original clause as the note for a DATE KPI when the extraction left it null — a bare date drops the 'why'", () => {
+    const deadlineOma = {
+      ...baseOma,
+      kpis: [
+        {
+          measure: "Jethro design and resourcing recommendation delivered for review",
+          unit: "DATE" as const,
+          direction: "HIGHER_BETTER" as const,
+          target: null,
+          targetDate: "2026-09-30",
+          targetText: "Signed off in the week 30 September 2026, ready to feed the October planning & budget round",
+          note: null,
+        },
+      ],
+    }
+    const draft = toDraft(extracted({ omas: [deadlineOma] }), [period2026H2], "test.pdf")
+    expect(draft.omas[0].metrics[0].note).toBe(
+      "Signed off in the week 30 September 2026, ready to feed the October planning & budget round",
+    )
+  })
+
+  it("keeps the extraction's own note for a DATE KPI rather than overwriting it with targetText", () => {
+    const deadlineOma = {
+      ...baseOma,
+      kpis: [
+        {
+          measure: "Some deliverable",
+          unit: "DATE" as const,
+          direction: "HIGHER_BETTER" as const,
+          target: null,
+          targetDate: "2026-09-30",
+          targetText: "Done by end of Sep [date inferred from quarter end]",
+          note: "Exact day inferred as quarter-end; source only said 'end of Sep'.",
+        },
+      ],
+    }
+    const draft = toDraft(extracted({ omas: [deadlineOma] }), [period2026H2], "test.pdf")
+    expect(draft.omas[0].metrics[0].note).toBe(
+      "Exact day inferred as quarter-end; source only said 'end of Sep'.",
+    )
+  })
+
   it("defaults a DATE KPI with no targetDate to target 0 (unset), not NaN", () => {
     const deadlineOma = {
       ...baseOma,

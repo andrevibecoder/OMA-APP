@@ -107,6 +107,13 @@ function toDraftOma(o: ExtractedOma): { oma: DraftOma; warnings: string[] } {
     // column every other unit uses (see progress.ts's dateSerial) — every
     // other unit keeps the plain extracted number.
     const target = unit === "DATE" ? (k.targetDate ? dateSerial(k.targetDate) : 0) : k.target ?? 0
+    // A DATE target collapses the whole clause down to a single day, dropping
+    // any "why it matters" framing the source carried (e.g. "... ready to
+    // feed the October planning & budget round") — unlike a plain number,
+    // that context has nowhere else to live, so keep the original clause as
+    // the note whenever the extraction didn't already flag something more
+    // specific. Independent of the extraction prompt actually doing this.
+    const finalNote = unit === "DATE" && !note ? k.targetText : note
     return {
       measure: k.measure,
       unit,
@@ -114,7 +121,7 @@ function toDraftOma(o: ExtractedOma): { oma: DraftOma; warnings: string[] } {
       target,
       current: 0,
       targetText: k.targetText,
-      note,
+      note: finalNote,
     }
   })
   return {

@@ -61,6 +61,10 @@ For each row under "METRIC / KPI":
   entirely ("Target is null — stated as '...' with no figure."), or unit/direction
   had to be guessed. This travels with the KPI, not the document, so write it as a
   standalone sentence naming the KPI's own measure only when that adds clarity.
+  When unit is DATE, never leave this null even if the deadline itself was
+  unambiguous: a bare date drops any "why it matters" framing the clause carried
+  (e.g. "... ready to feed the October planning & budget round") — summarise that
+  remaining context here, or copy the clause verbatim if it's already short.
 
 For each row under "ACTIONS":
 - "description": the action text.
