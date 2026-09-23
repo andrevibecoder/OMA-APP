@@ -9,7 +9,8 @@ import { formatMetricValue, ragColorVar, ragState } from "@/lib/progress"
 import { db } from "@/lib/db"
 import { periodRangeLabel, resolvePeriodId } from "@/lib/periods"
 import { getSessionUser } from "@/lib/session"
-import { canCreateOMA } from "@/lib/authz"
+import { canCreateOMA, canEditOma } from "@/lib/authz"
+import { DeleteOmaButton } from "@/components/DeleteOmaButton"
 import { createOma } from "./actions"
 
 export default async function PersonPage({
@@ -51,6 +52,12 @@ export default async function PersonPage({
           person.omas.map((o) => {
             const primary = o.metrics[0]
             const extra = o.metrics.length - 1
+            const canDelete = canEditOma(viewer, {
+              ownerId: target.id,
+              owner: { managerId: target.managerId },
+              periodLocked: period.locked,
+              createdById: o.createdById,
+            })
             return (
               <Link
                 key={o.id}
@@ -63,6 +70,9 @@ export default async function PersonPage({
                     <span className="min-w-0 flex-1 truncate font-semibold">
                       {o.title || <em className="font-normal text-mfa-muted">Untitled</em>}
                     </span>
+                    {canDelete && (
+                      <DeleteOmaButton omaId={o.id} sequence={o.sequence} compact />
+                    )}
                     <span className="shrink-0 text-[10px] uppercase tracking-wide text-mfa-muted/50">
                       Click
                     </span>
