@@ -40,7 +40,7 @@ export default async function BuPage({
             label={p.name}
             value={p.pct}
             href={`/person/${p.id}${qp}`}
-            emptyReason={p.targetsNotSet ? "Targets not yet set." : undefined}
+            emptyReason={p.emptyReason}
           />
         ))}
       </div>

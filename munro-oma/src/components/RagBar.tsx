@@ -15,9 +15,10 @@ export function RagBar({
   // submit button (e.g. "create and open OMA 1") instead of a link.
   formAction?: () => Promise<void>
   // Shown inside the track in place of the (otherwise indistinguishable)
-  // blank bar when value is 0 because no KPI target has been set yet —
-  // e.g. "Targets not yet set." — so this doesn't read as "no OMA at all".
-  emptyReason?: string
+  // blank bar when value is 0 for a reason other than real, measured
+  // progress — e.g. "Targets not yet set." or "No progress recorded yet." —
+  // so this doesn't read as "no OMA at all".
+  emptyReason?: string | null
 }) {
   const clickable = !!(href || formAction)
   // Same padding/hover slot on every row, clickable or not, so a plain row

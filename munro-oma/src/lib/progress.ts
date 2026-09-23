@@ -145,3 +145,22 @@ export function hasOmasWithNoTargets(omas: OmaLike[]): boolean {
   if (omas.length === 0) return false
   return omas.some((o) => o.metrics.length === 0 || o.metrics.every((m) => m.target <= 0))
 }
+
+// True when every OMA has a real target, but not a single metric anywhere has
+// a "current" recorded yet (current is 0 by default until someone updates
+// it) — a rolled-up 0% here means "nothing's been reported yet", not "no
+// target", but it's just as easily mistaken for the empty state above.
+export function hasNoRecordedProgress(omas: OmaLike[]): boolean {
+  if (omas.length === 0) return false
+  return omas.every((o) => o.metrics.every((m) => m.current <= 0))
+}
+
+// What a 0% bar should say instead of just "0%" — null when 0% is a real,
+// unambiguous progress figure (a target exists and a current has been
+// recorded against it, and it genuinely computes to 0). Targets take
+// priority over current, since a missing target is the more fundamental gap.
+export function zeroBarReason(omas: OmaLike[]): string | null {
+  if (hasOmasWithNoTargets(omas)) return "Targets not yet set."
+  if (hasNoRecordedProgress(omas)) return "No progress recorded yet."
+  return null
+}

@@ -1,5 +1,5 @@
 import { db } from "@/lib/db"
-import { buProgress, hasOmasWithNoTargets, omaProgress, personProgress } from "@/lib/progress"
+import { buProgress, omaProgress, personProgress, zeroBarReason } from "@/lib/progress"
 
 export async function getCompanyDashboard(periodId: string) {
   const bus = await db.businessUnit.findMany({
@@ -17,7 +17,7 @@ export async function getCompanyDashboard(periodId: string) {
     id: bu.id,
     name: bu.name,
     pct: buProgress(bu.users.map((u) => ({ omas: u.omas }))),
-    targetsNotSet: hasOmasWithNoTargets(bu.users.flatMap((u) => u.omas)),
+    emptyReason: zeroBarReason(bu.users.flatMap((u) => u.omas)),
   }))
 }
 
@@ -41,7 +41,7 @@ export async function getPeopleDashboard(periodId: string) {
       id: u.id,
       name: u.name,
       pct: personProgress(u.omas),
-      targetsNotSet: hasOmasWithNoTargets(u.omas),
+      emptyReason: zeroBarReason(u.omas),
     })),
   }))
 }
@@ -66,7 +66,7 @@ export async function getBusinessUnit(buId: string, periodId: string) {
       id: u.id,
       name: u.name,
       pct: personProgress(u.omas),
-      targetsNotSet: hasOmasWithNoTargets(u.omas),
+      emptyReason: zeroBarReason(u.omas),
     })),
   }
 }

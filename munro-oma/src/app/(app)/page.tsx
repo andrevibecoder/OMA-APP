@@ -72,7 +72,7 @@ async function FunctionalView({ periodId, qp }: { periodId: string; qp: string }
             label={bu.name}
             value={bu.pct}
             href={`/bu/${bu.id}${qp}`}
-            emptyReason={bu.targetsNotSet ? "Targets not yet set." : undefined}
+            emptyReason={bu.emptyReason}
           />
         ))}
       </div>
@@ -98,7 +98,7 @@ async function PeopleView({ periodId, qp }: { periodId: string; qp: string }) {
                   label={p.name}
                   value={p.pct}
                   href={`/person/${p.id}${qp}`}
-                  emptyReason={p.targetsNotSet ? "Targets not yet set." : undefined}
+                  emptyReason={p.emptyReason}
                 />
               ))
             ) : (

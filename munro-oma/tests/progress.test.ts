@@ -10,6 +10,8 @@ import {
   personProgress,
   buProgress,
   hasOmasWithNoTargets,
+  hasNoRecordedProgress,
+  zeroBarReason,
 } from "@/lib/progress"
 
 const hi = (target: number, current: number) =>
@@ -158,5 +160,39 @@ describe("hasOmasWithNoTargets", () => {
 
   it("is false for an OMA with several metrics as long as one of them has a real target", () => {
     expect(hasOmasWithNoTargets([{ metrics: [hi(40, 10), hi(0, 0)] }])).toBe(false)
+  })
+})
+
+describe("hasNoRecordedProgress", () => {
+  it("is false when there are no OMAs at all", () => {
+    expect(hasNoRecordedProgress([])).toBe(false)
+  })
+
+  it("is true when every metric's current is still 0", () => {
+    expect(hasNoRecordedProgress([{ metrics: [hi(40, 0)] }, { metrics: [hi(10, 0)] }])).toBe(true)
+  })
+
+  it("is false as soon as one metric anywhere has a recorded current", () => {
+    expect(hasNoRecordedProgress([{ metrics: [hi(40, 0)] }, { metrics: [hi(10, 5)] }])).toBe(false)
+  })
+})
+
+describe("zeroBarReason", () => {
+  it("is null when there are no OMAs — a different empty state entirely", () => {
+    expect(zeroBarReason([])).toBeNull()
+  })
+
+  it("flags missing targets over missing progress when both are true", () => {
+    expect(zeroBarReason([{ metrics: [hi(0, 0)] }])).toBe("Targets not yet set.")
+  })
+
+  it("flags missing progress when real targets exist but nothing's been recorded", () => {
+    expect(zeroBarReason([{ metrics: [hi(40, 0)] }])).toBe("No progress recorded yet.")
+  })
+
+  it("is null once there's a real target and a real recorded current, even if attainment rounds to 0%", () => {
+    // current is nonzero (something has been reported), it's just tiny
+    // relative to the target — a genuine, meaningful ~0%, not a data-entry gap.
+    expect(zeroBarReason([{ metrics: [hi(1_000_000, 1)] }])).toBeNull()
   })
 })
