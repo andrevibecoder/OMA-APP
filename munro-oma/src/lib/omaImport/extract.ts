@@ -34,8 +34,12 @@ For each row under "METRIC / KPI":
   largely constant (0% increase)" -> target 0, unit PERCENT, direction LOWER_BETTER.
   If the target is "[TBC]", a bare date, or pure narrative with no figure -> target
   null. In every case, always copy the original clause text into "targetText" verbatim.
-- "unit": CURRENCY for "R…"/"ZAR"/"Rand"; PERCENT for "%"/"NPS"/"score"; DAYS for
-  "days"/"turnaround"; else NUMBER. null only if genuinely unclear.
+- "unit": CURRENCY for "R…"/"ZAR"/"Rand". PERCENT only for a true percentage — a
+  "%" sign, or an NPS score (which runs -100 to 100). DAYS for "days"/"turnaround".
+  Otherwise NUMBER — this includes any "X out of N" or "X/N" score where N isn't
+  100 (e.g. "7/10", "a wellbeing score out of 10"): that's a plain number on its
+  own scale, not a percentage, even though the source calls it a "score". null
+  only if genuinely unclear.
 - "direction": LOWER_BETTER for "reduce"/"turnaround"/"drop-off"/"rework"/a
   no-increase constraint; else HIGHER_BETTER. null only if genuinely unclear.
 - "note": null when the target/unit/direction above were unambiguous. Otherwise a

@@ -71,18 +71,46 @@ function matchPeriod(
   return { periodId: best.id, warning: null }
 }
 
+// Catches "7/10", "7 out of 10", "score out of 10" — a plain number on its
+// own scale, not a percentage, even when the source calls it a "score".
+const SCORE_OUT_OF = /(\d+(?:\.\d+)?)\s*(?:\/|out of)\s*(\d+)/i
+
+// A safety net independent of the extraction prompt: whatever unit the model
+// picked, a "X out of N" scale where N isn't 100 can never be a real
+// percentage. Downgrades PERCENT -> NUMBER in that case and folds an
+// explanation into the KPI's note so the correction isn't silent.
+function correctPercentMisclassification(
+  unit: MetricUnit,
+  measure: string,
+  targetText: string,
+  note: string | null,
+): { unit: MetricUnit; note: string | null } {
+  if (unit !== "PERCENT") return { unit, note }
+  const match = `${measure} ${targetText}`.match(SCORE_OUT_OF)
+  const denominator = match ? Number(match[2]) : null
+  if (denominator === null || denominator === 100) return { unit, note }
+  const correction = `Unit changed from Percent to Number — this reads as a score out of ${denominator}, not a percentage.`
+  return { unit: "NUMBER", note: note ? `${note} ${correction}` : correction }
+}
+
 function toDraftOma(o: ExtractedOma): { oma: DraftOma; warnings: string[] } {
   const warnings: string[] = []
   const metrics = o.kpis.map((k) => {
     const target = k.target ?? 0
+    const { unit, note } = correctPercentMisclassification(
+      k.unit ?? "NUMBER",
+      k.measure,
+      k.targetText,
+      k.note,
+    )
     return {
       measure: k.measure,
-      unit: k.unit ?? "NUMBER",
+      unit,
       direction: k.direction ?? "HIGHER_BETTER",
       target,
       current: 0,
       targetText: k.targetText,
-      note: k.note,
+      note,
     }
   })
   return {

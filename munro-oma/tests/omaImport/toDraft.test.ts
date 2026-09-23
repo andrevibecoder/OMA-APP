@@ -141,4 +141,82 @@ describe("toDraft", () => {
     const draft = toDraft(extracted({ omas: [zeroTargetOma] }), [period2026H2], "test.pdf")
     expect(draft.warnings.some((w) => w.includes("Price"))).toBe(false)
   })
+
+  it("downgrades a PERCENT score out of 10 to NUMBER and explains the correction", () => {
+    const scoreOma = {
+      ...baseOma,
+      kpis: [
+        {
+          measure: "Team Wellbeing Score (self-reported, out of 10)",
+          unit: "PERCENT" as const,
+          direction: "HIGHER_BETTER" as const,
+          target: 7,
+          targetText: "≥ 7 / 10 (TBC — set the floor with the team)",
+          note: null,
+        },
+      ],
+    }
+    const draft = toDraft(extracted({ omas: [scoreOma] }), [period2026H2], "test.pdf")
+    const metric = draft.omas[0].metrics[0]
+    expect(metric.unit).toBe("NUMBER")
+    expect(metric.note).toContain("Unit changed from Percent to Number")
+    expect(metric.note).toContain("out of 10")
+  })
+
+  it("appends the unit correction to an existing note rather than replacing it", () => {
+    const scoreOma = {
+      ...baseOma,
+      kpis: [
+        {
+          measure: "Wellbeing score",
+          unit: "PERCENT" as const,
+          direction: "HIGHER_BETTER" as const,
+          target: 7,
+          targetText: "7/10",
+          note: "Target marked TBC in the source.",
+        },
+      ],
+    }
+    const draft = toDraft(extracted({ omas: [scoreOma] }), [period2026H2], "test.pdf")
+    const note = draft.omas[0].metrics[0].note
+    expect(note).toContain("Target marked TBC in the source.")
+    expect(note).toContain("Unit changed from Percent to Number")
+  })
+
+  it("leaves a genuine percentage (out of 100) classified as PERCENT", () => {
+    const percentOma = {
+      ...baseOma,
+      kpis: [
+        {
+          measure: "Score out of 100",
+          unit: "PERCENT" as const,
+          direction: "HIGHER_BETTER" as const,
+          target: 90,
+          targetText: "90/100",
+          note: null,
+        },
+      ],
+    }
+    const draft = toDraft(extracted({ omas: [percentOma] }), [period2026H2], "test.pdf")
+    expect(draft.omas[0].metrics[0].unit).toBe("PERCENT")
+    expect(draft.omas[0].metrics[0].note).toBeNull()
+  })
+
+  it("leaves a plain % figure with no unit already classified as PERCENT", () => {
+    const percentOma = {
+      ...baseOma,
+      kpis: [
+        {
+          measure: "% of Reports Delivered on Time",
+          unit: "PERCENT" as const,
+          direction: "HIGHER_BETTER" as const,
+          target: 90,
+          targetText: "focus 90–95%",
+          note: null,
+        },
+      ],
+    }
+    const draft = toDraft(extracted({ omas: [percentOma] }), [period2026H2], "test.pdf")
+    expect(draft.omas[0].metrics[0].unit).toBe("PERCENT")
+  })
 })
