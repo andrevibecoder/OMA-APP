@@ -20,6 +20,10 @@ type FormMetric = {
   apiPath: string
   apiKey: string
   sourceNote: string
+  // UI-only — whether the note box is open for this row. Separate from
+  // sourceNote itself so "+ Add note" can reveal an empty box to type into,
+  // and never sent to the server (submit() builds its own payload fields).
+  noteOpen: boolean
 }
 
 type Oma = {
@@ -60,6 +64,7 @@ const EMPTY_METRIC: FormMetric = {
   apiPath: "",
   apiKey: "",
   sourceNote: "",
+  noteOpen: false,
 }
 
 // Keep the field roughly numeric while still allowing shorthand — digits, one
@@ -138,6 +143,7 @@ export function OmaEditForm({
       apiPath: m.apiPath ?? "",
       apiKey: m.apiKey ?? "",
       sourceNote: m.sourceNote ?? "",
+      noteOpen: !!m.sourceNote,
     })),
   )
   const [actions, setActions] = useState<SaveOmaInput["actions"]>(oma.actions)
@@ -338,14 +344,14 @@ export function OmaEditForm({
                 </div>
               )}
 
-              {m.sourceNote && (
+              {m.sourceNote || m.noteOpen ? (
                 <div className="w-full rounded-lg border border-yellow-400 bg-yellow-50 p-3 text-sm text-yellow-900">
                   <div className="mb-1 flex items-center justify-between gap-3">
-                    <span className="font-semibold">⚠ Note from import</span>
+                    <span className="font-semibold">⚠ Note</span>
                     {canOutcomeMetric && (
                       <button
                         type="button"
-                        onClick={() => setM({ sourceNote: "" })}
+                        onClick={() => setM({ sourceNote: "", noteOpen: false })}
                         className="text-xs text-yellow-900/70 underline"
                       >
                         Remove
@@ -356,6 +362,7 @@ export function OmaEditForm({
                     <textarea
                       value={m.sourceNote}
                       onChange={(e) => setM({ sourceNote: e.target.value })}
+                      placeholder="e.g. this KPI doesn't fit a single target/current number — explain here"
                       rows={2}
                       className="w-full rounded border border-yellow-400/60 bg-white/60 px-2 py-1 text-sm outline-none"
                     />
@@ -363,6 +370,16 @@ export function OmaEditForm({
                     <p>{m.sourceNote}</p>
                   )}
                 </div>
+              ) : (
+                canOutcomeMetric && (
+                  <button
+                    type="button"
+                    onClick={() => setM({ noteOpen: true })}
+                    className="text-xs text-mfa-red"
+                  >
+                    + Add note
+                  </button>
+                )
               )}
 
               {m.source === "API" &&
