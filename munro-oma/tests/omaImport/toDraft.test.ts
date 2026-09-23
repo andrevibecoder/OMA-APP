@@ -50,6 +50,44 @@ describe("toDraft", () => {
     expect(draft.periodId).toBe("h2-2026")
   })
 
+  it("prefers the period the document starts in over one with more total overlap (a multi-year OMA still files under its start period)", () => {
+    const shortStartPeriod: PeriodLite = {
+      id: "short-start",
+      startDate: new Date("2026-09-01"),
+      endDate: new Date("2026-09-30"),
+    }
+    const longLaterPeriod: PeriodLite = {
+      id: "long-later",
+      startDate: new Date("2026-10-01"),
+      endDate: new Date("2027-08-31"),
+    }
+    const draft = toDraft(
+      extracted({ periodStart: "2026-09-01", periodEnd: "2027-08-31" }),
+      [shortStartPeriod, longLaterPeriod],
+      "test.pdf",
+    )
+    expect(draft.periodId).toBe("short-start")
+  })
+
+  it("falls back to largest overlap when no period contains the document's start date", () => {
+    const smallerOverlap: PeriodLite = {
+      id: "smaller",
+      startDate: new Date("2026-10-01"),
+      endDate: new Date("2026-12-31"),
+    }
+    const biggerOverlap: PeriodLite = {
+      id: "bigger",
+      startDate: new Date("2026-10-01"),
+      endDate: new Date("2027-02-28"),
+    }
+    const draft = toDraft(
+      extracted({ periodStart: "2026-09-01", periodEnd: "2027-02-28" }),
+      [smallerOverlap, biggerOverlap],
+      "test.pdf",
+    )
+    expect(draft.periodId).toBe("bigger")
+  })
+
   it("returns periodId null with a warning when no period overlaps", () => {
     const draft = toDraft(
       extracted({ periodStart: "2030-01-01", periodEnd: "2030-06-30" }),

@@ -60,6 +60,18 @@ function matchPeriod(
   }
   const docStart = new Date(periodStart)
   const docEnd = new Date(periodEnd)
+
+  // Prefer the period the document actually starts in — a multi-year OMA
+  // still belongs with the period it kicks off in, not whichever period
+  // happens to cover more of its (much longer) total span. Per-KPI notes are
+  // what carry "this target's real horizon runs past this period", not
+  // which period the OMA gets filed under.
+  const startsIn = periods.find((p) => {
+    const pEnd = p.endDate ?? p.startDate
+    return docStart >= p.startDate && docStart <= pEnd
+  })
+  if (startsIn) return { periodId: startsIn.id, warning: null }
+
   let best: { id: string; days: number } | null = null
   for (const p of periods) {
     const pEnd = p.endDate ?? p.startDate
