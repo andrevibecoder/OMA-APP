@@ -18,6 +18,10 @@ export async function getCompanyDashboard(periodId: string) {
     name: bu.name,
     pct: buProgress(bu.users.map((u) => ({ omas: u.omas }))),
     emptyReason: zeroBarReason(bu.users.flatMap((u) => u.omas)),
+    // A one-person department (e.g. CEO) has no real "list of people" to
+    // show — the BU page would just be a single row pointing at this same
+    // person. Skip straight to them from the dashboard.
+    soleUserId: bu.users.length === 1 ? bu.users[0].id : null,
   }))
 }
 

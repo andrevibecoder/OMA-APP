@@ -71,7 +71,7 @@ async function FunctionalView({ periodId, qp }: { periodId: string; qp: string }
             key={bu.id}
             label={bu.name}
             value={bu.pct}
-            href={`/bu/${bu.id}${qp}`}
+            href={bu.soleUserId ? `/person/${bu.soleUserId}${qp}` : `/bu/${bu.id}${qp}`}
             emptyReason={bu.emptyReason}
           />
         ))}
