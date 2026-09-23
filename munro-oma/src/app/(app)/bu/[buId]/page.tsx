@@ -35,7 +35,13 @@ export default async function BuPage({
       </div>
       <div className="mt-10">
         {bu.people.map((p) => (
-          <RagBar key={p.id} label={p.name} value={p.pct} href={`/person/${p.id}${qp}`} />
+          <RagBar
+            key={p.id}
+            label={p.name}
+            value={p.pct}
+            href={`/person/${p.id}${qp}`}
+            emptyReason={p.targetsNotSet ? "Targets not yet set." : undefined}
+          />
         ))}
       </div>
     </main>

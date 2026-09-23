@@ -133,3 +133,15 @@ export function buProgress(people: { omas: OmaLike[] }[]): number {
   const withOmas = people.filter((p) => p.omas.length > 0)
   return mean(withOmas.map((p) => personProgress(p.omas)))
 }
+
+// True when at least one OMA in the group has no usable target (no metrics,
+// or every metric's target is unset) — paired with a rolled-up pct of 0, that
+// 0% is at least partly an artifact of missing data entry, not a real "no
+// progress" signal, and a bare grey bar reads as "nothing here at all"
+// instead. Distinguishing this needs the raw metrics, which are gone by the
+// time a rolled-up pct reaches the UI — so this is computed alongside pct in
+// queries.ts, not derived from it.
+export function hasOmasWithNoTargets(omas: OmaLike[]): boolean {
+  if (omas.length === 0) return false
+  return omas.some((o) => o.metrics.length === 0 || o.metrics.every((m) => m.target <= 0))
+}

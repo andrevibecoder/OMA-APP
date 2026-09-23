@@ -9,6 +9,7 @@ import {
   mean,
   personProgress,
   buProgress,
+  hasOmasWithNoTargets,
 } from "@/lib/progress"
 
 const hi = (target: number, current: number) =>
@@ -129,5 +130,33 @@ describe("buProgress", () => {
   })
   it("is 0 when nobody has OMAs", () => {
     expect(buProgress([{ omas: [] }, { omas: [] }])).toBe(0)
+  })
+})
+
+describe("hasOmasWithNoTargets", () => {
+  it("is false when there are no OMAs at all — that's a different empty state", () => {
+    expect(hasOmasWithNoTargets([])).toBe(false)
+  })
+
+  it("is true for an OMA with metrics but no target set on any of them", () => {
+    expect(hasOmasWithNoTargets([{ metrics: [hi(0, 0)] }])).toBe(true)
+  })
+
+  it("is true for an OMA with no metrics at all", () => {
+    expect(hasOmasWithNoTargets([{ metrics: [] }])).toBe(true)
+  })
+
+  it("is true as soon as one OMA in the group has no usable target, even if another does", () => {
+    expect(
+      hasOmasWithNoTargets([{ metrics: [hi(0, 0)] }, { metrics: [hi(40, 0)] }]),
+    ).toBe(true)
+  })
+
+  it("is false when every OMA has a real target, even if current attainment is genuinely 0", () => {
+    expect(hasOmasWithNoTargets([{ metrics: [hi(40, 0)] }])).toBe(false)
+  })
+
+  it("is false for an OMA with several metrics as long as one of them has a real target", () => {
+    expect(hasOmasWithNoTargets([{ metrics: [hi(40, 10), hi(0, 0)] }])).toBe(false)
   })
 })

@@ -67,7 +67,13 @@ async function FunctionalView({ periodId, qp }: { periodId: string; qp: string }
       </div>
       <div className="mt-3">
         {rows.map((bu) => (
-          <RagBar key={bu.id} label={bu.name} value={bu.pct} href={`/bu/${bu.id}${qp}`} />
+          <RagBar
+            key={bu.id}
+            label={bu.name}
+            value={bu.pct}
+            href={`/bu/${bu.id}${qp}`}
+            emptyReason={bu.targetsNotSet ? "Targets not yet set." : undefined}
+          />
         ))}
       </div>
     </>
@@ -87,7 +93,13 @@ async function PeopleView({ periodId, qp }: { periodId: string; qp: string }) {
           <div className="mt-3">
             {bu.people.length > 0 ? (
               bu.people.map((p) => (
-                <RagBar key={p.id} label={p.name} value={p.pct} href={`/person/${p.id}${qp}`} />
+                <RagBar
+                  key={p.id}
+                  label={p.name}
+                  value={p.pct}
+                  href={`/person/${p.id}${qp}`}
+                  emptyReason={p.targetsNotSet ? "Targets not yet set." : undefined}
+                />
               ))
             ) : (
               <p className="text-sm text-mfa-muted">No one assigned yet.</p>

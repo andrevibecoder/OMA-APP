@@ -6,6 +6,7 @@ export function RagBar({
   value,
   href,
   formAction,
+  emptyReason,
 }: {
   label: string
   value: number
@@ -13,6 +14,10 @@ export function RagBar({
   // Alternative to href: a bound server action, so the whole row acts as a
   // submit button (e.g. "create and open OMA 1") instead of a link.
   formAction?: () => Promise<void>
+  // Shown inside the track in place of the (otherwise indistinguishable)
+  // blank bar when value is 0 because no KPI target has been set yet —
+  // e.g. "Targets not yet set." — so this doesn't read as "no OMA at all".
+  emptyReason?: string
 }) {
   const clickable = !!(href || formAction)
   // Same padding/hover slot on every row, clickable or not, so a plain row
@@ -26,7 +31,13 @@ export function RagBar({
     >
       <span className="w-44 shrink-0 font-semibold">{label}</span>
       <div className="h-6 flex-1 overflow-hidden rounded-md bg-mfa-track">
-        <div className="h-full rounded-md" style={{ width: `${value}%`, background: ragColorVar(ragState(value)) }} />
+        {value === 0 && emptyReason ? (
+          <span className="flex h-full items-center px-3 text-xs italic text-mfa-muted">
+            {emptyReason}
+          </span>
+        ) : (
+          <div className="h-full rounded-md" style={{ width: `${value}%`, background: ragColorVar(ragState(value)) }} />
+        )}
       </div>
       <span className="w-14 shrink-0 text-right font-semibold">{value}%</span>
       <span className="w-9 shrink-0 text-right text-[10px] uppercase tracking-wide text-mfa-muted/50" aria-hidden>
