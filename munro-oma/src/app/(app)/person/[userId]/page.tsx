@@ -7,7 +7,7 @@ import { RagBar } from "@/components/RagBar"
 import { getPerson } from "@/lib/queries"
 import { formatMetricValue, ragColorVar, ragState } from "@/lib/progress"
 import { db } from "@/lib/db"
-import { resolvePeriodId } from "@/lib/periods"
+import { periodRangeLabel, resolvePeriodId } from "@/lib/periods"
 import { getSessionUser } from "@/lib/session"
 import { canCreateOMA } from "@/lib/authz"
 import { createOma } from "./actions"
@@ -40,7 +40,7 @@ export default async function PersonPage({
             ? [{ label: person.businessUnit.name, href: `/bu/${person.businessUnit.id}${qp}` }]
             : []),
           { label: person.name },
-          { label: period.shortLabel },
+          { label: periodRangeLabel(period) },
         ]}
       />
       <div className="mt-3">

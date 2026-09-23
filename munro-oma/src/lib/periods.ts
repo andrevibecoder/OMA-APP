@@ -39,3 +39,26 @@ export async function resolvePeriodId(searchParam: string | undefined): Promise<
   }
   return (await getActivePeriod()).id
 }
+
+// Fixed abbreviations, not toLocaleDateString — the en-GB Intl short month
+// for September renders as "Sept" (four letters, unlike every other month),
+// which reads oddly next to the rest. UTC getters because these dates are
+// stored as UTC midnight and a negative-offset server timezone could
+// otherwise roll the day back by one.
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+function shortDate(d: Date): string {
+  return `${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]} ${String(d.getUTCFullYear()).slice(-2)}`
+}
+
+// "H2" alone (shortLabel) reads as a bare term with no sense of which year or
+// exact window it covers — this spells both out, e.g.
+// "2026 H2 (1 Sep 26 - 28 Feb 27)".
+export function periodRangeLabel(period: {
+  year: number
+  shortLabel: string
+  startDate: Date
+  endDate: Date | null
+}): string {
+  const end = period.endDate ?? period.startDate
+  return `${period.year} ${period.shortLabel} (${shortDate(period.startDate)} - ${shortDate(end)})`
+}

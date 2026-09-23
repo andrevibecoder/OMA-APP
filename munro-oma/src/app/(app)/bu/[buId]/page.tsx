@@ -5,7 +5,7 @@ import { BackButton } from "@/components/BackButton"
 import { RagBar } from "@/components/RagBar"
 import { getBusinessUnit } from "@/lib/queries"
 import { db } from "@/lib/db"
-import { resolvePeriodId } from "@/lib/periods"
+import { periodRangeLabel, resolvePeriodId } from "@/lib/periods"
 
 export default async function BuPage({
   params,
@@ -27,7 +27,7 @@ export default async function BuPage({
         items={[
           { label: "Main dashboard", href: `/${qp}` },
           { label: bu.name },
-          { label: period.shortLabel },
+          { label: periodRangeLabel(period) },
         ]}
       />
       <div className="mt-3">
