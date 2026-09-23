@@ -311,15 +311,13 @@ function PeriodRow({ p }: { p: AdminData["periods"][number] }) {
           onChange={(e) => setEnd(e.target.value)}
         />
       </span>
-      {datesDirty && (
-        <button
-          className={btn}
-          disabled={pending}
-          onClick={() => run(() => setPeriodDates(p.id, start, end))}
-        >
-          Save dates
-        </button>
-      )}
+      <button
+        className={btn}
+        disabled={pending || !datesDirty}
+        onClick={() => run(() => setPeriodDates(p.id, start, end))}
+      >
+        Save dates
+      </button>
       <span className="text-xs text-mfa-muted">
         {p._count.omas} {p._count.omas === 1 ? "OMA" : "OMAs"}
       </span>
