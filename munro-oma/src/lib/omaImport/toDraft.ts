@@ -1,4 +1,5 @@
 import type { MetricDirection, MetricUnit } from "@prisma/client"
+import { dateSerial } from "@/lib/progress"
 import type { ExtractedImport, ExtractedOma } from "./schema"
 
 // Redeclared here (not imported from periods.ts) so this pure module has no
@@ -96,13 +97,16 @@ function correctPercentMisclassification(
 function toDraftOma(o: ExtractedOma): { oma: DraftOma; warnings: string[] } {
   const warnings: string[] = []
   const metrics = o.kpis.map((k) => {
-    const target = k.target ?? 0
     const { unit, note } = correctPercentMisclassification(
       k.unit ?? "NUMBER",
       k.measure,
       k.targetText,
       k.note,
     )
+    // DATE stores the deadline as epoch-millis in the same numeric "target"
+    // column every other unit uses (see progress.ts's dateSerial) — every
+    // other unit keeps the plain extracted number.
+    const target = unit === "DATE" ? (k.targetDate ? dateSerial(k.targetDate) : 0) : k.target ?? 0
     return {
       measure: k.measure,
       unit,

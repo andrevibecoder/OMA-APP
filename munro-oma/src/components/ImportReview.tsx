@@ -3,7 +3,7 @@
 import { useRef, useState, useTransition } from "react"
 import { parsePdf, createImportedOmas } from "@/app/(app)/import/actions"
 import { draftOmaBlockers } from "@/lib/omaImport/createFromDraft"
-import { formatMetricValue, parseAmount } from "@/lib/progress"
+import { formatMetricValue, inputToMetricValue, metricValueToInput, parseAmount } from "@/lib/progress"
 import type { ImportDraft } from "@/lib/omaImport/toDraft"
 import type { MetricDirection, MetricUnit } from "@/types"
 
@@ -43,8 +43,8 @@ function toReviewOma(o: ImportDraft["omas"][number]): ReviewOma {
       measure: m.measure,
       unit: m.unit,
       direction: m.direction,
-      target: String(m.target),
-      current: String(m.current),
+      target: metricValueToInput(m.target, m.unit),
+      current: metricValueToInput(m.current, m.unit),
       targetText: m.targetText,
       note: m.note,
     })),
@@ -87,8 +87,8 @@ function omaBlockers(o: ReviewOma): string[] {
       measure: m.measure,
       unit: m.unit,
       direction: m.direction,
-      target: parseAmount(m.target) ?? 0,
-      current: parseAmount(m.current) ?? 0,
+      target: inputToMetricValue(m.target, m.unit),
+      current: inputToMetricValue(m.current, m.unit),
       targetText: m.targetText,
       note: m.note,
     })),
@@ -166,8 +166,8 @@ export function ImportReview({
         measure: m.measure,
         unit: m.unit,
         direction: m.direction,
-        target: parseAmount(m.target) ?? 0,
-        current: parseAmount(m.current) ?? 0,
+        target: inputToMetricValue(m.target, m.unit),
+        current: inputToMetricValue(m.current, m.unit),
         targetText: m.targetText,
         note: m.note?.trim() || null,
       })),
@@ -360,40 +360,65 @@ export function ImportReview({
                         <option value="CURRENCY">Currency (R)</option>
                         <option value="PERCENT">Percent</option>
                         <option value="DAYS">Days</option>
+                        <option value="DATE">Date</option>
                       </select>
                     </label>
-                    <div className="flex flex-col">
-                      <span className="text-xs text-mfa-muted">Direction</span>
-                      <div className="inline-flex overflow-hidden rounded border border-mfa-track">
-                        {(["HIGHER_BETTER", "LOWER_BETTER"] as const).map((d) => (
-                          <button
-                            key={d}
-                            type="button"
-                            onClick={() => setM({ direction: d })}
-                            className={`px-2.5 py-1.5 ${m.direction === d ? "bg-mfa-red text-white" : "text-mfa-muted"}`}
-                          >
-                            {d === "HIGHER_BETTER" ? "↑ Higher" : "↓ Lower"}
-                          </button>
-                        ))}
+                    {m.unit !== "DATE" && (
+                      <div className="flex flex-col">
+                        <span className="text-xs text-mfa-muted">Direction</span>
+                        <div className="inline-flex overflow-hidden rounded border border-mfa-track">
+                          {(["HIGHER_BETTER", "LOWER_BETTER"] as const).map((d) => (
+                            <button
+                              key={d}
+                              type="button"
+                              onClick={() => setM({ direction: d })}
+                              className={`px-2.5 py-1.5 ${m.direction === d ? "bg-mfa-red text-white" : "text-mfa-muted"}`}
+                            >
+                              {d === "HIGHER_BETTER" ? "↑ Higher" : "↓ Lower"}
+                            </button>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                    <label className="flex w-32 flex-col">
-                      <span className="text-xs text-mfa-muted">Target</span>
-                      <input
-                        value={m.target}
-                        placeholder="0"
-                        onChange={(e) => setM({ target: num(e.target.value) })}
-                        className="rounded border border-mfa-track px-2 py-1.5"
-                      />
+                    )}
+                    <label className="flex w-40 flex-col">
+                      <span className="text-xs text-mfa-muted">
+                        {m.unit === "DATE" ? "Target — deadline" : "Target"}
+                      </span>
+                      {m.unit === "DATE" ? (
+                        <input
+                          type="date"
+                          value={m.target}
+                          onChange={(e) => setM({ target: e.target.value })}
+                          className="rounded border border-mfa-track px-2 py-1.5"
+                        />
+                      ) : (
+                        <input
+                          value={m.target}
+                          placeholder="0"
+                          onChange={(e) => setM({ target: num(e.target.value) })}
+                          className="rounded border border-mfa-track px-2 py-1.5"
+                        />
+                      )}
                     </label>
-                    <label className="flex w-32 flex-col">
-                      <span className="text-xs text-mfa-muted">Current</span>
-                      <input
-                        value={m.current}
-                        placeholder="0"
-                        onChange={(e) => setM({ current: num(e.target.value) })}
-                        className="rounded border border-mfa-track px-2 py-1.5"
-                      />
+                    <label className="flex w-40 flex-col">
+                      <span className="text-xs text-mfa-muted">
+                        {m.unit === "DATE" ? "Current — done on" : "Current"}
+                      </span>
+                      {m.unit === "DATE" ? (
+                        <input
+                          type="date"
+                          value={m.current}
+                          onChange={(e) => setM({ current: e.target.value })}
+                          className="rounded border border-mfa-track px-2 py-1.5"
+                        />
+                      ) : (
+                        <input
+                          value={m.current}
+                          placeholder="0"
+                          onChange={(e) => setM({ current: num(e.target.value) })}
+                          className="rounded border border-mfa-track px-2 py-1.5"
+                        />
+                      )}
                     </label>
                     <button type="button" onClick={removeM} className="px-2 text-mfa-muted">
                       ✕

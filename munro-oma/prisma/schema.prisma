@@ -19,6 +19,11 @@ enum MetricUnit {
   CURRENCY
   PERCENT
   DAYS
+  // Target/current are stored as the date's epoch-millis in the same Float
+  // columns (target/current), not a separate column — see progress.ts's
+  // dateSerial/formatMetricValue. A pure deadline KPI ("done by 30 Sep
+  // 2026"), not a number that happens to have a date attached.
+  DATE
 }
 
 enum MetricDirection {

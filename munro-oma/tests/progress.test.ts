@@ -12,12 +12,15 @@ import {
   hasOmasWithNoTargets,
   hasNoRecordedProgress,
   zeroBarReason,
+  dateSerial,
 } from "@/lib/progress"
 
 const hi = (target: number, current: number) =>
-  ({ direction: "HIGHER_BETTER", target, current }) as const
+  ({ unit: "NUMBER", direction: "HIGHER_BETTER", target, current }) as const
 const lo = (target: number, current: number) =>
-  ({ direction: "LOWER_BETTER", target, current }) as const
+  ({ unit: "NUMBER", direction: "LOWER_BETTER", target, current }) as const
+const date = (target: number, current: number) =>
+  ({ unit: "DATE", direction: "HIGHER_BETTER", target, current }) as const
 
 describe("ragState", () => {
   it("maps thresholds exactly", () => {
@@ -63,6 +66,19 @@ describe("formatMetricValue", () => {
   it("DAYS: value + ' days'", () => {
     expect(formatMetricValue(10, "DAYS")).toBe("10 days")
   })
+  it("DATE: reads back the serial as a readable date", () => {
+    expect(formatMetricValue(dateSerial("2026-09-30"), "DATE")).toBe("30 Sep 2026")
+  })
+  it("DATE: 0 (unset) reads as a dash, not the 1970 epoch", () => {
+    expect(formatMetricValue(0, "DATE")).toBe("—")
+  })
+})
+
+describe("dateSerial", () => {
+  it("round-trips through formatMetricValue using UTC, immune to server timezone", () => {
+    expect(formatMetricValue(dateSerial("2027-02-28"), "DATE")).toBe("28 Feb 2027")
+    expect(formatMetricValue(dateSerial("2026-01-01"), "DATE")).toBe("1 Jan 2026")
+  })
 })
 
 describe("metricAttainment", () => {
@@ -85,6 +101,13 @@ describe("metricAttainment", () => {
   })
   it("clamps negatives to 0", () => {
     expect(metricAttainment(hi(40, -5))).toBe(0)
+  })
+  it("DATE: a deadline is 0% until marked done (current set), then 100% — direction is irrelevant", () => {
+    const target = dateSerial("2026-09-30")
+    expect(metricAttainment(date(target, 0))).toBe(0)
+    expect(metricAttainment(date(target, dateSerial("2026-09-28")))).toBe(100) // done early
+    expect(metricAttainment(date(target, dateSerial("2026-10-05")))).toBe(100) // done late — still "done"
+    expect(metricAttainment(date(0, 0))).toBe(0) // no deadline set at all
   })
 })
 

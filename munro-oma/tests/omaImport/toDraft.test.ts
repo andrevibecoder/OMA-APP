@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 import { toDraft, type PeriodLite } from "@/lib/omaImport/toDraft"
 import type { ExtractedImport, ExtractedOma } from "@/lib/omaImport/schema"
+import { dateSerial } from "@/lib/progress"
 
 const period2026H2: PeriodLite = {
   id: "h2-2026",
@@ -22,6 +23,7 @@ const baseOma: ExtractedOma = {
       unit: "CURRENCY",
       direction: "HIGHER_BETTER",
       target: 3_000_000,
+      targetDate: null,
       targetText: "R3 million",
       note: null,
     },
@@ -113,7 +115,7 @@ describe("toDraft", () => {
       ...baseOma,
       kpis: [
         baseOma.kpis[0],
-        { measure: "Cost per report", unit: "CURRENCY", direction: "LOWER_BETTER", target: 3500, targetText: "R3 500", note: null },
+        { measure: "Cost per report", unit: "CURRENCY", direction: "LOWER_BETTER", target: 3500, targetDate: null, targetText: "R3 500", note: null },
       ],
     }
     const draft = toDraft(extracted({ omas: [twoKpiOma] }), [period2026H2], "test.pdf")
@@ -151,6 +153,7 @@ describe("toDraft", () => {
           unit: "PERCENT" as const,
           direction: "HIGHER_BETTER" as const,
           target: 7,
+          targetDate: null,
           targetText: "≥ 7 / 10 (TBC — set the floor with the team)",
           note: null,
         },
@@ -172,6 +175,7 @@ describe("toDraft", () => {
           unit: "PERCENT" as const,
           direction: "HIGHER_BETTER" as const,
           target: 7,
+          targetDate: null,
           targetText: "7/10",
           note: "Target marked TBC in the source.",
         },
@@ -192,6 +196,7 @@ describe("toDraft", () => {
           unit: "PERCENT" as const,
           direction: "HIGHER_BETTER" as const,
           target: 90,
+          targetDate: null,
           targetText: "90/100",
           note: null,
         },
@@ -200,6 +205,45 @@ describe("toDraft", () => {
     const draft = toDraft(extracted({ omas: [percentOma] }), [period2026H2], "test.pdf")
     expect(draft.omas[0].metrics[0].unit).toBe("PERCENT")
     expect(draft.omas[0].metrics[0].note).toBeNull()
+  })
+
+  it("converts a DATE KPI's targetDate into the epoch-millis target, ignoring the null numeric target", () => {
+    const deadlineOma = {
+      ...baseOma,
+      kpis: [
+        {
+          measure: "Jethro design and resourcing recommendation delivered for review",
+          unit: "DATE" as const,
+          direction: "HIGHER_BETTER" as const,
+          target: null,
+          targetDate: "2026-09-30",
+          targetText: "Signed off in the week 30 September 2026, ready to feed the October planning & budget round",
+          note: null,
+        },
+      ],
+    }
+    const draft = toDraft(extracted({ omas: [deadlineOma] }), [period2026H2], "test.pdf")
+    expect(draft.omas[0].metrics[0].unit).toBe("DATE")
+    expect(draft.omas[0].metrics[0].target).toBe(dateSerial("2026-09-30"))
+  })
+
+  it("defaults a DATE KPI with no targetDate to target 0 (unset), not NaN", () => {
+    const deadlineOma = {
+      ...baseOma,
+      kpis: [
+        {
+          measure: "Some deliverable",
+          unit: "DATE" as const,
+          direction: "HIGHER_BETTER" as const,
+          target: null,
+          targetDate: null,
+          targetText: "[TBC]",
+          note: null,
+        },
+      ],
+    }
+    const draft = toDraft(extracted({ omas: [deadlineOma] }), [period2026H2], "test.pdf")
+    expect(draft.omas[0].metrics[0].target).toBe(0)
   })
 
   it("leaves a plain % figure with no unit already classified as PERCENT", () => {
@@ -211,6 +255,7 @@ describe("toDraft", () => {
           unit: "PERCENT" as const,
           direction: "HIGHER_BETTER" as const,
           target: 90,
+          targetDate: null,
           targetText: "focus 90–95%",
           note: null,
         },

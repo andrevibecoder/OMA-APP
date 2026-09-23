@@ -2,7 +2,7 @@ import { z } from "zod"
 
 export type Role = "ADMIN" | "MANAGER" | "USER"
 
-export type MetricUnit = "NUMBER" | "CURRENCY" | "PERCENT" | "DAYS"
+export type MetricUnit = "NUMBER" | "CURRENCY" | "PERCENT" | "DAYS" | "DATE"
 export type MetricDirection = "HIGHER_BETTER" | "LOWER_BETTER"
 
 export type RagState = "not-started" | "behind" | "in-progress" | "on-track"
@@ -25,7 +25,7 @@ export const saveOmaSchema = z.object({
     .array(
       z.object({
         measure: z.string().max(200),
-        unit: z.enum(["NUMBER", "CURRENCY", "PERCENT", "DAYS"]),
+        unit: z.enum(["NUMBER", "CURRENCY", "PERCENT", "DAYS", "DATE"]),
         direction: z.enum(["HIGHER_BETTER", "LOWER_BETTER"]),
         target: z.number().finite(),
         current: z.number().finite(),

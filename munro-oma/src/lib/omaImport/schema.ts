@@ -10,10 +10,14 @@ export const extractedKpiSchema = z.object({
   // call attaches to zod's global metadata registry, which z.toJSONSchema
   // merges onto the generated node — restoring the type key the transform
   // requires, without changing runtime validation.
-  unit: z.enum(["NUMBER", "CURRENCY", "PERCENT", "DAYS"]).meta({ type: "string" }).nullable(),
+  unit: z.enum(["NUMBER", "CURRENCY", "PERCENT", "DAYS", "DATE"]).meta({ type: "string" }).nullable(),
   direction: z.enum(["HIGHER_BETTER", "LOWER_BETTER"]).meta({ type: "string" }).nullable(),
-  // 3_000_000 from "R3 million"; null from "[TBC]" or pure narrative.
+  // 3_000_000 from "R3 million"; null from "[TBC]" or pure narrative. Null
+  // whenever unit is DATE — see targetDate instead.
   target: z.number().nullable(),
+  // Set only when unit is DATE: the deadline itself, as an ISO date
+  // ("2026-09-30"). null for every other unit.
+  targetDate: z.string().nullable(),
   // The original target prose — always kept, shown on the review page.
   targetText: z.string(),
   // Only set when this KPI's target didn't fit the app's single-number model

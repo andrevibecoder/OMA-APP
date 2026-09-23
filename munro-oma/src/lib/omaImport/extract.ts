@@ -33,13 +33,23 @@ For each row under "METRIC / KPI":
   stating no change is a real, trackable target, not narrative to discard — "Price
   largely constant (0% increase)" -> target 0, unit PERCENT, direction LOWER_BETTER.
   If the target is "[TBC]", a bare date, or pure narrative with no figure -> target
-  null. In every case, always copy the original clause text into "targetText" verbatim.
+  null. Always null when unit is DATE (use "targetDate" instead). In every case,
+  always copy the original clause text into "targetText" verbatim.
+- "targetDate": an ISO date (YYYY-MM-DD) ONLY when unit is DATE — the deadline
+  itself (e.g. "Signed off in the week of 30 September 2026" -> "2026-09-30", the
+  Monday of that week). null for every other unit, including a number/percent
+  target that merely has a date attached (see "unit" below).
 - "unit": CURRENCY for "R…"/"ZAR"/"Rand". PERCENT only for a true percentage — a
   "%" sign, or an NPS score (which runs -100 to 100). DAYS for "days"/"turnaround".
-  Otherwise NUMBER — this includes any "X out of N" or "X/N" score where N isn't
-  100 (e.g. "7/10", "a wellbeing score out of 10"): that's a plain number on its
-  own scale, not a percentage, even though the source calls it a "score". null
-  only if genuinely unclear.
+  DATE only when the clause's whole target IS a deadline with no number/percent of
+  its own — a deliverable that's simply "done" or "not done" by a date (e.g. "Signed
+  off in the week 30 September 2026, ready to feed the October planning & budget
+  round"). Do NOT use DATE for something like "100% by 31 December 2026" — that's
+  a real PERCENT target (100) that happens to name a date; keep unit PERCENT and
+  put the date in "note" instead. Otherwise NUMBER — this includes any "X out of N"
+  or "X/N" score where N isn't 100 (e.g. "7/10", "a wellbeing score out of 10"):
+  that's a plain number on its own scale, not a percentage, even though the source
+  calls it a "score". null only if genuinely unclear.
 - "direction": LOWER_BETTER for "reduce"/"turnaround"/"drop-off"/"rework"/a
   no-increase constraint; else HIGHER_BETTER. null only if genuinely unclear.
 - "note": null when the target/unit/direction above were unambiguous. Otherwise a

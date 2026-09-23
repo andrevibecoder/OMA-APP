@@ -6,6 +6,7 @@ const validKpi = {
   unit: "CURRENCY",
   direction: "HIGHER_BETTER",
   target: 3_000_000,
+  targetDate: null,
   targetText: "R3 million",
   note: null,
 }
@@ -81,6 +82,30 @@ describe("extractedImportSchema", () => {
       extractedImportSchema.safeParse({
         ...validImport,
         omas: [{ ...validOma, kpis: [{ ...validKpi, target: "3000000" }] }],
+      }).success,
+    ).toBe(false)
+  })
+
+  it("accepts unit DATE with a targetDate and a null target", () => {
+    expect(
+      extractedImportSchema.safeParse({
+        ...validImport,
+        omas: [
+          {
+            ...validOma,
+            kpis: [{ ...validKpi, unit: "DATE", target: null, targetDate: "2026-09-30" }],
+          },
+        ],
+      }).success,
+    ).toBe(true)
+  })
+
+  it("rejects a missing targetDate field on a KPI", () => {
+    const { targetDate: _targetDate, ...kpiWithoutTargetDate } = validKpi
+    expect(
+      extractedImportSchema.safeParse({
+        ...validImport,
+        omas: [{ ...validOma, kpis: [kpiWithoutTargetDate] }],
       }).success,
     ).toBe(false)
   })

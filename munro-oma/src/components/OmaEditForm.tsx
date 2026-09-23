@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react"
 import { saveOma } from "@/app/(app)/oma/[omaId]/actions"
 import { DeleteOmaButton } from "@/components/DeleteOmaButton"
-import { formatMetricValue, parseAmount } from "@/lib/progress"
+import { formatMetricValue, inputToMetricValue, metricValueToInput, parseAmount } from "@/lib/progress"
 import { omaSaveBlockers } from "@/lib/omaValidation"
 import type { MetricDirection, MetricUnit, SaveOmaInput } from "@/types"
 
@@ -136,8 +136,8 @@ export function OmaEditForm({
       measure: m.measure,
       unit: m.unit,
       direction: m.direction,
-      target: m.target ? String(m.target) : "",
-      current: m.current ? String(m.current) : "",
+      target: metricValueToInput(m.target, m.unit),
+      current: metricValueToInput(m.current, m.unit),
       source: m.source,
       apiUrl: m.apiUrl ?? "",
       apiPath: m.apiPath ?? "",
@@ -163,8 +163,8 @@ export function OmaEditForm({
       measure: m.measure,
       unit: m.unit,
       direction: m.direction,
-      target: parseAmount(m.target) ?? 0,
-      current: parseAmount(m.current) ?? 0,
+      target: inputToMetricValue(m.target, m.unit),
+      current: inputToMetricValue(m.current, m.unit),
       source: m.source,
       apiUrl: m.apiUrl.trim() || null,
       apiPath: m.apiPath.trim() || null,
@@ -290,49 +290,76 @@ export function OmaEditForm({
                   <option value="CURRENCY">Currency (R)</option>
                   <option value="PERCENT">Percent</option>
                   <option value="DAYS">Days</option>
+                  <option value="DATE">Date</option>
                 </select>
               </label>
 
-              <div className="flex flex-col">
-                <span className="text-xs text-mfa-muted">Direction</span>
-                <div className="inline-flex overflow-hidden rounded border border-mfa-track">
-                  {(["HIGHER_BETTER", "LOWER_BETTER"] as const).map((d) => (
-                    <button
-                      key={d}
-                      type="button"
-                      disabled={!canOutcomeMetric}
-                      onClick={() => setM({ direction: d })}
-                      title={d === "HIGHER_BETTER" ? "Higher is better" : "Lower is better"}
-                      className={`px-2.5 py-1.5 disabled:opacity-60 ${
-                        m.direction === d ? "bg-mfa-red text-white" : "text-mfa-muted"
-                      }`}
-                    >
-                      {d === "HIGHER_BETTER" ? "↑ Higher" : "↓ Lower"}
-                    </button>
-                  ))}
+              {m.unit !== "DATE" && (
+                <div className="flex flex-col">
+                  <span className="text-xs text-mfa-muted">Direction</span>
+                  <div className="inline-flex overflow-hidden rounded border border-mfa-track">
+                    {(["HIGHER_BETTER", "LOWER_BETTER"] as const).map((d) => (
+                      <button
+                        key={d}
+                        type="button"
+                        disabled={!canOutcomeMetric}
+                        onClick={() => setM({ direction: d })}
+                        title={d === "HIGHER_BETTER" ? "Higher is better" : "Lower is better"}
+                        className={`px-2.5 py-1.5 disabled:opacity-60 ${
+                          m.direction === d ? "bg-mfa-red text-white" : "text-mfa-muted"
+                        }`}
+                      >
+                        {d === "HIGHER_BETTER" ? "↑ Higher" : "↓ Lower"}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
-              <label className="flex w-32 flex-col">
-                <span className="text-xs text-mfa-muted">Target</span>
-                <input
-                  value={m.target}
-                  disabled={!canOutcomeMetric}
-                  placeholder="0"
-                  onChange={(e) => setM({ target: num(e.target.value) })}
-                  className="rounded border border-mfa-track px-2 py-1.5 disabled:text-mfa-muted"
-                />
+              <label className="flex w-40 flex-col">
+                <span className="text-xs text-mfa-muted">
+                  {m.unit === "DATE" ? "Target — deadline" : "Target"}
+                </span>
+                {m.unit === "DATE" ? (
+                  <input
+                    type="date"
+                    value={m.target}
+                    disabled={!canOutcomeMetric}
+                    onChange={(e) => setM({ target: e.target.value })}
+                    className="rounded border border-mfa-track px-2 py-1.5 disabled:text-mfa-muted"
+                  />
+                ) : (
+                  <input
+                    value={m.target}
+                    disabled={!canOutcomeMetric}
+                    placeholder="0"
+                    onChange={(e) => setM({ target: num(e.target.value) })}
+                    className="rounded border border-mfa-track px-2 py-1.5 disabled:text-mfa-muted"
+                  />
+                )}
               </label>
 
-              <label className="flex w-32 flex-col">
-                <span className="text-xs text-mfa-muted">Current</span>
-                <input
-                  value={m.current}
-                  disabled={!canOutcomeMetric}
-                  placeholder="0"
-                  onChange={(e) => setM({ current: num(e.target.value) })}
-                  className="rounded border border-mfa-track px-2 py-1.5 disabled:text-mfa-muted"
-                />
+              <label className="flex w-40 flex-col">
+                <span className="text-xs text-mfa-muted">
+                  {m.unit === "DATE" ? "Current — done on" : "Current"}
+                </span>
+                {m.unit === "DATE" ? (
+                  <input
+                    type="date"
+                    value={m.current}
+                    disabled={!canOutcomeMetric}
+                    onChange={(e) => setM({ current: e.target.value })}
+                    className="rounded border border-mfa-track px-2 py-1.5 disabled:text-mfa-muted"
+                  />
+                ) : (
+                  <input
+                    value={m.current}
+                    disabled={!canOutcomeMetric}
+                    placeholder="0"
+                    onChange={(e) => setM({ current: num(e.target.value) })}
+                    className="rounded border border-mfa-track px-2 py-1.5 disabled:text-mfa-muted"
+                  />
+                )}
               </label>
 
               {(hint(m.target, m.unit) || hint(m.current, m.unit)) && (

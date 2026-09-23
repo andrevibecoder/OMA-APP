@@ -37,6 +37,27 @@ function groupThousands(n: number): string {
   return (negative ? "-" : "") + intPart + fractionStr
 }
 
+// Fixed abbreviations, not toLocaleDateString — the en-GB Intl short month
+// for September renders as "Sept" (four letters, unlike every other month).
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+
+// A DATE metric's target/current live in the same Float columns as every
+// other unit, holding the date's epoch-millis rather than a plain number —
+// these three are the only places that encode/decode that representation.
+export function dateSerial(isoDay: string): number {
+  return Date.parse(`${isoDay}T00:00:00.000Z`)
+}
+// Back to "YYYY-MM-DD" for an <input type="date"> value — "" (not 0's date)
+// when unset, so the input shows empty rather than the 1970 epoch.
+export function serialToIsoDay(value: number): string {
+  return value > 0 ? new Date(value).toISOString().slice(0, 10) : ""
+}
+function formatDateSerial(value: number): string {
+  if (value <= 0) return "—" // 0 means "no date set yet", not epoch (1970)
+  const d = new Date(value)
+  return `${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`
+}
+
 export function formatMetricValue(value: number, unit: MetricUnit): string {
   switch (unit) {
     case "CURRENCY":
@@ -47,6 +68,8 @@ export function formatMetricValue(value: number, unit: MetricUnit): string {
       return groupThousands(value) + "%"
     case "DAYS":
       return groupThousands(value) + " days"
+    case "DATE":
+      return formatDateSerial(value)
   }
 }
 
@@ -77,20 +100,36 @@ export function parseAmount(raw: string): number | null {
   return n * (m[2] ? AMOUNT_SUFFIX[m[2]] : 1)
 }
 
+// Shared by every target/current input (OmaEditForm, ImportReview) so a DATE
+// metric's edit-time representation — an ISO day string for <input
+// type="date"> — is handled in exactly one place, not re-derived per form.
+export function metricValueToInput(value: number, unit: MetricUnit): string {
+  if (unit === "DATE") return serialToIsoDay(value)
+  return value ? String(value) : ""
+}
+export function inputToMetricValue(raw: string, unit: MetricUnit): number {
+  if (unit === "DATE") return raw ? dateSerial(raw) : 0
+  return parseAmount(raw) ?? 0
+}
+
 // ---------------------------------------------------------------------------
 // Attainment — how far current has moved toward target.
 // ---------------------------------------------------------------------------
 
 type MetricLike = {
+  unit: MetricUnit
   direction: MetricDirection
   target: number
   current: number
 }
 
 /** Real attainment %, rounded. Can exceed 100 (target beaten). 0 for the
- *  degenerate cases (no usable target, or nothing measured yet). */
+ *  degenerate cases (no usable target, or nothing measured yet). A DATE
+ *  metric is a deadline, not a number to converge on: 100 once it's marked
+ *  done (current set), 0 until then — direction doesn't apply to it. */
 export function metricAttainment(m: MetricLike): number {
-  const { direction, target, current } = m
+  const { unit, direction, target, current } = m
+  if (unit === "DATE") return current > 0 ? 100 : 0
   let ratio: number
   if (direction === "LOWER_BETTER") {
     if (current <= 0) return target > 0 ? 100 : 0
